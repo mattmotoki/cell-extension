@@ -179,10 +179,10 @@ export class Board {
         return n_extensions;
     }
 
-
     reset(playerColors) {
         this.playerColors = playerColors;
         this.cellsGroup.selectAll(".rectangle1, .rectangle2").remove();
+        this.linesGroup.selectAll("circle").remove();
         this.linesGroup.selectAll("line").remove();
         this.occupiedCells = [{}, {}];
     }
