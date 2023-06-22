@@ -32,22 +32,26 @@ export class AIPlayer {
 
     calculateScore(x, y, currentPlayer, board) {
         
-        let openSpace = 0;
+        let openness = 0;
         for (let dx = -board.cellSize; dx <= board.cellSize; dx += board.cellSize) {
             for (let dy = -board.cellSize; dy <= board.cellSize; dy += board.cellSize) {
                 let nx = x + dx;
                 let ny = y + dy;
                 if (nx >= 0 && nx < board.gridSize && ny >= 0 && ny < board.gridSize) {
                     if (!board.occupiedCells[0][`${nx}-${ny}`] && !board.occupiedCells[1][`${nx}-${ny}`]) {
-                        openSpace++;
+                        openness++;
                     }
                 }
             }
-        }
+        }        
 
-        let nNeighbors = board.canPlaceRectangle(x, y, currentPlayer).length;
+        let edges = new Set([0, board.gridSize - board.cellSize]);
+        let edgeness = edges.has(x) || edges.has(y);
+
+        let centrality = -Math.sqrt(Math.pow(x - board.gridSize/2, 2) + Math.pow(y - board.gridSize/2, 2));
         let nOpponents = board.canPlaceRectangle(x, y, (currentPlayer + 1) % 2).length;
-        let score = openSpace + nNeighbors + nOpponents;
+        let nNeighbors = board.canPlaceRectangle(x, y, currentPlayer).length;
+        let score = -0*edgeness + 0*centrality + openness + nOpponents + nNeighbors;
 
         return score;
     }
