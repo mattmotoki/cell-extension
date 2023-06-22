@@ -5,19 +5,38 @@
 </head>
 <body>
 
-<svg id="mySVG" xmlns="http://www.w3.org/2000/svg" width="100" height="100">
-    <!-- <rect x="" y="" width="50" height="50" rx="10" ry="10" fill="#00FF00" />     -->
-    <rect x="50" y="" width="50" height="50" rx="10" ry="10" fill="#1E90FF" />
-    <rect x="0" y="" width="50" height="100" rx="10" ry="10" fill="#00FF00" />
-    <rect x="0" y="50" width="100" height="50" rx="10" ry="10" fill="#00FF00" />
-</svg>
+<div>
+    <svg id="v1" xmlns="http://www.w3.org/2000/svg" width="150" height="150">
+        <rect x="50" y="50" width="100" height="50" rx="20" ry="20" fill="#00FF00" />
+        <rect x="0" y="0" width="150" height="50" rx="20" ry="20" fill="#1E90FF" />
+        <rect x="0" y="0" width="50" height="150" rx="20" ry="20" fill="#1E90FF" />
+        <rect x="0" y="100" width="150" height="50" rx="20" ry="20" fill="#1E90FF" />
+    </svg>
+    <button onclick="downloadSVG()">Download V1</button>    
+</div>
 
-<button onclick="downloadSV()">Download SVG</button>
+<div></div>
+    <svg id="v2" xmlns="http://www.w3.org/2000/svg" width="150" height="150">
+        <rect x="50" y="50" width="100" height="50" rx="20" ry="20" fill="#1E90FF" />
+        <rect x="0" y="0" width="150" height="50" rx="20" ry="20" fill="#00FF00" />
+        <rect x="0" y="0" width="50" height="150" rx="20" ry="20" fill="#00FF00" />
+        <rect x="0" y="100" width="150" height="50" rx="20" ry="20" fill="#00FF00" />
+    </svg>
+    <button onclick="downloadSVG()">Download V2</button>
+</div>
+
+
+<!-- <svg id="v0" xmlns="http://www.w3.org/2000/svg" width="100" height="100"> -->
+    <!-- <rect x="50" y="0" width="50" height="50" rx="20" ry="20" fill="#1E90FF" />
+    <rect x="0" y="0" width="50" height="100" rx="20" ry="20" fill="#00FF00" />
+    <rect x="0" y="50" width="100" height="50" rx="20" ry="20" fill="#00FF00" /> -->
+<!-- </svg> -->
+
 
 <script>
     function downloadSVG() {
         // Get the SVG element
-        var svg = document.getElementById("mySVG");
+        var svg = document.getElementById("v1");
 
         // Serialize the SVG to string
         var serializer = new XMLSerializer();
