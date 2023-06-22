@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cell Extension</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div id="game">
+        <div id="game-header">
+            <svg id="widget"></svg>        
+            <div id="score-display">gameState.Scores: Player 1: 0, Player 2: 0</div>        
+        </div>
+        <svg id="board"></svg>        
+        <svg id="score-chart"></svg>
+        <div id="game-controls">
+            <div id="player-mode">
+                <input type="radio" id="ai" name="player-mode" value="ai" checked>
+                <label for="ai">AI Player</label>
+                <input type="radio" id="user" name="player-mode" value="user">
+                <label for="user">User Player</label>
+            </div>
+            <button id="reset">Reset Game</button>
+        </div>
+    </div>
+    <script type="module">
+
+        import {ScoreChart} from "./js/score-chart.js";
+        import {Widget} from "./js/widget.js";
+        import {Game} from "./js/game.js";
+        
+        // TODO: 
+        // * fix alert message happening too soon
+        // * fix reset logic (switch first player)
+        
+        let gridSize = 600;
+        let cellSize = 100;
+        let playerColors = ["#00FF00", "#1E90FF"];
+        let currentPlayer = 0;
+        let scores = [0, 0];
+        let progress = "playing";
+
+        // create widget
+        let widget = new Widget("widget", 32, 8, 250);
+        setTimeout(widget.playRandomly.bind(widget), widget.waitTime);
+
+        // create score chart
+        let scoreChart = new ScoreChart("score-chart", gridSize);
+        scoreChart.update(playerColors, scores);
+
+        // create game
+        let game = new Game(
+            gridSize, cellSize, playerColors, currentPlayer, scores, progress, 
+            scoreChart
+        );
+
+        // UI
+        d3.select("#reset").on("click", game.reset.bind(game));
+        d3.select("#player-mode").on("change", game.reset.bind(game));
+ 
+
+    </script>    
+</body>
+</html>
