@@ -6,7 +6,6 @@ import {AIPlayer} from "./ai.js";
 export class Game {
 
     constructor(gridSize, cellSize, playerColors, currentPlayer, scores, progress, scoreChart) {
-
         this.gridSize = gridSize;
         this.cellSize = cellSize;
         this.playerColors = playerColors;
@@ -14,13 +13,11 @@ export class Game {
         this.scores = scores;
         this.progress = progress;
         this.scoreChart = scoreChart;
-
-        this.scoreDisplay = d3.select("#score-display"); // Select the score display element
+        this.scoreDisplay = d3.select("#score-display");
         this.scoreDisplay.text("Scores: Player 1: 0, Player 2: 0");
-
         this.board = new Board(gridSize, cellSize, this.playerColors, this.handleCellClick.bind(this));
+        this.connectionsVisible = false;
         this.opponent = new AIPlayer();
-
     }
 
     handleCellClick(event) {
@@ -112,5 +109,11 @@ export class Game {
         }
 
     }       
+    
+    toggleConnections() {
+        this.connectionsVisible = !this.connectionsVisible;
+        this.board.linesGroup.style("display", this.connectionsVisible ? "block" : "none");
+    }
+    
 } 
 

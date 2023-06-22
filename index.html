@@ -24,6 +24,7 @@
                 <input type="radio" id="user" name="player-mode" value="user">
                 <label for="user">User Player</label>
             </div>
+            <button id="toggle-connections">Toggle Connections</button>
             <button id="reset">Reset Game</button>
         </div>
     </div>
@@ -58,10 +59,10 @@
             scoreChart
         );
 
-        // UI
+        // game controls
         d3.select("#reset").on("click", game.reset.bind(game));
         d3.select("#player-mode").on("change", game.reset.bind(game));
- 
+        d3.select("#toggle-connections").on("click", game.toggleConnections.bind(game));
 
     </script>    
 </body>

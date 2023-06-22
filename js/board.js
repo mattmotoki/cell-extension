@@ -15,7 +15,7 @@ export class Board {
             .attr("height", this.gridSize);
         this.gridGroup = this.svg.append("g");
         this.cellsGroup = this.svg.append("g");
-        this.linesGroup = this.svg.append("g");
+        this.linesGroup = this.svg.append("g").style("display", "none");
 
         // initialize board
         for (let x = 0; x < this.gridSize; x += this.cellSize) {
