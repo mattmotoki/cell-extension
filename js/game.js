@@ -1,22 +1,22 @@
 import {getPlayerMode, displayWinnerMessage} from "./utils.js";
+import {ScoreChart, ScoreDisplay} from "./scoring.js";
 import {Board} from "./board.js";
 import {AIPlayer} from "./ai.js";
 
 
 export class Game {
 
-    constructor(gridSize, cellSize, playerColors, currentPlayer, scores, progress, scoreChart) {
+    constructor(gridSize, cellSize, playerColors, currentPlayer, scores, progress) {
         this.gridSize = gridSize;
         this.cellSize = cellSize;
         this.playerColors = playerColors;
         this.currentPlayer = currentPlayer;
         this.scores = scores;
         this.progress = progress;
-        this.scoreChart = scoreChart;
-        this.scoreDisplay = d3.select("#score-display");
-        this.scoreDisplay.text("Scores: Player 1: 0, Player 2: 0");
-        this.board = new Board(gridSize, cellSize, this.playerColors, this.handleCellClick.bind(this));
         this.connectionsVisible = false;
+        this.scoreDisplay = new ScoreDisplay(currentPlayer, playerColors);
+        this.scoreChart = new ScoreChart(playerColors, gridSize);;
+        this.board = new Board(gridSize, cellSize, this.playerColors, this.handleCellClick.bind(this));
         this.opponent = new AIPlayer();
     }
 
@@ -36,11 +36,11 @@ export class Game {
 
             // Update score
             this.scores[this.currentPlayer] += n_extensions;
-            this.scoreChart.update(this.playerColors, this.scores);
-            this.scoreDisplay.text(`Scores: Player 1: ${this.scores[0]}, Player 2: ${this.scores[1]}`);
+            this.scoreChart.update(this.currentPlayer, this.scores);
 
             // Change players
             this.currentPlayer = (this.currentPlayer + 1) % 2;               
+            this.scoreDisplay.update(this.currentPlayer, this.scores);
 
             // Get AI opponent's move
             if (getPlayerMode() === "ai") {
@@ -54,13 +54,13 @@ export class Game {
             this.progress = "over";
             
             if (getPlayerMode() == "ai") {
-                var waitTime = 1350; // this.currentPlayer === 1 ? 1000 : 1350
+                var waitTime = 1350;
             } else {
                 var waitTime = 1000;
             }
             console.log(waitTime);
             setTimeout(displayWinnerMessage, waitTime, this.scores=this.scores);
-        }        
+        }
     }
 
 
@@ -76,13 +76,12 @@ export class Game {
 
         // Update score
         this.scores[this.currentPlayer] += n_extensions;
-        this.scoreChart.update(this.playerColors, this.scores);
-        this.scoreDisplay.text(`Scores: Player 1: ${this.scores[0]}, Player 2: ${this.scores[1]}`);
-
+        this.scoreChart.update(this.currentPlayer, this.scores);
+        
         // Change players
         this.currentPlayer = (this.currentPlayer + 1) % 2;               
+        this.scoreDisplay.update(this.currentPlayer, this.scores);
         this.progress = "playing";
-        
     }
 
 
@@ -100,12 +99,12 @@ export class Game {
         // reset board
         this.board.reset(this.playerColors);
 
-        // reset score display
-        this.scoreDisplay.text(`Scores: Player 1: ${this.scores[0]}, Player 2: ${this.scores[1]}`);
-        this.scoreChart.reset(this.playerColors, this.scores);
+        // reset score display and chart
+        this.scoreDisplay.reset(this.currentPlayer);
+        this.scoreChart.reset();
 
-        if ((getPlayerMode() == "ai") && (this.currentPlayer == 1)) {
-            this.handleOpponentMove()
+        if ((getPlayerMode() === "ai") && (this.currentPlayer === 1)) {
+            setTimeout(this.handleOpponentMove.bind(this), 600);
         }
 
     }       

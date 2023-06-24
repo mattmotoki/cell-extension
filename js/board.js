@@ -6,8 +6,7 @@ export class Board {
         this.gridSize = gridSize;
         this.cellSize = cellSize;
         this.playerColors = playerColors;
-        this.lineColors = ["#D8BFD8", "#D8BFD8"];  // #7851A9
-        // this.lineColors = this.playerColors.map(color => d3.rgb(color).darker(2));
+        this.lineColors = ["#D8BFD8", "#D8BFD8"];
         this.clickHandler = clickHandler;
         this.occupiedCells = [{}, {}];
         this.svg = d3.select("#board")
@@ -74,28 +73,47 @@ export class Board {
         for (let i = 0; i < neighbors.length; i++) {
             let neighbor = neighbors[i];
             if (x > neighbor[0]) {  // right
-                this.extendRectangle(neighbor[0], y, neighbor[0], y, this.cellSize * 2, this.cellSize, player);
+                this.extendCell(neighbor[0], y, neighbor[0], y, this.cellSize * 2, this.cellSize, player);
             } else if (x < neighbor[0]) {  // left
-                this.extendRectangle(neighbor[0], y, x, y, this.cellSize * 2, this.cellSize, player);
+                this.extendCell(neighbor[0], y, x, y, this.cellSize * 2, this.cellSize, player);
             } else if (y > neighbor[1]) {  // down
-                this.extendRectangle(x, neighbor[1], x, neighbor[1], this.cellSize, this.cellSize * 2, player);
+                this.extendCell(x, neighbor[1], x, neighbor[1], this.cellSize, this.cellSize * 2, player);
             } else if (y < neighbor[1]) {  // up
-                this.extendRectangle(x, neighbor[1], x, y, this.cellSize, this.cellSize * 2, player);
+                this.extendCell(x, neighbor[1], x, y, this.cellSize, this.cellSize * 2, player);
             }    
             n_extensions++;
         }
 
         // If there are no neighbors, draw a new rectangle
         if (neighbors.length === 0) {
-            this.extendRectangle(x, y, x, y, this.cellSize, this.cellSize, player);
+            this.expandCell(x, y, this.cellSize, this.cellSize, player);
         }
 
         return n_extensions;
     }
 
-    // Helper function to draw or extend a rectangle
-    extendRectangle(x_start, y_start, x_end, y_end, width, height, player) {
-        let rect = this.cellsGroup.append("rect")
+    // Helper function to draw a new cell
+    expandCell(x_start, y_start, width, height, player) {
+        this.cellsGroup.append("rect")
+            .attr("class", `rectangle${player}`)
+            .attr("x", x_start + width/2)
+            .attr("y", y_start + height/2)
+            .attr("width", 0)
+            .attr("height", 0)
+            .attr("fill", this.playerColors[player - 1])
+            .transition()
+            .duration(1000)
+            .attr("x", x_start)
+            .attr("y", y_start)
+            .attr("rx", this.cellSize/5)
+            .attr("ry", this.cellSize/5)
+            .attr("width", width)
+            .attr("height", height);
+    }
+
+    // Helper function to extend an existing cell
+    extendCell(x_start, y_start, x_end, y_end, width, height, player) {
+        this.cellsGroup.append("rect")
             .attr("class", `rectangle${player}`)
             .attr("x", x_start)
             .attr("y", y_start)
@@ -103,9 +121,8 @@ export class Board {
             .attr("height", height === 2*this.cellSize ? this.cellSize : height)
             .attr("fill", this.playerColors[player - 1])
             .attr("rx", this.cellSize/5)
-            .attr("ry", this.cellSize/5);
-
-        rect.transition()
+            .attr("ry", this.cellSize/5)
+            .transition()
             .duration(1000)
             .attr("x", x_end)
             .attr("y", y_end)

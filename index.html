@@ -30,7 +30,6 @@
     </div>
     <script type="module">
 
-        import {ScoreChart} from "./js/score-chart.js";
         import {Widget} from "./js/widget.js";
         import {Game} from "./js/game.js";
         
@@ -48,16 +47,9 @@
         // create widget
         let widget = new Widget("widget", 32, 8, 250);
         setTimeout(widget.playRandomly.bind(widget), widget.waitTime);
-
-        // create score chart
-        let scoreChart = new ScoreChart("score-chart", gridSize);
-        scoreChart.update(playerColors, scores);
-
+    
         // create game
-        let game = new Game(
-            gridSize, cellSize, playerColors, currentPlayer, scores, progress, 
-            scoreChart
-        );
+        let game = new Game(gridSize, cellSize, playerColors, currentPlayer, scores, progress);
 
         // game controls
         d3.select("#reset").on("click", game.reset.bind(game));
