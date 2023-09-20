@@ -1,7 +1,67 @@
+// class ConnectedComponents {
+//     constructor() {
+//         this.components = [];
+//     }
 
-export class AIPlayer {
+//     addCell(component) {
+//         this.components.push(component);
+//     }
 
-    constructor() {}
+//     getComponent(x, y) {
+//         for (let i = 0; i < this.components.length; i++) {
+//             if (this.components[i].hasCell(x, y)) {
+//                 return this.components[i];
+//             }
+//         }
+//         return null;
+//     }
+
+//     getComponents() {
+//         return this.components;
+//     }
+
+//     reset() {
+//         this.components = [];
+//     }
+
+// }
+
+
+export class Player {
+    constructor() {
+        this.score = 0;
+        this.move_history = [];
+        this.score_history = [];
+        this.connectedComponents = [];
+    }
+
+    getScore() {
+        return this.score;
+    }
+
+    incrementScore(amount) {
+        this.score += amount;
+    }
+
+    addMove(move) {
+        this.move_history.push(move);
+
+        // udpate connected components
+    }
+
+    reset() {
+        this.score = 0;
+        this.move_history = [];
+        this.score_history = [];
+    }
+}
+
+
+export class AIPlayer extends Player {
+
+    constructor() {
+        super();
+    }
 
     // any methods specific to Player go here
     getMove(currentPlayer, board) {
@@ -23,11 +83,19 @@ export class AIPlayer {
 
         if (availableCells.length === 0) {return;}
 
-        // Sort cells by open space (in descending order)
+        // Sort cells by score (in descending order)
         availableCells.sort((a, b) => b.score - a.score);
 
-        // Return the cell with the most open space
-        return availableCells[0];
+        // Get the maximum score
+        let maxScore = availableCells[0].score;
+
+        // Filter the available cells to only include those with the maximum score
+        let maxScoreCells = availableCells.filter(cell => cell.score === maxScore);
+
+        // Select a random cell from those with the maximum score
+        let move = maxScoreCells[Math.floor(Math.random() * maxScoreCells.length)];
+
+        return move
     }
 
     calculateScore(x, y, currentPlayer, board) {
@@ -51,13 +119,20 @@ export class AIPlayer {
         let centrality = -Math.sqrt(Math.pow(x - board.gridSize/2, 2) + Math.pow(y - board.gridSize/2, 2));
         let nOpponents = board.canPlaceRectangle(x, y, (currentPlayer + 1) % 2).length;
         let nNeighbors = board.canPlaceRectangle(x, y, currentPlayer).length;
+
+        // console.log({"edgeness":edgeness, "centrality":centrality, "openness":openness, "nOpponents":nOpponents, "nNeighbors":nNeighbors});
         let score = -0*edgeness + 0*centrality + openness + nOpponents + nNeighbors;
 
         return score;
     }
 
-    reset() {
-
-    }
 }
 
+export class HumanPlayer extends Player {
+
+    constructor() {
+        super();
+    }
+
+
+}

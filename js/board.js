@@ -1,3 +1,52 @@
+class Cell {
+
+    constructor(x, y, player, color) {
+        this.x = x;
+        this.y = y;
+        this.player = player;
+        this.neighbors = [];
+    }
+
+    updateNeighbors(cell) {
+        if (cell.x)
+        this.neighbors.push(cell);
+    }
+
+    isNeighbor(cell) {
+        return this.neighbors.includes(cell);
+    }
+
+}
+
+
+class ConnectedComponents {
+    constructor() {
+        this.components = [];
+    }
+
+    addCell(component) {
+        this.components.push(component);
+    }
+
+    getComponent(x, y) {
+        for (let i = 0; i < this.components.length; i++) {
+            if (this.components[i].hasCell(x, y)) {
+                return this.components[i];
+            }
+        }
+        return null;
+    }
+
+    getComponents() {
+        return this.components;
+    }
+
+    reset() {
+        this.components = [];
+    }
+
+}
+
 
 export class Board {
 
@@ -14,7 +63,7 @@ export class Board {
             .attr("height", this.gridSize);
         this.gridGroup = this.svg.append("g");
         this.cellsGroup = this.svg.append("g");
-        this.linesGroup = this.svg.append("g").style("display", "none");
+        this.linesGroup = this.svg.append("g").style("display", "block");
 
         // initialize board
         for (let x = 0; x < this.gridSize; x += this.cellSize) {

@@ -13,7 +13,7 @@ export class Game {
         this.currentPlayer = currentPlayer;
         this.scores = scores;
         this.progress = progress;
-        this.connectionsVisible = false;
+        this.connectionsVisible = true;
         this.scoreDisplay = new ScoreDisplay(currentPlayer, playerColors);
         this.scoreChart = new ScoreChart(playerColors, gridSize);;
         this.board = new Board(gridSize, cellSize, this.playerColors, this.handleCellClick.bind(this));
