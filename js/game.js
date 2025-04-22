@@ -17,7 +17,7 @@ export class Game {
         this.scoreBreakdown = new ScoreBreakdown(playerColors);
         this.scoreChart = new ScoreChart(playerColors, gridSize);
         this.board = new Board(gridSize, cellSize, this.playerColors, this.handleCellClick.bind(this));
-        this.opponent = new AIPlayer();
+        this.opponent = new AIPlayer(1); // Initialize with AI as player 1
         
         // Initialize the score display
         this.updateScoreBreakdown();
@@ -129,8 +129,8 @@ export class Game {
     handleOpponentMove() {
             
         // Get opponent's move
-        let cell = this.opponent.getMove(this.currentPlayer, this.board);
-        if (cell === undefined) {return;}
+        let cell = this.opponent.getMove(this.board, this.scoringMechanism);
+        if (cell === null) {return;}
         let x = cell.x;
         let y = cell.y;
 
@@ -166,6 +166,9 @@ export class Game {
         // reset score display and chart
         this.scoreBreakdown.reset(this.currentPlayer);
         this.scoreChart.reset();
+        
+        // Reset the AI player's move counter
+        this.opponent.moveCount = 0;
         
         // Update score breakdown after reset
         this.updateScoreBreakdown();
