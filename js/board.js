@@ -66,7 +66,7 @@ export class Board {
             
         this.gridGroup = this.svg.append("g");
         this.cellsGroup = this.svg.append("g");
-        this.linesGroup = this.svg.append("g").style("display", "block");
+        this.linesGroup = this.svg.append("g");  // Always visible, no toggle
 
         // Initialize board with percentage-based cells
         for (let x = 0; x < 99; x += this.cellSize) {
@@ -80,6 +80,82 @@ export class Board {
                     .on("click", this.clickHandler);
             }
         }
+    }
+
+    // Get connected components for a player
+    getConnectedComponents(playerIndex) {
+        const components = [];
+        const visited = {};
+        const cells = Object.keys(this.occupiedCells[playerIndex]);
+        const tolerance = 0.01; // Add tolerance for floating point comparison
+        
+        // Skip if no cells for this player
+        if (cells.length === 0) return [];
+        
+        // For each cell that belongs to the player
+        for (let cellKey of cells) {
+            // Skip if already visited
+            if (visited[cellKey]) continue;
+            
+            // Start a new component
+            const component = [];
+            const stack = [cellKey];
+            
+            // DFS to find connected cells
+            while (stack.length > 0) {
+                const currentCellKey = stack.pop();
+                
+                // Skip if already visited
+                if (visited[currentCellKey]) continue;
+                
+                // Mark as visited and add to component
+                visited[currentCellKey] = true;
+                component.push(currentCellKey);
+                
+                // Get coordinates of current cell
+                const [currentX, currentY] = currentCellKey.split('-').map(parseFloat);
+                
+                // Find all cells that belong to this player
+                for (let neighborKey of cells) {
+                    // Skip if already visited or if it's the current cell
+                    if (visited[neighborKey] || neighborKey === currentCellKey) continue;
+                    
+                    const [neighborX, neighborY] = neighborKey.split('-').map(parseFloat);
+                    
+                    // Check if cells are neighbors (using tolerance for floating point)
+                    const isHorizontalNeighbor = 
+                        Math.abs(Math.abs(neighborX - currentX) - this.cellSize) < tolerance && 
+                        Math.abs(neighborY - currentY) < tolerance;
+                    
+                    const isVerticalNeighbor = 
+                        Math.abs(neighborX - currentX) < tolerance && 
+                        Math.abs(Math.abs(neighborY - currentY) - this.cellSize) < tolerance;
+                    
+                    // If they're neighbors, add to stack
+                    if (isHorizontalNeighbor || isVerticalNeighbor) {
+                        stack.push(neighborKey);
+                    }
+                }
+            }
+            
+            // Add component to components list
+            if (component.length > 0) {
+                components.push(component);
+            }
+        }
+        
+        return components;
+    }
+    
+    // Calculate the score for Cell-Multiplication scoring mechanism
+    getMultiplicationScore(playerIndex) {
+        const components = this.getConnectedComponents(playerIndex);
+        
+        // If no components, score is 0
+        if (components.length === 0) return 0;
+        
+        // Calculate product of component sizes
+        return components.reduce((product, component) => product * component.length, 1);
     }
 
     // game functions
@@ -201,12 +277,12 @@ export class Board {
                     this.linesGroup.append("circle")
                         .attr("cx", x_end + this.cellSize / 2)
                         .attr("cy", y_mid)
-                        .attr("r", 0.8)
+                        .attr("r", 0.6)
                         .attr("fill", this.lineColors[player - 1]);
                     this.linesGroup.append("circle")
                         .attr("cx", x_end + 3*this.cellSize / 2)
                         .attr("cy", y_mid)
-                        .attr("r", 0.8)
+                        .attr("r", 0.6)
                         .attr("fill", this.lineColors[player - 1]);
                 } else if (height === 2*this.cellSize) {  // vertical extension
                     let x_mid = x_start + this.cellSize / 2;
@@ -220,12 +296,12 @@ export class Board {
                     this.linesGroup.append("circle")
                         .attr("cx", x_mid)
                         .attr("cy", y_end + this.cellSize / 2)
-                        .attr("r", 0.8)
+                        .attr("r", 0.6)
                         .attr("fill", this.lineColors[player - 1]);
                     this.linesGroup.append("circle")
                         .attr("cx", x_mid)
                         .attr("cy", y_end + 3*this.cellSize / 2)
-                        .attr("r", 0.8)
+                        .attr("r", 0.6)
                         .attr("fill", this.lineColors[player - 1]);                        
                 }
             });            

@@ -22,50 +22,29 @@
     <div id="game">
         <div id="game-header">
             <svg id="widget"></svg>        
-            <div id="score-display">gameState.Scores: Player 1: 0, Player 2: 0</div>        
         </div>
+        <div id="score-breakdown"></div>
         <svg id="board"></svg>        
         <svg id="score-chart"></svg>
         <div id="game-controls">
             <div class="control-group">
-                <!-- Desktop: Radio buttons for player mode -->
-                <div class="radio-group">
-                    <div class="radio-option">
-                        <input type="radio" id="ai-radio" name="player-mode-radio" value="ai" checked>
-                        <label for="ai-radio">AI Player</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="user-radio" name="player-mode-radio" value="user">
-                        <label for="user-radio">Two Player</label>
-                    </div>
-                </div>
-                
-                <!-- Desktop: Checkbox for display options -->
-                <div class="checkbox-group">
-                    <div class="checkbox-option">
-                        <input type="checkbox" id="edges-checkbox" checked>
-                        <label for="edges-checkbox">Show Edges</label>
-                    </div>
-                </div>
-                
-                <!-- Mobile: Dropdown for player mode -->
-                <div class="dropdown">
+                <!-- Player Mode Dropdown for both desktop and mobile -->
+                <div class="player-dropdown">
                     <select id="player-mode">
                         <option value="ai">AI Player</option>
                         <option value="user">Two Player</option>
                     </select>
                 </div>
                 
-                <!-- Mobile: Dropdown for display options -->
-                <details class="display-dropdown">
-                    <summary>Display</summary>
-                    <div class="dropdown-content">
-                        <div class="dropdown-option">
-                            <input type="checkbox" id="toggle-connections" checked>
-                            <label for="toggle-connections">Show Edges</label>
-                        </div>
-                    </div>
-                </details>
+                <!-- Scoring Mechanism Dropdown -->
+                <div class="scoring-dropdown">
+                    <select id="scoring-mechanism" title="Select a scoring mechanism">
+                        <option value="cell-multiplication" title="Product of the size (number of cells) of the connected components" selected>Cell-Multiplication</option>                        
+                        <option value="cell-connection" title="The total number of edges (connections)">Cell-Connection</option>
+                        <option value="cell-maximization" title="The size of the largest connected component" disabled>Cell-Maximization (Coming soon)</option>
+                        <option value="cell-extension" title="The largest diameter of the graph" disabled>Cell-Extension (Coming soon)</option>
+                    </select>
+                </div>
             </div>
             
             <button id="reset">Reset Game</button>
@@ -95,46 +74,34 @@
 
         // Sync controls between desktop and mobile
         function syncControls() {
-            // Sync player mode
-            let playerModeRadios = document.getElementsByName("player-mode-radio");
+            // Player mode dropdown change handler
             let playerModeDropdown = document.getElementById("player-mode");
-            
-            // From radio to dropdown
-            for (let radio of playerModeRadios) {
-                if (radio.checked) {
-                    playerModeDropdown.value = radio.value;
-                }
-                
-                radio.addEventListener("change", function() {
-                    playerModeDropdown.value = this.value;
-                    game.reset();
-                });
-            }
-            
-            // From dropdown to radio
             playerModeDropdown.addEventListener("change", function() {
-                for (let radio of playerModeRadios) {
-                    if (radio.value === this.value) {
-                        radio.checked = true;
-                    }
-                }
                 game.reset();
             });
             
-            // Sync display options
-            let edgesCheckbox = document.getElementById("edges-checkbox");
-            let toggleConnectionsCheckbox = document.getElementById("toggle-connections");
+            // Setup scoring mechanism tooltip and change handler
+            const scoringSelect = document.getElementById("scoring-mechanism");
             
-            // From desktop to mobile
-            edgesCheckbox.addEventListener("change", function() {
-                toggleConnectionsCheckbox.checked = this.checked;
-                game.toggleConnections({ target: { checked: this.checked } });
+            // Add tooltip to the select element showing description of current selection
+            scoringSelect.addEventListener("change", function() {
+                // Reset the game when scoring mechanism changes
+                if (!this.options[this.selectedIndex].disabled) {
+                    game.reset();
+                } else {
+                    // If user selects a disabled option, reset to the previous value
+                    alert("This scoring mechanism is not yet implemented.");
+                    this.value = "cell-connection";
+                }
             });
             
-            // From mobile to desktop
-            toggleConnectionsCheckbox.addEventListener("change", function() {
-                edgesCheckbox.checked = this.checked;
-                game.toggleConnections({ target: { checked: this.checked } });
+            // Display tooltip with additional information when hovering over options
+            const options = scoringSelect.querySelectorAll("option");
+            options.forEach(option => {
+                const title = option.getAttribute("title");
+                if (title) {
+                    option.setAttribute("title", title);
+                }
             });
         }
 
