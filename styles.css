@@ -19,13 +19,16 @@
     
     /* Navbar height for calculations */
     --navbar-height: 60px;
+    /* Add space for margins and padding */
+    --content-spacing: 25px; 
 }
 
 html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow-y: hidden; /* Prevent vertical scrollbar */
+    overflow: hidden; /* Prevent any scrollbars */
+    box-sizing: border-box;
 }
 
 body {
@@ -33,9 +36,10 @@ body {
     background-color: var(--bg-color);
     color: var(--text-color);
     line-height: 1.6;
-    height: 100vh;
     display: flex;
     flex-direction: column;
+    min-height: 100%;
+    max-height: 100vh; /* Cap at viewport height */
 }
 
 #game {
@@ -48,8 +52,9 @@ body {
     margin: 0 auto; 
     text-align: center;
     padding-top: var(--navbar-height); /* Use the navbar height variable */
-    height: calc(100vh - var(--navbar-height)); /* Subtract navbar height from viewport height */
-    overflow-y: auto; /* Allow scrolling within game container if needed */
+    height: calc(100vh - var(--navbar-height)); /* Subtract navbar height */
+    overflow-y: auto; /* Allow scrolling within game if needed */
+    max-height: 100vh; /* Add an explicit max-height */
 }
 
 .game-content-wrapper {
@@ -58,11 +63,12 @@ body {
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    margin-top: 10px; /* Reduced from 20px */
-    margin-bottom: 15px; /* Reduced from 25px */
+    margin-top: 10px;
+    margin-bottom: 15px;
     transition: margin 0.3s ease;
     flex: 1;
-    max-height: calc(100vh - var(--navbar-height) - 25px); /* Ensure it fits within viewport */
+    max-height: calc(100vh - var(--navbar-height) - var(--content-spacing)); /* Use the content spacing variable */
+    overflow-y: visible; /* Don't create a scrollbar here */
 }
 
 #game-controls {
@@ -119,14 +125,14 @@ svg {
     height: auto;
     aspect-ratio: 1/1;
     object-fit: contain;
-    margin: 8px auto; /* Reduced from 10px to 8px */
+    margin: 8px auto;
     padding: 0;
     box-sizing: border-box;
     background-color: var(--board-bg);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     flex-shrink: 0; /* Prevent the board from shrinking */
-    max-height: calc((100vh - var(--navbar-height)) * 0.6); /* Maximum 60% of available height */
+    max-height: min(calc((100vh - var(--navbar-height)) * 0.6), 60vh); /* Use min to cap the height */
 }
 
 .grid-cell {
@@ -236,7 +242,7 @@ button:active {
 
 #score-chart {
     border-radius: 8px;
-    margin: 10px auto 5px; /* Reduced bottom margin from 10px to 5px */
+    margin: 10px auto 5px;
     width: 100%;
     max-width: 600px;
     height: auto;
@@ -244,7 +250,7 @@ button:active {
     aspect-ratio: 4/1;
     background-color: transparent;
     border: none;
-    max-height: calc((100vh - var(--navbar-height)) * 0.2); /* Maximum 20% of available height */
+    max-height: min(calc((100vh - var(--navbar-height)) * 0.2), 20vh); /* Use min to cap the height */
 }
 
 #player-scores {
@@ -464,6 +470,7 @@ button:active {
 @media (max-width: 768px) {
     :root {
         --navbar-height: 50px; /* Smaller navbar height on mobile */
+        --content-spacing: 15px; /* Smaller content spacing on mobile */
     }
     
     .navbar {
@@ -514,16 +521,17 @@ button:active {
     #game {
         padding-top: var(--navbar-height);
         height: calc(100vh - var(--navbar-height));
+        max-height: 100vh; /* Also cap on mobile */
         margin: 0 auto;
         text-align: center;
         width: 100%;
     }
     
     .game-content-wrapper {
-        margin-top: 5px; /* Further reduced on mobile */
+        margin-top: 5px;
         margin-bottom: 10px;
-        max-height: calc(100vh - var(--navbar-height) - 15px);
-        justify-content: center; /* Center content vertically on mobile */
+        max-height: calc(100vh - var(--navbar-height) - var(--content-spacing));
+        justify-content: center;
     }
     
     #widget {
@@ -554,7 +562,7 @@ button:active {
         margin: 5px auto;
         box-sizing: border-box;
         display: block;
-        max-height: calc((100vh - var(--navbar-height)) * 0.6); /* Use 60% of available height */
+        max-height: min(calc((100vh - var(--navbar-height)) * 0.6), 60vh);
         aspect-ratio: 1/1;
     }
     
@@ -569,7 +577,7 @@ button:active {
     #score-chart {
         width: 95%;
         margin: 5px auto;
-        max-height: calc((100vh - var(--navbar-height)) * 0.2); /* Use 20% of available height */
+        max-height: min(calc((100vh - var(--navbar-height)) * 0.2), 20vh);
     }
     
     /* Game controls on mobile - only contains reset button */
@@ -611,16 +619,21 @@ button:active {
 /* Game content media query for larger screens */
 @media (min-height: 800px) {
     .game-content-wrapper {
-        justify-content: space-around; /* More space between elements on taller screens */
+        justify-content: space-around;
+        max-height: calc(100vh - var(--navbar-height) - var(--content-spacing));
     }
     
     #board {
-        max-height: calc((100vh - var(--navbar-height)) * 0.65); /* Slightly larger on tall screens */
+        max-height: min(calc((100vh - var(--navbar-height)) * 0.65), 65vh);
     }
 }
 
 /* Game content media query for shorter screens */
 @media (max-height: 650px) {
+    :root {
+        --content-spacing: 15px; /* Even smaller spacing on short screens */
+    }
+    
     #player-scores {
         font-size: 0.95rem;
         padding: 3px 10px;
@@ -635,7 +648,7 @@ button:active {
     
     #score-chart {
         margin: 5px auto 3px;
-        max-height: calc((100vh - var(--navbar-height)) * 0.15);
+        max-height: min(calc((100vh - var(--navbar-height)) * 0.15), 15vh);
     }
     
     #game-controls {
