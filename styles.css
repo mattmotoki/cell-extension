@@ -202,18 +202,32 @@ button:active {
     border: none;
 }
 
-#score-breakdown {
-    font-size: 1.0rem;
+#player-scores {
+    font-size: 1.1rem;
     color: var(--text-color);
     text-align: center;
     width: 100%;
     max-width: 600px;
-    padding: 8px 15px 12px;
+    padding: 8px 15px 8px;
     border-radius: 8px;
-    margin: 5px auto 15px; /* Adjusted to reduce space at top of wrapper */
+    margin: 5px auto 10px; 
     font-family: var(--font-main);
     box-sizing: border-box;
     line-height: 1.3;
+}
+
+#score-breakdown {
+    font-size: 0.9rem;
+    color: var(--text-color);
+    text-align: center;
+    width: 100%;
+    max-width: 600px;
+    padding: 0px 15px 10px;
+    border-radius: 8px;
+    margin: 0 auto 15px;
+    font-family: var(--font-main);
+    box-sizing: border-box;
+    line-height: 1.2;
 }
 
 /* Navbar Styling */
@@ -437,10 +451,18 @@ button:active {
         display: none;
     }
     
+    #player-scores {
+        font-size: 1.0rem;
+        margin: 0 auto 10px;
+        padding: 5px 8px 5px;
+        width: 95%;
+        line-height: 1.2;
+    }
+    
     #score-breakdown {
-        font-size: 0.9rem;
-        margin: 0 auto 10px; /* Reduce top margin on mobile */
-        padding: 5px 8px 8px;
+        font-size: 0.85rem;
+        margin: 0 auto 10px;
+        padding: 0px 8px 5px;
         width: 95%;
         line-height: 1.2;
     }

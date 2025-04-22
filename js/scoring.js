@@ -2,7 +2,8 @@ import { getScoringMechanism } from "./utils.js";
 
 export class ScoreBreakdown {
     constructor(playerColors) {
-        this.display = d3.select("#score-breakdown");
+        this.breakdown = d3.select("#score-breakdown");
+        this.scores = d3.select("#player-scores");
         this.playerColors = playerColors;
         this.reset();
     }
@@ -43,24 +44,58 @@ export class ScoreBreakdown {
             ? `color: ${player2Color}; font-weight: 600; border-bottom: 2px solid ${player2Color};` 
             : `color: ${player2Color}; font-weight: 500;`;
         
-        // Create a justified display with labels and breakdowns on separate lines
-        this.display.html(`
+        // Create player scores display (above the board)
+        this.scores.html(`
             <div style="display: flex; justify-content: space-between; width: 100%;">
                 <div style="text-align: left; padding-right: 10px;">
                     <div style="${player1LabelStyle}">Player 1: ${scores[0]}</div>
-                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player1Color};">${breakdownText1}</div>
                 </div>
                 <div style="text-align: right; padding-left: 10px;">
                     <div style="${player2LabelStyle}">Player 2: ${scores[1]}</div>
-                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player2Color};">${breakdownText2}</div>
+                </div>
+            </div>
+        `);
+        
+        // Always create the breakdown container with the same structure
+        // Use non-breaking spaces (&#160;) as placeholders when there's no content
+        this.breakdown.html(`
+            <div style="display: flex; justify-content: space-between; width: 100%;">
+                <div style="text-align: left; padding-right: 10px;">
+                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player1Color};">${breakdownText1 || '&#160;'}</div>
+                </div>
+                <div style="text-align: right; padding-left: 10px;">
+                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player2Color};">${breakdownText2 || '&#160;'}</div>
                 </div>
             </div>
         `);
     }
     
     reset(currentPlayer = 0) {
-        // Just initialize empty display, game will call updateScoreBreakdown after reset
-        this.display.html('');
+        // Initialize with placeholders to maintain consistent height
+        const player1Color = this.playerColors[0];
+        const player2Color = this.playerColors[1];
+        
+        this.scores.html(`
+            <div style="display: flex; justify-content: space-between; width: 100%;">
+                <div style="text-align: left; padding-right: 10px;">
+                    <div style="color: ${player1Color}; font-weight: 500;">Player 1: 0</div>
+                </div>
+                <div style="text-align: right; padding-left: 10px;">
+                    <div style="color: ${player2Color}; font-weight: 500;">Player 2: 0</div>
+                </div>
+            </div>
+        `);
+        
+        this.breakdown.html(`
+            <div style="display: flex; justify-content: space-between; width: 100%;">
+                <div style="text-align: left; padding-right: 10px;">
+                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player1Color};">&#160;</div>
+                </div>
+                <div style="text-align: right; padding-left: 10px;">
+                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player2Color};">&#160;</div>
+                </div>
+            </div>
+        `);
     }
 }
 
