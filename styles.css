@@ -39,14 +39,13 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    max-width: 620px; /* Slightly larger to avoid clipping */
+    max-width: 620px;
     width: 100%;
-    padding: 0; /* Remove padding and control spacing with the wrapper */
     box-sizing: border-box;
     margin: 0 auto; 
     text-align: center;
-    min-height: 100vh;
+    padding-top: 80px; /* Account for navbar height plus some extra space */
+    min-height: calc(100vh - 20px); /* Subtract a bit to prevent overflow */
 }
 
 .game-content-wrapper {
@@ -54,9 +53,9 @@ body {
     flex-direction: column;
     align-items: center;
     width: 100%;
-    margin-top: 50px; /* Space between navbar and content */
-    margin-bottom: 50px; /* Space at the bottom */
-    transition: margin 0.3s ease; /* Smooth transition for spacing changes */
+    margin-top: 20px; /* Reduced from 50px since we added padding to #game */
+    margin-bottom: 25px;
+    transition: margin 0.3s ease;
 }
 
 #game-controls {
@@ -64,7 +63,7 @@ body {
     align-items: center;
     justify-content: space-between;
     flex-wrap: nowrap; /* Prevent wrapping on desktop */
-    margin: 15px 0;
+    margin: 8px 0; /* Reduced from 15px to 8px */
     width: 100%;
     max-width: 600px;
     box-sizing: border-box;
@@ -112,7 +111,7 @@ svg {
     height: auto;
     aspect-ratio: 1/1;
     object-fit: contain;
-    margin: 10px auto;
+    margin: 8px auto; /* Reduced from 10px to 8px */
     padding: 0;
     box-sizing: border-box;
     background-color: var(--board-bg);
@@ -183,6 +182,33 @@ button:active {
     outline: none;
     padding: 2px 4px;
     color: var(--text-color);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 2px center;
+    background-size: 20px;
+    padding-right: 25px;
+}
+
+/* Dropdown arrow styling for Firefox */
+.player-dropdown select::-ms-expand, 
+.scoring-dropdown select::-ms-expand {
+    display: none;
+}
+
+/* Style the dropdown menu options */
+.player-dropdown select option, 
+.scoring-dropdown select option {
+    background-color: #2a2a2a;
+    color: var(--text-color);
+    padding: 10px;
+}
+
+.player-dropdown select:focus, 
+.scoring-dropdown select:focus {
+    box-shadow: 0 0 0 1px var(--primary-color);
 }
 
 .scoring-dropdown option:disabled {
@@ -190,14 +216,22 @@ button:active {
     font-style: italic;
 }
 
+/* For Webkit browsers */
+@supports (-webkit-appearance: none) {
+    .player-dropdown select,
+    .scoring-dropdown select {
+        background-color: var(--input-bg);
+    }
+}
+
 #score-chart {
     border-radius: 8px;
-    margin: 10px auto 15px;
+    margin: 10px auto 5px; /* Reduced bottom margin from 10px to 5px */
     width: 100%;
     max-width: 600px;
     height: auto;
     box-sizing: border-box;
-    aspect-ratio: 4/1; /* Maintain aspect ratio based on our viewBox */
+    aspect-ratio: 4/1;
     background-color: transparent;
     border: none;
 }
@@ -208,9 +242,9 @@ button:active {
     text-align: center;
     width: 100%;
     max-width: 600px;
-    padding: 8px 15px 8px;
+    padding: 8px 15px 5px; /* Reduced bottom padding from 8px to 5px */
     border-radius: 8px;
-    margin: 5px auto 10px; 
+    margin: 5px auto 8px; /* Reduced bottom margin from 10px to 8px */
     font-family: var(--font-main);
     box-sizing: border-box;
     line-height: 1.3;
@@ -222,9 +256,9 @@ button:active {
     text-align: center;
     width: 100%;
     max-width: 600px;
-    padding: 0px 15px 10px;
+    padding: 0px 15px 5px;
     border-radius: 8px;
-    margin: 0 auto 15px;
+    margin: 0 auto 5px; /* Reduced bottom margin from 8px to 5px */
     font-family: var(--font-main);
     box-sizing: border-box;
     line-height: 1.2;
@@ -330,6 +364,29 @@ button:active {
     border: 1px solid var(--border-color);
     border-radius: 6px; /* Increased from 4px */
     font-size: 1rem; /* Slightly larger font */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 20px;
+    padding-right: 40px;
+}
+
+.mobile-menu select::-ms-expand {
+    display: none;
+}
+
+.mobile-menu select option {
+    background-color: #2a2a2a;
+    color: var(--text-color);
+    padding: 12px;
+}
+
+.mobile-menu select:focus {
+    border-color: var(--primary-color);
+    outline: none;
 }
 
 /* Mobile menu close button */
@@ -436,14 +493,14 @@ button:active {
     }
     
     #game {
-        padding: 0;
+        padding-top: 70px; /* Slightly less padding on mobile */
         margin: 0 auto;
         text-align: center;
         width: 100%;
     }
     
     .game-content-wrapper {
-        margin-top: 70px; /* Increased space for mobile navbar */
+        margin-top: 10px; /* Further reduced on mobile */
         margin-bottom: 30px;
     }
     
@@ -461,7 +518,7 @@ button:active {
     
     #score-breakdown {
         font-size: 0.85rem;
-        margin: 0 auto 10px;
+        margin: 0 auto;
         padding: 0px 8px 5px;
         width: 95%;
         line-height: 1.2;
@@ -486,13 +543,13 @@ button:active {
     
     #score-chart {
         width: 95%;
-        margin: 8px auto 15px;
+        margin: 8px auto 5px; /* Reduced bottom margin from 15px to 5px */
     }
     
     /* Game controls on mobile - only contains reset button */
     #game-controls {
         width: 95%;
-        margin: 15px auto 25px;
+        margin: 10px auto 15px; /* Reduced from 15px auto 25px */
         display: flex;
         justify-content: center;
     }
