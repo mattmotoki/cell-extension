@@ -56,8 +56,6 @@ export function getScoringDescription(mechanism) {
         'cell-multiplication': 'Product of the size (number of cells) of the connected components',
         'cell-maximization': 'The size of the largest connected component',
         'cell-extension': 'The largest diameter of the graph',
-        'cell-division': 'Cells can connect in any direction to grow across the board',
-        'cell-minimization': 'Minimize the score of a random opponent'
     };
     
     return descriptions[mechanism] || 'Unknown scoring mechanism';

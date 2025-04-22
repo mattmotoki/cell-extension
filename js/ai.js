@@ -1,9 +1,10 @@
 export class Player {
-    constructor() {
+    constructor(playerID) {
         this.score = 0;
         this.move_history = [];
         this.score_history = [];
         this.connectedComponents = [];
+        this.playerID = playerID; // Store the playerID
     }
 
     getScore() {
@@ -30,7 +31,7 @@ export class Player {
 
 export class AIPlayer extends Player {
     constructor(playerID) {
-        super(playerID);
+        super(playerID); // Correctly pass playerID to parent class
         // Track move count for strategy adjustment
         this.moveCount = 0;
     }
@@ -44,8 +45,7 @@ export class AIPlayer extends Player {
         // Simple strategy:
         // Moves 1-4: Completely random
         // Move 5+: Completely greedy (always choose the best move)
-        if (this.moveCount < 5) {
-            // Play completely randomly for the first 4 moves
+        if (this.moveCount < 7) {
             return availableCells[Math.floor(Math.random() * availableCells.length)];
         }
         
@@ -70,47 +70,40 @@ export class AIPlayer extends Player {
         const opponentIndex = (playerIndex + 1) % 2;
         
         // Safety check for board.occupiedCells
-        if (!board.occupiedCells) {
-            board.occupiedCells = [{}, {}];
-        }
-        if (!board.occupiedCells[playerIndex]) {
-            board.occupiedCells[playerIndex] = {};
-        }
-        if (!board.occupiedCells[opponentIndex]) {
-            board.occupiedCells[opponentIndex] = {};
-        }
+        if (!board.occupiedCells) board.occupiedCells = [{}, {}];
+        if (!board.occupiedCells[playerIndex]) board.occupiedCells[playerIndex] = {};
+        if (!board.occupiedCells[opponentIndex]) board.occupiedCells[opponentIndex] = {};
         
-        // Check if the cell is occupied by opponent
-        if (board.occupiedCells[opponentIndex][`${cell.x}-${cell.y}`]) {
-            return -1000; // Invalid move
+        const cellKey = `${cell.x}-${cell.y}`;
+
+        // Check if the cell is occupied by opponent or self (invalid move)
+        if (board.occupiedCells[opponentIndex][cellKey] || board.occupiedCells[playerIndex][cellKey]) {
+            return -Infinity; // Invalid move
         }
         
-        // Save the current board state
-        const tempBoard = JSON.parse(JSON.stringify(board.occupiedCells));
+        // Simulate the move by adding the cell
+        board.occupiedCells[playerIndex][cellKey] = true;
         
-        // Simulate the move
-        board.occupiedCells[playerIndex][`${cell.x}-${cell.y}`] = true;
-        
-        // Calculate total score after the move
-        let finalScore;
+        // Calculate total score AFTER the move
+        let totalScore;
         if (scoringMechanism === 'cell-multiplication') {
-            finalScore = board.getMultiplicationScore(playerIndex);
+            totalScore = board.getMultiplicationScore(playerIndex);
         } else {
-            finalScore = board.getConnectionScore(playerIndex); 
+            totalScore = board.getConnectionScore(playerIndex); 
         }
         
-        // Restore the board
-        board.occupiedCells = tempBoard;
+        // Restore the board state by removing the simulated cell
+        delete board.occupiedCells[playerIndex][cellKey];
         
-        return finalScore;
+        // Return the total score
+        return totalScore;
     }
 }
 
 export class HumanPlayer extends Player {
 
-    constructor() {
-        super();
+    constructor(playerID) {
+        super(playerID);
     }
-
 
 }
