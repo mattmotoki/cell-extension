@@ -58,22 +58,25 @@ export class Board {
         this.lineColors = ["#D8BFD8", "#D8BFD8"];
         this.clickHandler = clickHandler;
         this.occupiedCells = [{}, {}];
-        this.svg = d3.select("#board")
-            .attr("width", this.gridSize)
-            .attr("height", this.gridSize);
+        
+        // Create the SVG with viewBox (already done in index.html)
+        this.svg = d3.select("#board");
+        
+        // Border removed as requested
+            
         this.gridGroup = this.svg.append("g");
         this.cellsGroup = this.svg.append("g");
         this.linesGroup = this.svg.append("g").style("display", "block");
 
-        // initialize board
-        for (let x = 0; x < this.gridSize; x += this.cellSize) {
-            for (let y = 0; y < this.gridSize; y += this.cellSize) {
+        // Initialize board with percentage-based cells
+        for (let x = 0; x < 99; x += this.cellSize) {
+            for (let y = 0; y < 99; y += this.cellSize) {
                 this.gridGroup.append("rect")
                     .attr("class", "grid-cell")
                     .attr("x", x)
                     .attr("y", y)
-                    .attr("width", this.cellSize)
-                    .attr("height", this.cellSize)
+                    .attr("width", this.cellSize * 0.99)  // Larger cells with less space between them (was 0.98)
+                    .attr("height", this.cellSize * 0.99)
                     .on("click", this.clickHandler);
             }
         }
@@ -82,14 +85,22 @@ export class Board {
     // game functions
     canPlaceRectangle(x, y, currentPlayer) {
         let neighbors = [];
+        const tolerance = 0.01; // Add a small tolerance for floating point comparison
 
         // Check if the cell is adjacent to any occupied cell
         for (let key in this.occupiedCells[currentPlayer]) {
             let cell = key.split("-").map(parseFloat);
-            if (
-                (Math.abs(cell[0] - x) === this.cellSize && cell[1] === y) ||
-                (cell[0] === x && Math.abs(cell[1] - y) === this.cellSize)
-            ) {
+            
+            // Use approximate equality for floating point coordinates
+            const isHorizontalNeighbor = 
+                Math.abs(Math.abs(cell[0] - x) - this.cellSize) < tolerance && 
+                Math.abs(cell[1] - y) < tolerance;
+                
+            const isVerticalNeighbor = 
+                Math.abs(cell[0] - x) < tolerance && 
+                Math.abs(Math.abs(cell[1] - y) - this.cellSize) < tolerance;
+
+            if (isHorizontalNeighbor || isVerticalNeighbor) {
                 // Check if the other player hasn't occupied the cell
                 if (!this.occupiedCells[(currentPlayer + 1) % 2][`${x}-${y}`]) {
                     neighbors.push(cell); // Cell is adjacent to an occupied cell
@@ -186,16 +197,16 @@ export class Board {
                         .attr("x2", x_end + 3*this.cellSize / 2)
                         .attr("y2", y_mid)
                         .attr("stroke", this.lineColors[player - 1])
-                        .attr("stroke-width", 1);
+                        .attr("stroke-width", 0.2);
                     this.linesGroup.append("circle")
                         .attr("cx", x_end + this.cellSize / 2)
                         .attr("cy", y_mid)
-                        .attr("r", 2)
+                        .attr("r", 0.8)
                         .attr("fill", this.lineColors[player - 1]);
                     this.linesGroup.append("circle")
                         .attr("cx", x_end + 3*this.cellSize / 2)
                         .attr("cy", y_mid)
-                        .attr("r", 2)
+                        .attr("r", 0.8)
                         .attr("fill", this.lineColors[player - 1]);
                 } else if (height === 2*this.cellSize) {  // vertical extension
                     let x_mid = x_start + this.cellSize / 2;
@@ -205,16 +216,16 @@ export class Board {
                         .attr("x2", x_mid)
                         .attr("y2", y_end + 3*this.cellSize / 2)
                         .attr("stroke", this.lineColors[player - 1])
-                        .attr("stroke-width", 1);
+                        .attr("stroke-width", 0.2);
                     this.linesGroup.append("circle")
                         .attr("cx", x_mid)
                         .attr("cy", y_end + this.cellSize / 2)
-                        .attr("r", 2)
+                        .attr("r", 0.8)
                         .attr("fill", this.lineColors[player - 1]);
                     this.linesGroup.append("circle")
                         .attr("cx", x_mid)
                         .attr("cy", y_end + 3*this.cellSize / 2)
-                        .attr("r", 2)
+                        .attr("r", 0.8)
                         .attr("fill", this.lineColors[player - 1]);                        
                 }
             });            
