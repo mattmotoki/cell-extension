@@ -60,3 +60,25 @@ export function getScoringDescription(mechanism) {
     
     return descriptions[mechanism] || 'Unknown scoring mechanism';
 }
+
+// Format scoring mechanism name in title case for display 
+export function formatScoringMechanismTitle(mechanism) {
+    // Remove "cell-" prefix and split by dash
+    const formatted = mechanism.replace('-', ' ').split(' ');
+    
+    // Capitalize first letter of each word
+    return formatted.map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+}
+
+// Update navbar title with current scoring mechanism
+export function updateNavbarTitle() {
+    const mechanism = getScoringMechanism();
+    const formattedTitle = formatScoringMechanismTitle(mechanism);
+    const navbarTitle = document.querySelector('.navbar-title');
+    
+    if (navbarTitle) {
+        navbarTitle.textContent = formattedTitle;
+    }
+}
