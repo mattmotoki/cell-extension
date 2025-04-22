@@ -62,8 +62,6 @@ export class Board {
         // Create the SVG with viewBox (already done in index.html)
         this.svg = d3.select("#board");
         
-        // Border removed as requested
-            
         this.gridGroup = this.svg.append("g");
         this.cellsGroup = this.svg.append("g");
         this.linesGroup = this.svg.append("g");  // Always visible, no toggle
