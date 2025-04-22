@@ -1,3 +1,26 @@
+/**
+ * board.js - Game Board Implementation for Cell Collection
+ * 
+ * This file implements the core game mechanics and visual representation of the game board.
+ * It manages the grid, cell placement, scoring calculations, and visual rendering.
+ * 
+ * The Board class is responsible for:
+ * - Rendering the game grid and cells
+ * - Handling cell placement and extensions between cells
+ * - Implementing scoring mechanisms (Cell-Connection, Cell-Multiplication, Cell-Extension)
+ * - Tracking occupied cells using an integer-based grid system
+ * - Visualizing connections between cells with lines, circles, or connection counts
+ * 
+ * Relationships with other files:
+ * - game.js: Uses Board methods for updating the game state, calculating scores, and managing turns
+ * - ai.js: Queries Board methods to evaluate potential moves and make decisions
+ * - scoring.js: Visualizes scores that are calculated by Board methods
+ * - utils.js: Provides utility functions like scoring mechanism detection
+ * 
+ * The grid uses integer positions (converted from pixel coordinates) to avoid floating-point
+ * precision issues when determining cell adjacency and connections.
+ */
+
 import { getScoringMechanism } from "./utils.js";
 
 class Cell {

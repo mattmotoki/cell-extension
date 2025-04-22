@@ -1,3 +1,28 @@
+/**
+ * scoring.js - Score Visualization for Cell Collection
+ * 
+ * This file implements the visual components for displaying game scores.
+ * 
+ * Key components:
+ * - ScoreBreakdown: Shows player scores and detailed score breakdowns
+ * - ScoreChart: Visualizes score progression throughout the game
+ * 
+ * ScoreBreakdown displays:
+ * - Current scores for both players
+ * - Breakdown of multiplication factors for cell-multiplication scoring
+ * - Visual indicators for the current player's turn
+ * 
+ * ScoreChart visualizes:
+ * - Score trends over time with colored lines for each player
+ * - Round number labels on the x-axis
+ * - Maximum score label on the y-axis
+ * - Colored indicators to show which player is leading
+ * 
+ * Relationships with other files:
+ * - game.js: Updates these components when scores change
+ * - utils.js: Gets the current scoring mechanism
+ */
+
 import { getScoringMechanism } from "./utils.js";
 
 export class ScoreBreakdown {

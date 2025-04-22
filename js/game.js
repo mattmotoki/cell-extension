@@ -1,3 +1,22 @@
+/**
+ * game.js - Game Controller for Cell Collection
+ * 
+ * This file implements the main game controller that orchestrates gameplay.
+ * 
+ * The Game class is responsible for:
+ * - Managing the game state (scores, current player, game progress)
+ * - Handling player interactions and turn management
+ * - Coordinating between the board, AI, and scoring visualization
+ * - Implementing scoring mechanism switching
+ * - Managing the game lifecycle (initialization, reset, game over)
+ * 
+ * Relationships with other files:
+ * - board.js: Game uses board to manage the visual and logical game grid
+ * - ai.js: Game instantiates and triggers AI opponent moves
+ * - scoring.js: Game updates the score displays and breakdown
+ * - utils.js: Game accesses utility functions for player modes and scoring
+ */
+
 import {getPlayerMode, displayWinnerMessage, getScoringMechanism, getScoringDescription} from "./utils.js";
 import {ScoreChart, ScoreBreakdown} from "./scoring.js";
 import {Board} from "./board.js";
