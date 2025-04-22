@@ -23,7 +23,7 @@
     <nav class="navbar">
         <div class="navbar-logo">
             <img src="favicons/favicon-32x32.png" alt="Cell Extension Logo">
-            <h1 class="navbar-title">Cell Extension</h1>
+            <h1 class="navbar-title">Cell Multiplication</h1>
         </div>
         <div class="hamburger-menu" id="hamburger-menu">
             <span></span>
@@ -96,6 +96,7 @@
     
     <script type="module">
         import {Game} from "./js/game.js";
+        import {updateNavbarTitle} from "./js/utils.js";
                 
         // Use a standard size for the game board, then scale with percentages
         let gridDimension = 100;
@@ -137,12 +138,14 @@
                 // Reset the game when scoring mechanism changes
                 if (!this.options[this.selectedIndex].disabled) {
                     scoringSelectMobile.value = this.value;
+                    updateNavbarTitle();
                     game.reset();
                 } else {
                     // If user selects a disabled option, reset to the previous value
                     alert("This scoring mechanism is not yet implemented.");
                     this.value = "cell-connection";
                     scoringSelectMobile.value = "cell-connection";
+                    updateNavbarTitle();
                 }
             });
             
@@ -151,12 +154,14 @@
                 // Reset the game when scoring mechanism changes
                 if (!this.options[this.selectedIndex].disabled) {
                     scoringSelect.value = this.value;
+                    updateNavbarTitle();
                     game.reset();
                 } else {
                     // If user selects a disabled option, reset to the previous value
                     alert("This scoring mechanism is not yet implemented.");
                     this.value = "cell-connection";
                     scoringSelect.value = "cell-connection";
+                    updateNavbarTitle();
                 }
             });
             
@@ -251,6 +256,9 @@
         
         // Initialize synced controls
         syncControls();
+        
+        // Set the initial navbar title based on the default scoring mechanism
+        updateNavbarTitle();
     </script>    
 </body>
 </html>

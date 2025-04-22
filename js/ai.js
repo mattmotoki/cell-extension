@@ -45,7 +45,7 @@ export class AIPlayer extends Player {
         // Simple strategy:
         // Moves 1-4: Completely random
         // Move 5+: Completely greedy (always choose the best move)
-        if (this.moveCount < 7) {
+        if (this.moveCount < 8) {
             return availableCells[Math.floor(Math.random() * availableCells.length)];
         }
         
