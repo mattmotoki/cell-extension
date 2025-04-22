@@ -21,16 +21,18 @@ export function shuffle(array) {
 
 // Display a message based on the scores
 export function displayWinnerMessage(scores) {
+    // We could optionally replace alert with a custom modal in the future
+    // for better styling, but for now we'll leave alert in place
     if (scores[0] > scores[1]) {
-        alert("Game Over! Player 1 wins. Congratulations!");
+        alert("🎮 Game Over! Player 1 wins. Congratulations! 🎉");
     } else if (scores[0] < scores[1]) {
         if (getPlayerMode() == "ai") {
-            alert("Game Over! Sorry the AI won.");
+            alert("🎮 Game Over! The AI player won this round. Try again! 🤖");
         } else {
-            alert("Game Over! Player 2 wins. Congratulations!");
+            alert("🎮 Game Over! Player 2 wins. Congratulations! 🎉");
         }
     } else {
-        alert("Game Over! It's a tie.");
+        alert("🎮 Game Over! It's a tie. Great game by both players! 🏆");
     }            
 }
 

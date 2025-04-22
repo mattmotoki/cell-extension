@@ -43,7 +43,9 @@ export class Game {
         const mechanism = getScoringMechanism();
         const description = getScoringDescription(mechanism);
         
-        // Add tooltip to score display
+        // Add tooltip to both score display elements
+        d3.select("#player-scores")
+            .attr("title", `Scoring: ${description}`);
         d3.select("#score-breakdown")
             .attr("title", `Scoring: ${description}`);
     }
