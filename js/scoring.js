@@ -35,7 +35,7 @@ export class ScoreChart {
 
         let svgWidth = 100;
         let svgHeight = 25;
-        let margin = {top: 4, right: 5, bottom: 5, left: 8};
+        let margin = {top: 3, right: 7, bottom: 3, left: 6};
         let chartWidth = svgWidth - margin.left - margin.right;
         let chartHeight = svgHeight - margin.top - margin.bottom;
 
@@ -137,7 +137,7 @@ export class ScoreChart {
             
         // Add tick mark at the top (max value)
         this.yAxis.append("line")
-            .attr("x1", -3)
+            .attr("x1", -2)
             .attr("y1", this.yScale(maxScore))
             .attr("x2", 0)
             .attr("y2", this.yScale(maxScore))
@@ -146,7 +146,7 @@ export class ScoreChart {
             
         // Add only two labels: 0 and max score
         this.yAxis.append("text")
-            .attr("x", -3)
+            .attr("x", -2)
             .attr("y", this.yScale(0))
             .attr("dy", "0.3em")
             .style("text-anchor", "end")
@@ -154,7 +154,7 @@ export class ScoreChart {
             .text("0");
             
         this.yAxis.append("text")
-            .attr("x", -3)
+            .attr("x", -2)
             .attr("y", this.yScale(maxScore))
             .attr("dy", "0.3em")
             .style("text-anchor", "end")
@@ -179,23 +179,15 @@ export class ScoreChart {
         const moveLabel = moveCount - 1;
         
         if (moveCount > 1) {
-            // Add a tick mark at the last move (pointing upward)
-            this.xAxis.append("line")
-                .attr("x1", this.xScale(moveLabel))
-                .attr("y1", 0)
-                .attr("x2", this.xScale(moveLabel))
-                .attr("y2", -3)  // Changed to negative to point upward
-                .style("stroke", this.playerColors[prevPlayer])
-                .style("stroke-width", "0.2");
                 
-            // Add the move count label above the axis
+            // Add the move count label to the right of the axis
             this.xAxis.append("text")
-                .attr("x", this.xScale(moveLabel))
-                .attr("y", -2)  // Negative value to position above the axis
-                .attr("dy", "-0.2em")  // Small adjustment for better vertical positioning
-                .attr("text-anchor", "middle")
+                .attr("x", this.xScale.range()[1] + 2) // Position to the right of the axis
+                .attr("y", 0) // Align with the axis
+                .attr("dy", "0.3em") // Small adjustment for vertical alignment
+                .attr("text-anchor", "start") // Start text from the left edge
                 .style("font-size", "2.5")
-                .style("fill", "#000000")  // Changed to black for better visibility
+                .style("fill", "#000000") // Black for better visibility
                 .text(moveLabel);
         }
     }

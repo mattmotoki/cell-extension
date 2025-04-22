@@ -36,15 +36,27 @@ export function displayWinnerMessage(scores) {
 
 // Get player mode: "ai" or "user"
 export function getPlayerMode() {
-    // Check if we're on mobile by checking if the dropdown is visible
-    const isMobile = window.getComputedStyle(document.querySelector('.dropdown')).display !== 'none';
+    // Get value directly from the dropdown
+    const playerModeDropdown = document.getElementById("player-mode");
+    return playerModeDropdown ? playerModeDropdown.value : 'ai'; // Default to 'ai' if not found
+}
+
+// Get the current scoring mechanism
+export function getScoringMechanism() {
+    const scoringSelect = document.getElementById("scoring-mechanism");
+    return scoringSelect ? scoringSelect.value : 'cell-connection'; // Default to cell-connection
+}
+
+// Get description for a scoring mechanism
+export function getScoringDescription(mechanism) {
+    const descriptions = {
+        'cell-connection': 'The total number of edges (connections)',
+        'cell-multiplication': 'Product of the size (number of cells) of the connected components',
+        'cell-maximization': 'The size of the largest connected component',
+        'cell-extension': 'The largest diameter of the graph',
+        'cell-division': 'Cells can connect in any direction to grow across the board',
+        'cell-minimization': 'Minimize the score of a random opponent'
+    };
     
-    if (isMobile) {
-        // Mobile: get value from dropdown
-        return document.getElementById("player-mode").value;
-    } else {
-        // Desktop: get value from radio buttons
-        const radioButton = document.querySelector('input[name="player-mode-radio"]:checked');
-        return radioButton ? radioButton.value : 'ai'; // Default to 'ai' if nothing is checked
-    }
+    return descriptions[mechanism] || 'Unknown scoring mechanism';
 }

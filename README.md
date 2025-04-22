@@ -51,25 +51,7 @@ The game is built using JavaScript with D3.js for visualization and interactions
 
 ## TODO
 
-
-I want you to generalize the scoring mechanisms. 
-
-First create a drop-down menu for the scoring options (the default one which is currently implemented is "Cell-Connection"). Add the short description of the scoring mechanism (e.g., "The total number of edges (connections)" for "Cell-Connection") in the title text for that option. Also show the short description somewhere in the UI. Keep it minimal. 
-
-Show options but only allow for the options that we have implemented. Make sure the user is aware that an option is not yet available.  
-
-Then implment the "Cell-Multiplication" scoring mechanism. To do this, we need to keep track of the connected components for each player. 
-
-* Refactor Board class
-    * Create Cell class
-    * Create Connection class (connected component)
-    * Improve sizing
-* Create Player class
-    * Track moves, connections, score
 * UI/UX
-    * Make responsive
-    * Select board size
-    * Select scoring mechanism (maybe change colors)
     * Undo move
 * Multi-level modeling
     * Create layers

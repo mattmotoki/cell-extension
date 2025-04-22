@@ -56,26 +56,26 @@ body {
 
 #game-controls {
     display: flex;
-    gap: 15px;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* Prevent wrapping on desktop */
     margin: 15px 0;
     width: 100%;
     max-width: 600px;
     box-sizing: border-box;
+    gap: 15px;
 }
 
 .control-group {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
     gap: 15px;
     flex: 1;
 }
 
 button#reset {
     min-width: 120px;
+    flex-shrink: 0; /* Prevent button from shrinking */
 }
 
 #score-display {
@@ -150,34 +150,8 @@ button:hover {
     background-color: #3a5eff;
 }
 
-/* Radio and checkbox styling for desktop */
-.radio-group, .checkbox-group {
-    display: flex;
-    align-items: center;
-    background-color: white;
-    border-radius: 6px;
-    padding: 8px 12px;
-    gap: 12px;
-}
-
-.radio-option, .checkbox-option {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-input[type="radio"], input[type="checkbox"] {
-    margin: 0;
-    cursor: pointer;
-}
-
-label {
-    cursor: pointer;
-    user-select: none;
-}
-
-/* Dropdown styling (for mobile) */
-.dropdown {
+/* Dropdown styling for both desktop and mobile */
+.player-dropdown, .scoring-dropdown {
     position: relative;
     display: inline-block;
     background-color: white;
@@ -185,10 +159,10 @@ label {
     padding: 8px 12px;
     cursor: pointer;
     min-width: 120px;
-    display: none; /* Hidden on desktop */
+    flex: 1;
 }
 
-.dropdown select {
+.player-dropdown select, .scoring-dropdown select {
     border: none;
     background: transparent;
     width: 100%;
@@ -199,48 +173,9 @@ label {
     padding: 2px 4px;
 }
 
-/* Display options dropdown (for mobile) */
-.display-dropdown {
-    position: relative;
-    display: inline-block;
-    background-color: white;
-    border-radius: 6px;
-    padding: 8px 12px;
-    cursor: pointer;
-    min-width: 120px;
-    display: none; /* Hidden on desktop */
-}
-
-.display-dropdown summary {
-    list-style: none;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    outline: none;
-}
-
-.display-dropdown summary::after {
-    content: '▼';
-    font-size: 10px;
-    margin-left: 8px;
-}
-
-.display-dropdown[open] summary::after {
-    content: '▲';
-}
-
-.dropdown-content {
-    padding-top: 8px;
-}
-
-.dropdown-option {
-    display: flex;
-    align-items: center;
-    margin-bottom: 6px;
-}
-
-.dropdown-option input[type="checkbox"] {
-    margin-right: 8px;
+.scoring-dropdown option:disabled {
+    color: var(--secondary-color);
+    font-style: italic;
 }
 
 #score-chart {
@@ -256,10 +191,6 @@ label {
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-    body {
-        /* Keep body default for mobile */
-    }
-    
     #game {
         padding: 0;
         margin: 0 auto;
@@ -311,11 +242,8 @@ label {
     }
     
     #game-controls {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-between;
+        flex-wrap: wrap; /* Enable wrapping on mobile */
         gap: 8px;
-        width: 100%;
         padding: 0 4px;
     }
     
@@ -325,23 +253,24 @@ label {
         width: 100%;
         justify-content: space-between;
         margin-bottom: 8px;
+        gap: 8px;
     }
     
-    button {
-        width: 100%;
-        margin: 5px 0;
-    }
-    
-    /* Show dropdowns on mobile, hide radio/checkbox groups */
-    .dropdown, .display-dropdown {
-        display: inline-block;
+    .player-dropdown, .scoring-dropdown {
         width: 48%;
-        margin: 2px;
+        margin: 0;
         box-sizing: border-box;
         min-width: unset;
     }
     
-    .radio-group, .checkbox-group {
-        display: none;
+    button#reset {
+        width: 100%;
+        margin: 5px 0;
     }
+}
+
+/* Add tooltip styles for better description display */
+[title] {
+    position: relative;
+    cursor: help;
 }

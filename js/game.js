@@ -1,4 +1,4 @@
-import {getPlayerMode, displayWinnerMessage} from "./utils.js";
+import {getPlayerMode, displayWinnerMessage, getScoringMechanism, getScoringDescription} from "./utils.js";
 import {ScoreChart, ScoreDisplay} from "./scoring.js";
 import {Board} from "./board.js";
 import {AIPlayer} from "./ai.js";
@@ -13,11 +13,24 @@ export class Game {
         this.currentPlayer = currentPlayer;
         this.scores = scores;
         this.progress = progress;
-        this.connectionsVisible = true;
+        this.scoringMechanism = getScoringMechanism(); // Get initial scoring mechanism
         this.scoreDisplay = new ScoreDisplay(currentPlayer, playerColors);
-        this.scoreChart = new ScoreChart(playerColors, gridSize);;
+        this.scoreChart = new ScoreChart(playerColors, gridSize);
         this.board = new Board(gridSize, cellSize, this.playerColors, this.handleCellClick.bind(this));
         this.opponent = new AIPlayer();
+        
+        // Add a tooltip to the score display with scoring mechanism description
+        this.updateScoreTooltip();
+    }
+    
+    updateScoreTooltip() {
+        // Get current scoring mechanism and its description
+        const mechanism = getScoringMechanism();
+        const description = getScoringDescription(mechanism);
+        
+        // Add tooltip to score display
+        d3.select("#score-display")
+            .attr("title", `Scoring: ${description}`);
     }
 
     handleCellClick(event) {
@@ -33,10 +46,8 @@ export class Game {
         let n_extensions = this.board.update(x, y, this.currentPlayer);
 
         if (n_extensions >= 0) {
-
-            // Update score
-            this.scores[this.currentPlayer] += n_extensions;
-            this.scoreChart.update(this.currentPlayer, this.scores);
+            // Update score based on the selected scoring mechanism
+            this.updateScore(n_extensions);
 
             // Change players
             this.currentPlayer = (this.currentPlayer + 1) % 2;               
@@ -58,11 +69,29 @@ export class Game {
             } else {
                 var waitTime = 1000;
             }
-            console.log(waitTime);
             setTimeout(displayWinnerMessage, waitTime, this.scores=this.scores);
         }
     }
-
+    
+    updateScore(n_extensions) {
+        // Get current scoring mechanism
+        const mechanism = getScoringMechanism();
+        
+        // Currently only cell-connection is implemented
+        switch(mechanism) {
+            case 'cell-connection':
+                // Current implementation - score is number of connections
+                this.scores[this.currentPlayer] += n_extensions;
+                break;
+            // Future implementations would go here
+            default:
+                // Default to cell-connection
+                this.scores[this.currentPlayer] += n_extensions;
+        }
+        
+        // Update the score chart
+        this.scoreChart.update(this.currentPlayer, this.scores);
+    }
 
     handleOpponentMove() {
             
@@ -74,9 +103,8 @@ export class Game {
 
         let n_extensions = this.board.update(x, y, this.currentPlayer);
 
-        // Update score
-        this.scores[this.currentPlayer] += n_extensions;
-        this.scoreChart.update(this.currentPlayer, this.scores);
+        // Update score based on the selected scoring mechanism
+        this.updateScore(n_extensions);
         
         // Change players
         this.currentPlayer = (this.currentPlayer + 1) % 2;               
@@ -86,10 +114,13 @@ export class Game {
 
 
     reset() {
-
         // reset variables
         this.scores = [0, 0];
         this.progress = "playing";
+        
+        // Update the scoring mechanism from UI
+        this.scoringMechanism = getScoringMechanism();
+        this.updateScoreTooltip();
 
         // change first player
         if (this.board.getAvailableCells().length == (this.gridSize/this.cellSize)**2) {
@@ -106,19 +137,6 @@ export class Game {
         if ((getPlayerMode() === "ai") && (this.currentPlayer === 1)) {
             setTimeout(this.handleOpponentMove.bind(this), 600);
         }
-
     }       
-    
-    toggleConnections(event) {
-        if (event) {
-            // If triggered by the checkbox, use its checked state
-            this.connectionsVisible = event.target.checked;
-        } else {
-            // For backward compatibility with button click
-            this.connectionsVisible = !this.connectionsVisible;
-        }
-        this.board.linesGroup.style("display", this.connectionsVisible ? "block" : "none");
-    }
-    
 } 
 

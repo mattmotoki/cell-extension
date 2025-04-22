@@ -66,7 +66,7 @@ export class Board {
             
         this.gridGroup = this.svg.append("g");
         this.cellsGroup = this.svg.append("g");
-        this.linesGroup = this.svg.append("g").style("display", "block");
+        this.linesGroup = this.svg.append("g");  // Always visible, no toggle
 
         // Initialize board with percentage-based cells
         for (let x = 0; x < 99; x += this.cellSize) {
