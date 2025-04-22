@@ -37,21 +37,21 @@ body {
     width: 100%;
     max-width: 600px;
     box-sizing: border-box;
-    gap: 5px; /* Minimal gap between elements */
+    gap: 15px; 
 }
 
 #game {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; /* Center content vertically */
+    justify-content: center;
     max-width: 620px; /* Slightly larger to avoid clipping */
-    width: 100%; /* Take available width */
+    width: 100%;
     padding: 10px 0; /* Apply vertical padding only */
     box-sizing: border-box;
-    margin: 0 auto; /* Center the game container, remove top/bottom margins */
+    margin: 0 auto; 
     text-align: center;
-    min-height: 100vh; /* Take full viewport height */
+    min-height: 100vh; 
 }
 
 #game-controls {
@@ -120,7 +120,7 @@ svg {
 .grid-cell {
     fill: transparent;
     stroke: #e0e0e0;
-    stroke-width: 0.2;
+    stroke-width: 0.1;
     cursor: pointer;
     transition: fill 0.2s ease;
 }
@@ -244,14 +244,14 @@ label {
 }
 
 #score-chart {
-    border-radius: 8px;
-    padding: 0;
+    border-radius: 5px;
     width: 100%;
     max-width: 600px;
     height: auto;
     box-sizing: border-box;
     margin: 5px auto;
     aspect-ratio: 4/1; /* Maintain aspect ratio based on our viewBox */
+    border: 1px solid #dddddd; /* Add border that encompasses the padding */
 }
 
 /* Mobile responsiveness */

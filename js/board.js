@@ -52,8 +52,8 @@ export class Board {
 
     constructor(gridSize, cellSize, playerColors, clickHandler) {
 
-        this.gridSize = gridSize; // Now 100 (%)
-        this.cellSize = cellSize; // Now 16.667 (%)
+        this.gridSize = gridSize;
+        this.cellSize = cellSize;
         this.playerColors = playerColors;
         this.lineColors = ["#D8BFD8", "#D8BFD8"];
         this.clickHandler = clickHandler;
@@ -75,8 +75,8 @@ export class Board {
                     .attr("class", "grid-cell")
                     .attr("x", x)
                     .attr("y", y)
-                    .attr("width", this.cellSize * 0.98)  // Slightly smaller to avoid edges touching
-                    .attr("height", this.cellSize * 0.98)
+                    .attr("width", this.cellSize * 0.99)  // Larger cells with less space between them (was 0.98)
+                    .attr("height", this.cellSize * 0.99)
                     .on("click", this.clickHandler);
             }
         }
@@ -201,12 +201,12 @@ export class Board {
                     this.linesGroup.append("circle")
                         .attr("cx", x_end + this.cellSize / 2)
                         .attr("cy", y_mid)
-                        .attr("r", 1.0)
+                        .attr("r", 0.8)
                         .attr("fill", this.lineColors[player - 1]);
                     this.linesGroup.append("circle")
                         .attr("cx", x_end + 3*this.cellSize / 2)
                         .attr("cy", y_mid)
-                        .attr("r", 1.0)
+                        .attr("r", 0.8)
                         .attr("fill", this.lineColors[player - 1]);
                 } else if (height === 2*this.cellSize) {  // vertical extension
                     let x_mid = x_start + this.cellSize / 2;
@@ -220,12 +220,12 @@ export class Board {
                     this.linesGroup.append("circle")
                         .attr("cx", x_mid)
                         .attr("cy", y_end + this.cellSize / 2)
-                        .attr("r", 1.0)
+                        .attr("r", 0.8)
                         .attr("fill", this.lineColors[player - 1]);
                     this.linesGroup.append("circle")
                         .attr("cx", x_mid)
                         .attr("cy", y_end + 3*this.cellSize / 2)
-                        .attr("r", 1.0)
+                        .attr("r", 0.8)
                         .attr("fill", this.lineColors[player - 1]);                        
                 }
             });            
