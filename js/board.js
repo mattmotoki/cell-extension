@@ -300,8 +300,17 @@ export class Board {
             let cell = d3.select(nodes[i]);
             let x = parseFloat(cell.attr("x"));
             let y = parseFloat(cell.attr("y"));
-            if (!this.occupiedCells[0][`${x}-${y}`] && !this.occupiedCells[1][`${x}-${y}`]) {
-                availableCells.push({x: x, y: y});
+            
+            // Convert to integer position key for consistent checking
+            const posKey = this.toPositionKey(x, y);
+            
+            // Check if the cell is occupied by either player
+            if (!this.occupiedCells[0][posKey] && !this.occupiedCells[1][posKey]) {
+                // Return the original coordinates for rendering compatibility, but ensure they're exact multiples
+                // of the cell size to avoid floating point issues
+                const roundedX = Math.round(x / this.cellSize) * this.cellSize;
+                const roundedY = Math.round(y / this.cellSize) * this.cellSize;
+                availableCells.push({x: roundedX, y: roundedY});
             }
         });        
         return availableCells;
@@ -548,22 +557,32 @@ export class Board {
     }
 
     update(x, y, currentPlayer) {
+        // Ensure x and y are finite numbers
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            console.error("Invalid coordinates for update:", x, y);
+            return -1;
+        }
+        
+        // Ensure coordinates are multiples of cellSize
+        const roundedX = Math.round(x / this.cellSize) * this.cellSize;
+        const roundedY = Math.round(y / this.cellSize) * this.cellSize;
+        
         // Convert to integer position
-        const posKey = this.toPositionKey(x, y);
+        const posKey = this.toPositionKey(roundedX, roundedY);
 
         // Check if cell is not occupied by the other player
         let n_extensions = 0;
         if (!this.occupiedCells[(currentPlayer + 1) % 2][posKey]) {
 
             // check if there are neighbors to extend
-            let neighbors = this.canPlaceRectangle(x, y, currentPlayer);
+            let neighbors = this.canPlaceRectangle(roundedX, roundedY, currentPlayer);
             if (neighbors.length > 0) {
-                n_extensions = this.drawRectangle(x, y, neighbors, currentPlayer + 1);
+                n_extensions = this.drawRectangle(roundedX, roundedY, neighbors, currentPlayer + 1);
                 this.occupiedCells[currentPlayer][posKey] = true;
 
             // otherwise draw new cell
             } else {
-                n_extensions = this.drawRectangle(x, y, [], currentPlayer + 1);
+                n_extensions = this.drawRectangle(roundedX, roundedY, [], currentPlayer + 1);
                 this.occupiedCells[currentPlayer][posKey] = true;
             }
 

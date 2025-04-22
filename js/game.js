@@ -160,22 +160,54 @@ export class Game {
     }
 
     handleOpponentMove() {
+        // Get the current scoring mechanism instead of using potentially outdated value
+        const currentScoringMechanism = getScoringMechanism();
+        this.scoringMechanism = currentScoringMechanism;
             
         // Get opponent's move
-        let cell = this.opponent.getMove(this.board, this.scoringMechanism);
-        if (cell === null) {return;}
+        let cell = this.opponent.getMove(this.board, currentScoringMechanism);
+        if (cell === null) {
+            console.warn("AI couldn't find a valid move");
+            this.progress = "playing";
+            return;
+        }
+        
         let x = cell.x;
         let y = cell.y;
 
+        // Try to update the board with AI's move
         let n_extensions = this.board.update(x, y, this.currentPlayer);
 
-        // Update score based on the selected scoring mechanism
-        this.updateScore(n_extensions);
-        
-        // Change players
-        this.currentPlayer = (this.currentPlayer + 1) % 2;               
-        this.updateScoreBreakdown();
-        this.progress = "playing";
+        // Check if the move was valid and actually placed
+        if (n_extensions >= 0) {
+            // Update score based on the selected scoring mechanism
+            this.updateScore(n_extensions);
+            
+            // Change players
+            this.currentPlayer = (this.currentPlayer + 1) % 2;               
+            this.updateScoreBreakdown();
+            this.progress = "playing";
+        } else {
+            // Move was invalid, try again with a different move
+            console.warn("AI attempted invalid move at", x, y);
+            
+            // Find a random valid move instead
+            const availableCells = this.board.getAvailableCells();
+            if (availableCells.length > 0) {
+                const randomCell = availableCells[Math.floor(Math.random() * availableCells.length)];
+                setTimeout(() => {
+                    this.board.update(randomCell.x, randomCell.y, this.currentPlayer);
+                    this.updateScore(1); // Assume at least 1 extension for the random move
+                    this.currentPlayer = (this.currentPlayer + 1) % 2;
+                    this.updateScoreBreakdown();
+                    this.progress = "playing";
+                }, 300);
+            } else {
+                // No moves available, end the game
+                this.progress = "over";
+                setTimeout(displayWinnerMessage, 1000, this.scores);
+            }
+        }
     }
 
 

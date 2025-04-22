@@ -62,27 +62,50 @@ export class AIPlayer extends Player {
         const availableCells = board.getAvailableCells();
         if (availableCells.length === 0) return null;
         
-        // Simple strategy:
-        // Moves 1-4: Completely random
-        // Move 5+: Completely greedy (always choose the best move)
-        if (this.moveCount < 8) {
-            return availableCells[Math.floor(Math.random() * availableCells.length)];
+        // Filter out cells with invalid coordinates (must be multiples of cellSize)
+        const validCells = availableCells.filter(cell => {
+            return Number.isFinite(cell.x) && Number.isFinite(cell.y) && 
+                   cell.x >= 0 && cell.y >= 0 &&
+                   cell.x % board.cellSize === 0 && cell.y % board.cellSize === 0;
+        });
+        
+        if (validCells.length === 0) {
+            console.warn("No valid cells available for AI move");
+            return null;
         }
         
-        // After move 4, play greedily
+        // Simple strategy:
+        // Moves 1-7: Completely random
+        // Move 8+: Completely greedy (always choose the best move)
+        if (this.moveCount < 8) {
+            return validCells[Math.floor(Math.random() * validCells.length)];
+        }
+        
+        // After move 8, play greedily
         // Calculate scores for each available cell
-        const cellScores = availableCells.map(cell => {
+        const cellScores = validCells.map(cell => {
+            const score = this.calculateCellScore(cell, board, scoringMechanism);
             return {
                 cell: cell,
-                score: this.calculateCellScore(cell, board, scoringMechanism)
+                score: score
             };
         });
         
+        // Filter out any invalid scores (e.g., NaN, undefined)
+        const validScores = cellScores.filter(item => 
+            Number.isFinite(item.score)
+        );
+        
+        if (validScores.length === 0) {
+            // If no valid scores, fall back to random
+            return validCells[Math.floor(Math.random() * validCells.length)];
+        }
+        
         // Sort by score (descending)
-        cellScores.sort((a, b) => b.score - a.score);
+        validScores.sort((a, b) => b.score - a.score);
         
         // Always choose the best move
-        return cellScores[0].cell;
+        return validScores[0].cell;
     }
     
     calculateCellScore(cell, board, scoringMechanism) {
