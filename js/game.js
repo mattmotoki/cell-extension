@@ -77,11 +77,16 @@ export class Game {
         // Get current scoring mechanism
         const mechanism = getScoringMechanism();
         
-        // Currently only cell-connection is implemented
+        // Use the appropriate scoring mechanism
         switch(mechanism) {
             case 'cell-connection':
                 // Current implementation - score is number of connections
                 this.scores[this.currentPlayer] += n_extensions;
+                break;
+            case 'cell-multiplication':
+                // Calculate multiplication-based score (product of connected component sizes)
+                this.scores[0] = this.board.getMultiplicationScore(0);
+                this.scores[1] = this.board.getMultiplicationScore(1);
                 break;
             // Future implementations would go here
             default:

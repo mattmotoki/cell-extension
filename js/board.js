@@ -82,6 +82,79 @@ export class Board {
         }
     }
 
+    // Get connected components for a player
+    getConnectedComponents(playerIndex) {
+        const components = [];
+        const visited = {};
+        const cells = Object.keys(this.occupiedCells[playerIndex]);
+        
+        // Skip if no cells for this player
+        if (cells.length === 0) return [];
+        
+        // For each cell that belongs to the player
+        for (let cellKey of cells) {
+            // Skip if already visited
+            if (visited[cellKey]) continue;
+            
+            // Start a new component
+            const component = [];
+            const stack = [cellKey];
+            
+            // DFS to find connected cells
+            while (stack.length > 0) {
+                const currentCellKey = stack.pop();
+                
+                // Skip if already visited
+                if (visited[currentCellKey]) continue;
+                
+                // Mark as visited and add to component
+                visited[currentCellKey] = true;
+                component.push(currentCellKey);
+                
+                // Get coordinates of current cell
+                const [x, y] = currentCellKey.split('-').map(parseFloat);
+                
+                // Check all four neighbors
+                const neighbors = [
+                    `${x + this.cellSize}-${y}`,
+                    `${x - this.cellSize}-${y}`,
+                    `${x}-${y + this.cellSize}`,
+                    `${x}-${y - this.cellSize}`
+                ];
+                
+                // Add unvisited neighbors that belong to the player
+                for (let neighborKey of neighbors) {
+                    if (this.occupiedCells[playerIndex][neighborKey] && !visited[neighborKey]) {
+                        stack.push(neighborKey);
+                    }
+                }
+            }
+            
+            // Add component to components list
+            if (component.length > 0) {
+                components.push(component);
+            }
+        }
+        
+        return components;
+    }
+    
+    // Calculate the score for Cell-Multiplication scoring mechanism
+    getMultiplicationScore(playerIndex) {
+        const components = this.getConnectedComponents(playerIndex);
+        
+        // If no components, score is 0
+        if (components.length === 0) return 0;
+        
+        let score = 1;
+        for (let component of components) {
+            score *= component.length;
+            console.log(component);
+        }
+        
+        return score;
+    }
+
     // game functions
     canPlaceRectangle(x, y, currentPlayer) {
         let neighbors = [];
@@ -201,12 +274,12 @@ export class Board {
                     this.linesGroup.append("circle")
                         .attr("cx", x_end + this.cellSize / 2)
                         .attr("cy", y_mid)
-                        .attr("r", 0.8)
+                        .attr("r", 0.6)
                         .attr("fill", this.lineColors[player - 1]);
                     this.linesGroup.append("circle")
                         .attr("cx", x_end + 3*this.cellSize / 2)
                         .attr("cy", y_mid)
-                        .attr("r", 0.8)
+                        .attr("r", 0.6)
                         .attr("fill", this.lineColors[player - 1]);
                 } else if (height === 2*this.cellSize) {  // vertical extension
                     let x_mid = x_start + this.cellSize / 2;
@@ -220,12 +293,12 @@ export class Board {
                     this.linesGroup.append("circle")
                         .attr("cx", x_mid)
                         .attr("cy", y_end + this.cellSize / 2)
-                        .attr("r", 0.8)
+                        .attr("r", 0.6)
                         .attr("fill", this.lineColors[player - 1]);
                     this.linesGroup.append("circle")
                         .attr("cx", x_mid)
                         .attr("cy", y_end + 3*this.cellSize / 2)
-                        .attr("r", 0.8)
+                        .attr("r", 0.6)
                         .attr("fill", this.lineColors[player - 1]);                        
                 }
             });            

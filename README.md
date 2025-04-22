@@ -78,12 +78,3 @@ Only the largest connected cluster of a player's cells contributes to their scor
 
 Players aim to create the longest continuous path of connected cells. The length of this path, or the 'diameter' of the group, determines the score. Effective planning and placement are crucial to forming an extensive network.
 
-### Cell-Division (different UI)
-
-Players gain points by expanding their cells through strategic placement. Cells can connect in any direction (horizontally, vertically, or diagonally) to grow across the board. The more a player's cells proliferate, the higher their score.
-
-### Cell-Minimization
-> Minimize the score of a random (or simple rule-based) opponent
-
-Instead of maximizing their own score, players aim to minimize the score of an opponent following a predetermined strategy. Success depends on disrupting the opponent's ability to form large or valuable clusters.
-

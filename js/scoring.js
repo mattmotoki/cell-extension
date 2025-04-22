@@ -35,7 +35,7 @@ export class ScoreChart {
 
         let svgWidth = 100;
         let svgHeight = 25;
-        let margin = {top: 3, right: 7, bottom: 3, left: 6};
+        let margin = {top: 4, right: 4, bottom: 5, left: 7};
         let chartWidth = svgWidth - margin.left - margin.right;
         let chartHeight = svgHeight - margin.top - margin.bottom;
 
@@ -179,15 +179,15 @@ export class ScoreChart {
         const moveLabel = moveCount - 1;
         
         if (moveCount > 1) {
-                
-            // Add the move count label to the right of the axis
+
+            // Add the move count label above the axis
             this.xAxis.append("text")
-                .attr("x", this.xScale.range()[1] + 2) // Position to the right of the axis
-                .attr("y", 0) // Align with the axis
-                .attr("dy", "0.3em") // Small adjustment for vertical alignment
-                .attr("text-anchor", "start") // Start text from the left edge
+                .attr("x", this.xScale(moveLabel))
+                .attr("y", -1)  // Negative value to position above the axis
+                .attr("dy", "-0.2em")  // Small adjustment for better vertical positioning
+                .attr("text-anchor", "middle")
                 .style("font-size", "2.5")
-                .style("fill", "#000000") // Black for better visibility
+                .style("fill", "#000000")
                 .text(moveLabel);
         }
     }
@@ -200,10 +200,10 @@ export class ScoreChart {
         dots.enter()
             .append("circle")
             .attr("class", `dot${player}`)
-            .attr("r", 0.8)
+            .attr("r", 0.5)
             .attr("fill", isCurrentPlayer ? color : "none")
             .attr("stroke", color)
-            .attr("stroke-width", 0.5) 
+            .attr("stroke-width", 0.25) 
             .merge(dots)
             .attr("cx", (d, i) => this.xScale(i))
             .attr("cy", d => this.yScale(d));
