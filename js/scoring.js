@@ -9,11 +9,11 @@ export class ScoreDisplay {
     update(currentPlayer, scores) {
         if (currentPlayer === 0) {
             this.display.html(` 
-                <span style='border-bottom: 2px solid ${this.playerColors[0]};'>Player 1: ${scores[0]}</span> &nbsp;
+                <span style='border-bottom: 2px solid ${this.playerColors[0]};'>Player 1: ${scores[0]}</span> &nbsp;&nbsp;&nbsp;&nbsp;
                 Player 2: ${scores[1]}`);
         } else {
             this.display.html(` 
-                Player 1: ${scores[0]} &nbsp;
+                Player 1: ${scores[0]} &nbsp;&nbsp;&nbsp;&nbsp;
                 <span style='border-bottom: 2px solid ${this.playerColors[1]};'>Player 2: ${scores[1]}</span>`);
         }
     }
@@ -33,9 +33,9 @@ export class ScoreChart {
         this.scoreHistory2 = [];
         this.playerColors = playerColors;
 
-        let svgWidth = gridSize
-        let svgHeight = 150;        
-        let margin = {top: 10, right: 20, bottom: 10, left: 30};
+        let svgWidth = 100;
+        let svgHeight = 25;
+        let margin = {top: 4, right: 5, bottom: 5, left: 8};
         let chartWidth = svgWidth - margin.left - margin.right;
         let chartHeight = svgHeight - margin.top - margin.bottom;
 
@@ -50,23 +50,39 @@ export class ScoreChart {
             .x((d, i) => { return this.xScale(i); })
             .y((d) => { return this.yScale(d); });
 
-        this.svg = d3.select(("#score-chart"))
-            .attr("width", svgWidth)
-            .attr("height", svgHeight)
+        // Create a chart with viewBox for responsive scaling
+        d3.select("#score-chart")
+            .attr("viewBox", `0 0 ${svgWidth} ${svgHeight}`)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+            
+        this.svg = d3.select("#score-chart")
             .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            .attr("transform", `translate(${margin.left},${margin.top})`);
 
         this.svg.append("path")
-            .attr("class", "line line1");
+            .attr("class", "line line1")
+            .style("stroke-width", "0.2");
 
         this.svg.append("path")
-            .attr("class", "line line2");
+            .attr("class", "line line2")
+            .style("stroke-width", "0.2");
 
-        this.svg.append("g")
-            .attr("class", "x axis");
-
-        this.svg.append("g")
+        // Create a simplified y-axis
+        this.yAxis = this.svg.append("g")
             .attr("class", "y axis");
+
+        // Create a simplified x-axis
+        this.xAxis = this.svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", `translate(0,${chartHeight})`);
+
+        // Style the axis lines to match score lines
+        this.svg.selectAll(".axis path, .axis line")
+            .style("stroke-width", "0.2")
+            .style("stroke", "#aaaaaa");
+
+        this.svg.selectAll(".axis text")
+            .style("font-size", "2.5");
 
         this.reset();
     }
@@ -79,10 +95,12 @@ export class ScoreChart {
         this.scoreHistory2.push(scores[1]);
 
         // Update the domain of the x scale
-        this.xScale.domain([0, d3.max([this.scoreHistory1.length, this.scoreHistory2.length])]);
+        let moveCount = this.scoreHistory1.length;
+        this.xScale.domain([0, moveCount > 1 ? moveCount - 1 : 1]);
 
         // Update the domain of the y scale
-        this.yScale.domain([0, d3.max(this.scoreHistory1.concat(this.scoreHistory2))]);
+        let maxScore = d3.max(this.scoreHistory1.concat(this.scoreHistory2)) || 1;
+        this.yScale.domain([0, maxScore]);
         
         // Update line paths
         this.svg.selectAll(".line1")
@@ -104,9 +122,82 @@ export class ScoreChart {
             this._updateMarkers(0, this.scoreHistory1, this.playerColors[0], currentPlayer === 0);
         }
 
-        // Update y axis
-        this.svg.selectAll(".y.axis")
-            .call(d3.axisLeft(this.yScale));        
+        // Create a custom minimalist y-axis
+        // First clear the existing axis
+        this.yAxis.selectAll("*").remove();
+        
+        // Add the axis line
+        this.yAxis.append("line")
+            .attr("x1", 0)
+            .attr("y1", 0)
+            .attr("x2", 0)
+            .attr("y2", this.yScale.range()[0])
+            .style("stroke", "#aaaaaa")
+            .style("stroke-width", "0.2");
+            
+        // Add tick mark at the top (max value)
+        this.yAxis.append("line")
+            .attr("x1", -3)
+            .attr("y1", this.yScale(maxScore))
+            .attr("x2", 0)
+            .attr("y2", this.yScale(maxScore))
+            .style("stroke", "#aaaaaa")
+            .style("stroke-width", "0.2");
+            
+        // Add only two labels: 0 and max score
+        this.yAxis.append("text")
+            .attr("x", -3)
+            .attr("y", this.yScale(0))
+            .attr("dy", "0.3em")
+            .style("text-anchor", "end")
+            .style("font-size", "2.5")
+            .text("0");
+            
+        this.yAxis.append("text")
+            .attr("x", -3)
+            .attr("y", this.yScale(maxScore))
+            .attr("dy", "0.3em")
+            .style("text-anchor", "end")
+            .style("font-size", "2.5")
+            .text(maxScore);
+            
+        // Create a custom minimalist x-axis (showing only the most recent player's move count)
+        // Clear the existing x-axis
+        this.xAxis.selectAll("*").remove();
+        
+        // Add the axis line
+        this.xAxis.append("line")
+            .attr("x1", 0)
+            .attr("y1", 0)
+            .attr("x2", this.xScale.range()[1])
+            .attr("y2", 0)
+            .style("stroke", "#aaaaaa")
+            .style("stroke-width", "0.2");
+            
+        // Only show the last move count (for the player who just moved)
+        const prevPlayer = (currentPlayer + 1) % 2;
+        const moveLabel = moveCount - 1;
+        
+        if (moveCount > 1) {
+            // Add a tick mark at the last move (pointing upward)
+            this.xAxis.append("line")
+                .attr("x1", this.xScale(moveLabel))
+                .attr("y1", 0)
+                .attr("x2", this.xScale(moveLabel))
+                .attr("y2", -3)  // Changed to negative to point upward
+                .style("stroke", this.playerColors[prevPlayer])
+                .style("stroke-width", "0.2");
+                
+            // Add the move count label above the axis
+            this.xAxis.append("text")
+                .attr("x", this.xScale(moveLabel))
+                .attr("y", -2)  // Negative value to position above the axis
+                .attr("dy", "-0.2em")  // Small adjustment for better vertical positioning
+                .attr("text-anchor", "middle")
+                .style("font-size", "2.5")
+                .style("fill", "#000000")  // Changed to black for better visibility
+                .text(moveLabel);
+        }
     }
     
 
@@ -117,9 +208,10 @@ export class ScoreChart {
         dots.enter()
             .append("circle")
             .attr("class", `dot${player}`)
-            .attr("r", 3)
+            .attr("r", 0.8)
             .attr("fill", isCurrentPlayer ? color : "none")
-            .attr("stroke", color)            
+            .attr("stroke", color)
+            .attr("stroke-width", 0.5) 
             .merge(dots)
             .attr("cx", (d, i) => this.xScale(i))
             .attr("cy", d => this.yScale(d));

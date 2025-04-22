@@ -109,8 +109,14 @@ export class Game {
 
     }       
     
-    toggleConnections() {
-        this.connectionsVisible = !this.connectionsVisible;
+    toggleConnections(event) {
+        if (event) {
+            // If triggered by the checkbox, use its checked state
+            this.connectionsVisible = event.target.checked;
+        } else {
+            // For backward compatibility with button click
+            this.connectionsVisible = !this.connectionsVisible;
+        }
         this.board.linesGroup.style("display", this.connectionsVisible ? "block" : "none");
     }
     

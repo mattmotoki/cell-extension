@@ -34,7 +34,17 @@ export function displayWinnerMessage(scores) {
     }            
 }
 
-// Get the player mode
+// Get player mode: "ai" or "user"
 export function getPlayerMode() {
-    return d3.select('input[name="player-mode"]:checked').node().value;
+    // Check if we're on mobile by checking if the dropdown is visible
+    const isMobile = window.getComputedStyle(document.querySelector('.dropdown')).display !== 'none';
+    
+    if (isMobile) {
+        // Mobile: get value from dropdown
+        return document.getElementById("player-mode").value;
+    } else {
+        // Desktop: get value from radio buttons
+        const radioButton = document.querySelector('input[name="player-mode-radio"]:checked');
+        return radioButton ? radioButton.value : 'ai'; // Default to 'ai' if nothing is checked
+    }
 }
