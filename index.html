@@ -21,7 +21,7 @@
 <body>
     <div id="game">
         <div id="game-header">
-            <svg id="widget"></svg>        
+            <h1 style="color: var(--primary-color); margin: 10px 0; font-size: 1.8rem;">Cell Extension</h1>
         </div>
         <div id="score-breakdown"></div>
         <svg id="board"></svg>        
@@ -52,7 +52,6 @@
     </div>
     
     <script type="module">
-        import {Widget} from "./js/widget.js";
         import {Game} from "./js/game.js";
         
         // TODO: 
@@ -104,10 +103,6 @@
                 }
             });
         }
-
-        // create widget
-        let widget = new Widget("widget", 32, 8, 250);
-        setTimeout(widget.playRandomly.bind(widget), widget.waitTime);
     
         // create game
         let game = new Game(gridDimension, cellDimension, playerColors, currentPlayer, scores, progress);

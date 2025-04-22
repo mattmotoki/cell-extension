@@ -30,25 +30,29 @@ export class ScoreBreakdown {
             }
         }
         
-        // Style based on current player - apply underline to player label with score
-        const player1Label = currentPlayer === 0 
-            ? `<span style='border-bottom: 2px solid ${this.playerColors[0]};'>Player 1: ${scores[0]}</span>` 
-            : `Player 1: ${scores[0]}`;
+        // Create label and score text with player colors
+        const player1Color = this.playerColors[0];
+        const player2Color = this.playerColors[1];
+        
+        // Style based on current player
+        const player1LabelStyle = currentPlayer === 0 
+            ? `color: ${player1Color}; font-weight: 600; border-bottom: 2px solid ${player1Color};` 
+            : `color: ${player1Color}; font-weight: 500;`;
             
-        const player2Label = currentPlayer === 1 
-            ? `<span style='border-bottom: 2px solid ${this.playerColors[1]};'>Player 2: ${scores[1]}</span>` 
-            : `Player 2: ${scores[1]}`;
+        const player2LabelStyle = currentPlayer === 1 
+            ? `color: ${player2Color}; font-weight: 600; border-bottom: 2px solid ${player2Color};` 
+            : `color: ${player2Color}; font-weight: 500;`;
         
         // Create a justified display with labels and breakdowns on separate lines
         this.display.html(`
             <div style="display: flex; justify-content: space-between; width: 100%;">
                 <div style="text-align: left; padding-right: 10px;">
-                    <div style="font-weight: 500; margin-bottom: 3px;">${player1Label}</div>
-                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em;">${breakdownText1}</div>
+                    <div style="${player1LabelStyle}">Player 1: ${scores[0]}</div>
+                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player1Color};">${breakdownText1}</div>
                 </div>
                 <div style="text-align: right; padding-left: 10px;">
-                    <div style="font-weight: 500; margin-bottom: 3px;">${player2Label}</div>
-                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em;">${breakdownText2}</div>
+                    <div style="${player2LabelStyle}">Player 2: ${scores[1]}</div>
+                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player2Color};">${breakdownText2}</div>
                 </div>
             </div>
         `);
@@ -118,7 +122,8 @@ export class ScoreChart {
             .style("stroke", "#aaaaaa");
 
         this.svg.selectAll(".axis text")
-            .style("font-size", "2.5");
+            .style("font-size", "2.5")
+            .style("fill", "#cccccc");
 
         this.reset();
     }
@@ -187,6 +192,7 @@ export class ScoreChart {
             .attr("dy", "0.3em")
             .style("text-anchor", "end")
             .style("font-size", "2.5")
+            .style("fill", "#cccccc")
             .text("0");
             
         this.yAxis.append("text")
@@ -195,6 +201,7 @@ export class ScoreChart {
             .attr("dy", "0.3em")
             .style("text-anchor", "end")
             .style("font-size", "2.5")
+            .style("fill", "#cccccc")
             .text(maxScore);
             
         // Create a custom minimalist x-axis (showing only the most recent player's move count)
@@ -222,7 +229,7 @@ export class ScoreChart {
                 .attr("dy", "-0.2em")  // Small adjustment for better vertical positioning
                 .attr("text-anchor", "middle")
                 .style("font-size", "2.5")
-                .style("fill", "#000000")  // Black color for better visibility
+                .style("fill", "#cccccc")  // Light gray color for dark mode
                 .text(moveLabel);
         }
     }
