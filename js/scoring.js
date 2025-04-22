@@ -1,27 +1,63 @@
-export class ScoreDisplay {
+import { getScoringMechanism } from "./utils.js";
 
-    constructor(currentPlayer, playerColors) {
-        this.display = d3.select(("#score-display"));
+export class ScoreBreakdown {
+    constructor(playerColors) {
+        this.display = d3.select("#score-breakdown");
         this.playerColors = playerColors;
-        this.reset(currentPlayer);
+        this.reset();
     }
-
-    update(currentPlayer, scores) {
-        if (currentPlayer === 0) {
-            this.display.html(` 
-                <span style='border-bottom: 2px solid ${this.playerColors[0]};'>Player 1: ${scores[0]}</span> &nbsp;&nbsp;&nbsp;&nbsp;
-                Player 2: ${scores[1]}`);
-        } else {
-            this.display.html(` 
-                Player 1: ${scores[0]} &nbsp;&nbsp;&nbsp;&nbsp;
-                <span style='border-bottom: 2px solid ${this.playerColors[1]};'>Player 2: ${scores[1]}</span>`);
+    
+    update(currentPlayer, scores, components1, components2) {
+        const scoring = getScoringMechanism();
+        
+        // Generate breakdown text for each player
+        let breakdownText1 = "";
+        let breakdownText2 = "";
+        
+        if (scoring === 'cell-multiplication' && components1 && components2) {
+            // Format player 1 breakdown - only show if there are multiple components
+            const componentSizes1 = components1.map(comp => comp.length).sort((a, b) => b - a);
+            if (componentSizes1.length > 1) {
+                const breakdown1 = componentSizes1.join('×');
+                breakdownText1 = `(${scores[0]} = ${breakdown1})`;
+            }
+            
+            // Format player 2 breakdown - only show if there are multiple components
+            const componentSizes2 = components2.map(comp => comp.length).sort((a, b) => b - a);
+            if (componentSizes2.length > 1) {
+                const breakdown2 = componentSizes2.join('×');
+                breakdownText2 = `(${scores[1]} = ${breakdown2})`;
+            }
         }
+        
+        // Style based on current player - apply underline to player label with score
+        const player1Label = currentPlayer === 0 
+            ? `<span style='border-bottom: 2px solid ${this.playerColors[0]};'>Player 1: ${scores[0]}</span>` 
+            : `Player 1: ${scores[0]}`;
+            
+        const player2Label = currentPlayer === 1 
+            ? `<span style='border-bottom: 2px solid ${this.playerColors[1]};'>Player 2: ${scores[1]}</span>` 
+            : `Player 2: ${scores[1]}`;
+        
+        // Create a justified display with labels and breakdowns on separate lines
+        this.display.html(`
+            <div style="display: flex; justify-content: space-between; width: 100%;">
+                <div style="text-align: left; padding-right: 10px;">
+                    <div style="font-weight: 500; margin-bottom: 3px;">${player1Label}</div>
+                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em;">${breakdownText1}</div>
+                </div>
+                <div style="text-align: right; padding-left: 10px;">
+                    <div style="font-weight: 500; margin-bottom: 3px;">${player2Label}</div>
+                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em;">${breakdownText2}</div>
+                </div>
+            </div>
+        `);
     }
-
-    reset(currentPlayer) {
-        this.update(currentPlayer, [0, 0]);
+    
+    reset(currentPlayer = 0) {
+        // Just initialize empty display, game will call updateScoreBreakdown after reset
+        this.display.html('');
     }
-
 }
 
 
@@ -35,7 +71,7 @@ export class ScoreChart {
 
         let svgWidth = 100;
         let svgHeight = 25;
-        let margin = {top: 4, right: 5, bottom: 5, left: 8};
+        let margin = {top: 4, right: 4, bottom: 5, left: 7};
         let chartWidth = svgWidth - margin.left - margin.right;
         let chartHeight = svgHeight - margin.top - margin.bottom;
 
@@ -137,7 +173,7 @@ export class ScoreChart {
             
         // Add tick mark at the top (max value)
         this.yAxis.append("line")
-            .attr("x1", -3)
+            .attr("x1", -2)
             .attr("y1", this.yScale(maxScore))
             .attr("x2", 0)
             .attr("y2", this.yScale(maxScore))
@@ -146,7 +182,7 @@ export class ScoreChart {
             
         // Add only two labels: 0 and max score
         this.yAxis.append("text")
-            .attr("x", -3)
+            .attr("x", -2)
             .attr("y", this.yScale(0))
             .attr("dy", "0.3em")
             .style("text-anchor", "end")
@@ -154,7 +190,7 @@ export class ScoreChart {
             .text("0");
             
         this.yAxis.append("text")
-            .attr("x", -3)
+            .attr("x", -2)
             .attr("y", this.yScale(maxScore))
             .attr("dy", "0.3em")
             .style("text-anchor", "end")
@@ -179,23 +215,14 @@ export class ScoreChart {
         const moveLabel = moveCount - 1;
         
         if (moveCount > 1) {
-            // Add a tick mark at the last move (pointing upward)
-            this.xAxis.append("line")
-                .attr("x1", this.xScale(moveLabel))
-                .attr("y1", 0)
-                .attr("x2", this.xScale(moveLabel))
-                .attr("y2", -3)  // Changed to negative to point upward
-                .style("stroke", this.playerColors[prevPlayer])
-                .style("stroke-width", "0.2");
-                
             // Add the move count label above the axis
             this.xAxis.append("text")
                 .attr("x", this.xScale(moveLabel))
-                .attr("y", -2)  // Negative value to position above the axis
+                .attr("y", -1)  // Negative value to position above the axis
                 .attr("dy", "-0.2em")  // Small adjustment for better vertical positioning
                 .attr("text-anchor", "middle")
                 .style("font-size", "2.5")
-                .style("fill", "#000000")  // Changed to black for better visibility
+                .style("fill", "#000000")  // Black color for better visibility
                 .text(moveLabel);
         }
     }
@@ -208,10 +235,10 @@ export class ScoreChart {
         dots.enter()
             .append("circle")
             .attr("class", `dot${player}`)
-            .attr("r", 0.8)
+            .attr("r", 0.5)
             .attr("fill", isCurrentPlayer ? color : "none")
             .attr("stroke", color)
-            .attr("stroke-width", 0.5) 
+            .attr("stroke-width", 0.25) 
             .merge(dots)
             .attr("cx", (d, i) => this.xScale(i))
             .attr("cy", d => this.yScale(d));

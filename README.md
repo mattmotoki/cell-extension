@@ -51,25 +51,7 @@ The game is built using JavaScript with D3.js for visualization and interactions
 
 ## TODO
 
-
-I want you to generalize the scoring mechanisms. 
-
-First create a drop-down menu for the scoring options (the default one which is currently implemented is "Cell-Connection"). Add the short description of the scoring mechanism (e.g., "The total number of edges (connections)" for "Cell-Connection") in the title text for that option. Also show the short description somewhere in the UI. Keep it minimal. 
-
-Show options but only allow for the options that we have implemented. Make sure the user is aware that an option is not yet available.  
-
-Then implment the "Cell-Multiplication" scoring mechanism. To do this, we need to keep track of the connected components for each player. 
-
-* Refactor Board class
-    * Create Cell class
-    * Create Connection class (connected component)
-    * Improve sizing
-* Create Player class
-    * Track moves, connections, score
 * UI/UX
-    * Make responsive
-    * Select board size
-    * Select scoring mechanism (maybe change colors)
     * Undo move
 * Multi-level modeling
     * Create layers
@@ -95,13 +77,4 @@ Only the largest connected cluster of a player's cells contributes to their scor
 > The largest diameter of the graph
 
 Players aim to create the longest continuous path of connected cells. The length of this path, or the 'diameter' of the group, determines the score. Effective planning and placement are crucial to forming an extensive network.
-
-### Cell-Division (different UI)
-
-Players gain points by expanding their cells through strategic placement. Cells can connect in any direction (horizontally, vertically, or diagonally) to grow across the board. The more a player's cells proliferate, the higher their score.
-
-### Cell-Minimization
-> Minimize the score of a random (or simple rule-based) opponent
-
-Instead of maximizing their own score, players aim to minimize the score of an opponent following a predetermined strategy. Success depends on disrupting the opponent's ability to form large or valuable clusters.
 
