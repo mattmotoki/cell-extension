@@ -63,10 +63,7 @@ export function getScoringDescription(mechanism) {
 
 // Format scoring mechanism name in title case for display 
 export function formatScoringMechanismTitle(mechanism) {
-    // Remove "cell-" prefix and split by dash
     const formatted = mechanism.replace('-', ' ').split(' ');
-    
-    // Capitalize first letter of each word
     return formatted.map(word => 
         word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
@@ -81,4 +78,5 @@ export function updateNavbarTitle() {
     if (navbarTitle) {
         navbarTitle.textContent = formattedTitle;
     }
+    
 }
