@@ -81,6 +81,13 @@ export class AIPlayer extends Player {
             return -Infinity; // Invalid move
         }
         
+        // For cell-extension, find the number of neighbors
+        if (scoringMechanism === 'cell-extension') {
+            const neighbors = board.canPlaceRectangle(cell.x, cell.y, playerIndex);
+            return neighbors.length; // Score is the number of extensions
+        }
+        
+        // For other scoring mechanisms
         // Simulate the move by adding the cell
         board.occupiedCells[playerIndex][cellKey] = true;
         

@@ -120,6 +120,15 @@ export class Game {
                 // Update score breakdown
                 this.scoreBreakdown.update(this.currentPlayer, this.scores, components0, components1);
                 break;
+            case 'cell-extension':
+                // For Cell-Extension, just add the number of extensions to the current player's score
+                if (n_extensions > 0) {
+                    this.scores[this.currentPlayer] += n_extensions;
+                }
+                
+                // Update score breakdown without components
+                this.scoreBreakdown.update(this.currentPlayer, this.scores);
+                break;
             // Future implementations would go here
             default:
                 // Default to cell-connection
