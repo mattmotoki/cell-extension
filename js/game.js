@@ -97,8 +97,13 @@ export class Game {
         // Use the appropriate scoring mechanism
         switch(mechanism) {
             case 'cell-connection':
-                // Current implementation - score is number of connections
-                this.scores[this.currentPlayer] += n_extensions;
+                // Calculate the total connection count
+                const player0Connections = this.board.getConnectionScore(0);
+                const player1Connections = this.board.getConnectionScore(1);
+                
+                // Update scores with the total connection count
+                this.scores[0] = player0Connections;
+                this.scores[1] = player1Connections;
                 
                 // Update score breakdown without components
                 this.scoreBreakdown.update(this.currentPlayer, this.scores);

@@ -164,22 +164,16 @@ export class Board {
     
     // Calculate the score for Cell-Connection scoring mechanism
     getConnectionScore(playerIndex) {
-        const components = this.getConnectedComponents(playerIndex);
-        
-        // If no components, score is 0
-        if (components.length === 0) return 0;
-        
         // Get all occupied cells for this player
         const cells = Object.keys(this.occupiedCells[playerIndex] || {});
         
         // Count the number of connections (edges) between cells
         let connections = 0;
-        const tolerance = 0.01; // Add tolerance for floating point comparison
         
         // For each cell, check connections to other cells
         for (let cellKey of cells) {
             const [x, y] = cellKey.split('-').map(parseFloat);
-            
+
             // Check adjacent cells
             const adjacentPositions = [
                 [x + this.cellSize, y], // right
@@ -188,18 +182,15 @@ export class Board {
                 [x, y - this.cellSize]  // up
             ];
             
+            let cellConnections = 0;
             // For each adjacent position, check if it's occupied by the same player
             for (let [adjX, adjY] of adjacentPositions) {
                 const adjKey = `${adjX}-${adjY}`;
-                
-                // If this adjacent cell is occupied by the same player, we have a connection
                 if (this.occupiedCells[playerIndex][adjKey]) {
-                    // Only count each connection once (when x1 < x2 or y1 < y2)
-                    if (adjX > x || (Math.abs(adjX - x) < tolerance && adjY > y)) {
-                        connections++;
-                    }
+                    cellConnections++;
                 }
             }
+            connections += cellConnections;
         }
         
         // The score is the number of connections
