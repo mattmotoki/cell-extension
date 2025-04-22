@@ -84,6 +84,12 @@ export class Board {
     getConnectedComponents(playerIndex) {
         const components = [];
         const visited = {};
+        
+        // Safety check to ensure occupiedCells[playerIndex] exists
+        if (!this.occupiedCells[playerIndex]) {
+            this.occupiedCells[playerIndex] = {};
+        }
+        
         const cells = Object.keys(this.occupiedCells[playerIndex]);
         const tolerance = 0.01; // Add tolerance for floating point comparison
         
@@ -155,9 +161,64 @@ export class Board {
         // Calculate product of component sizes
         return components.reduce((product, component) => product * component.length, 1);
     }
+    
+    // Calculate the score for Cell-Connection scoring mechanism
+    getConnectionScore(playerIndex) {
+        const components = this.getConnectedComponents(playerIndex);
+        
+        // If no components, score is 0
+        if (components.length === 0) return 0;
+        
+        // Get all occupied cells for this player
+        const cells = Object.keys(this.occupiedCells[playerIndex] || {});
+        
+        // Count the number of connections (edges) between cells
+        let connections = 0;
+        const tolerance = 0.01; // Add tolerance for floating point comparison
+        
+        // For each cell, check connections to other cells
+        for (let cellKey of cells) {
+            const [x, y] = cellKey.split('-').map(parseFloat);
+            
+            // Check adjacent cells
+            const adjacentPositions = [
+                [x + this.cellSize, y], // right
+                [x - this.cellSize, y], // left
+                [x, y + this.cellSize], // down
+                [x, y - this.cellSize]  // up
+            ];
+            
+            // For each adjacent position, check if it's occupied by the same player
+            for (let [adjX, adjY] of adjacentPositions) {
+                const adjKey = `${adjX}-${adjY}`;
+                
+                // If this adjacent cell is occupied by the same player, we have a connection
+                if (this.occupiedCells[playerIndex][adjKey]) {
+                    // Only count each connection once (when x1 < x2 or y1 < y2)
+                    if (adjX > x || (Math.abs(adjX - x) < tolerance && adjY > y)) {
+                        connections++;
+                    }
+                }
+            }
+        }
+        
+        // The score is the number of connections
+        return connections;
+    }
 
     // game functions
     canPlaceRectangle(x, y, currentPlayer) {
+        // Safety check to ensure occupiedCells exists
+        if (!this.occupiedCells) {
+            this.occupiedCells = [{}, {}];
+        }
+        if (!this.occupiedCells[currentPlayer]) {
+            this.occupiedCells[currentPlayer] = {};
+        }
+        if (!this.occupiedCells[(currentPlayer + 1) % 2]) {
+            this.occupiedCells[(currentPlayer + 1) % 2] = {};
+        }
+        
         let neighbors = [];
         const tolerance = 0.01; // Add a small tolerance for floating point comparison
 
@@ -187,6 +248,17 @@ export class Board {
 
     
     getAvailableCells() {
+        // Safety check to ensure occupiedCells exists
+        if (!this.occupiedCells) {
+            this.occupiedCells = [{}, {}];
+        }
+        if (!this.occupiedCells[0]) {
+            this.occupiedCells[0] = {};
+        }
+        if (!this.occupiedCells[1]) {
+            this.occupiedCells[1] = {};
+        }
+        
         let availableCells = [];
         this.svg.selectAll(".grid-cell").each((d, i, nodes) => {
             let cell = d3.select(nodes[i]);

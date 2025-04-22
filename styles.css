@@ -182,11 +182,46 @@ button:active {
     outline: none;
     padding: 2px 4px;
     color: var(--text-color);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 2px center;
+    background-size: 20px;
+    padding-right: 25px;
+}
+
+/* Dropdown arrow styling for Firefox */
+.player-dropdown select::-ms-expand, 
+.scoring-dropdown select::-ms-expand {
+    display: none;
+}
+
+/* Style the dropdown menu options */
+.player-dropdown select option, 
+.scoring-dropdown select option {
+    background-color: #2a2a2a;
+    color: var(--text-color);
+    padding: 10px;
+}
+
+.player-dropdown select:focus, 
+.scoring-dropdown select:focus {
+    box-shadow: 0 0 0 1px var(--primary-color);
 }
 
 .scoring-dropdown option:disabled {
     color: var(--secondary-color);
     font-style: italic;
+}
+
+/* For Webkit browsers */
+@supports (-webkit-appearance: none) {
+    .player-dropdown select,
+    .scoring-dropdown select {
+        background-color: var(--input-bg);
+    }
 }
 
 #score-chart {
@@ -329,6 +364,29 @@ button:active {
     border: 1px solid var(--border-color);
     border-radius: 6px; /* Increased from 4px */
     font-size: 1rem; /* Slightly larger font */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 20px;
+    padding-right: 40px;
+}
+
+.mobile-menu select::-ms-expand {
+    display: none;
+}
+
+.mobile-menu select option {
+    background-color: #2a2a2a;
+    color: var(--text-color);
+    padding: 12px;
+}
+
+.mobile-menu select:focus {
+    border-color: var(--primary-color);
+    outline: none;
 }
 
 /* Mobile menu close button */
