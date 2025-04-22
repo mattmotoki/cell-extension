@@ -9,11 +9,11 @@ export class ScoreDisplay {
     update(currentPlayer, scores) {
         if (currentPlayer === 0) {
             this.display.html(` 
-                <span style='border-bottom: 2px solid ${this.playerColors[0]};'>Player 1: ${scores[0]}</span> &nbsp;
+                <span style='border-bottom: 2px solid ${this.playerColors[0]};'>Player 1: ${scores[0]}</span> &nbsp;&nbsp;&nbsp;&nbsp;
                 Player 2: ${scores[1]}`);
         } else {
             this.display.html(` 
-                Player 1: ${scores[0]} &nbsp;
+                Player 1: ${scores[0]} &nbsp;&nbsp;&nbsp;&nbsp;
                 <span style='border-bottom: 2px solid ${this.playerColors[1]};'>Player 2: ${scores[1]}</span>`);
         }
     }
@@ -33,9 +33,9 @@ export class ScoreChart {
         this.scoreHistory2 = [];
         this.playerColors = playerColors;
 
-        let svgWidth = gridSize
-        let svgHeight = 150;        
-        let margin = {top: 10, right: 20, bottom: 10, left: 30};
+        let svgWidth = 100; // Use 100% as base
+        let svgHeight = 25; // Relative to width in viewBox
+        let margin = {top: 2, right: 4, bottom: 2, left: 6}; // Percentages
         let chartWidth = svgWidth - margin.left - margin.right;
         let chartHeight = svgHeight - margin.top - margin.bottom;
 
@@ -50,23 +50,49 @@ export class ScoreChart {
             .x((d, i) => { return this.xScale(i); })
             .y((d) => { return this.yScale(d); });
 
-        this.svg = d3.select(("#score-chart"))
-            .attr("width", svgWidth)
-            .attr("height", svgHeight)
+        // Create a chart with viewBox for responsive scaling
+        d3.select("#score-chart")
+            .attr("viewBox", `0 0 ${svgWidth} ${svgHeight}`)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+            
+        // Add a border rectangle with percentages
+        d3.select("#score-chart")
+            .append("rect")
+            .attr("width", "99%")
+            .attr("height", "98%")
+            .attr("x", "0.5%")
+            .attr("y", "0.5%")
+            .attr("fill", "none")
+            .attr("stroke", "#aaaaaa")
+            .attr("stroke-width", "0.3%")
+            .attr("rx", "3%")
+            .attr("ry", "3%");
+
+        this.svg = d3.select("#score-chart")
             .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            .attr("transform", `translate(${margin.left},${margin.top})`);
 
         this.svg.append("path")
-            .attr("class", "line line1");
+            .attr("class", "line line1")
+            .style("stroke-width", "0.6"); // Smaller fixed line width
 
         this.svg.append("path")
-            .attr("class", "line line2");
+            .attr("class", "line line2")
+            .style("stroke-width", "0.6"); // Smaller fixed line width
 
         this.svg.append("g")
             .attr("class", "x axis");
 
         this.svg.append("g")
             .attr("class", "y axis");
+
+        // Style the axis lines to match score lines
+        this.svg.selectAll(".axis path, .axis line")
+            .style("stroke-width", "0.2")
+            .style("stroke", "#aaaaaa");
+
+        this.svg.selectAll(".axis text")
+            .style("font-size", "2.5");
 
         this.reset();
     }
@@ -117,9 +143,10 @@ export class ScoreChart {
         dots.enter()
             .append("circle")
             .attr("class", `dot${player}`)
-            .attr("r", 3)
+            .attr("r", 1.0) // Smaller dot size, reduced from 1.2
             .attr("fill", isCurrentPlayer ? color : "none")
-            .attr("stroke", color)            
+            .attr("stroke", color)
+            .attr("stroke-width", 0.5) // Thinner stroke
             .merge(dots)
             .attr("cx", (d, i) => this.xScale(i))
             .attr("cy", d => this.yScale(d));

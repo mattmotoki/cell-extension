@@ -80,46 +80,18 @@
         // * fix alert message happening too soon
         // * bug: reset doesn't remove active transitions
         
-        // Responsive sizing variables
-        let gridSize = calculateGridSize();
-        let cellSize = gridSize / 6; // 6 cells per grid
+        // Use a standard size for the game board, then scale with percentages
+        let gridDimension = 100; // Representing 100%
+        let cellDimension = gridDimension / 6; // 6 cells per grid, each 16.667%
         let playerColors = ["#00FF00", "#1E90FF"];
         let currentPlayer = 0;
         let scores = [0, 0];
         let progress = "playing";
         
-        // Function to calculate grid size based on screen width
-        function calculateGridSize() {
-            if (window.innerWidth < 768) {
-                // For mobile: use a higher percentage of viewport width
-                return Math.min(window.innerWidth - 16, 600);
-            } else {
-                return 600; // Desktop size
-            }
-        }
-        
-        // Handle resize events
-        window.addEventListener('resize', function() {
-            let newGridSize = calculateGridSize();
-            let newCellSize = newGridSize / 6;
-            
-            // Update SVG dimensions
-            d3.select("#board")
-                .attr("width", newGridSize)
-                .attr("height", newGridSize);
-                
-            // Only create a new game if the size has changed significantly
-            if (Math.abs(newGridSize - gridSize) > 20) {
-                gridSize = newGridSize;
-                cellSize = newCellSize;
-                game.reset();
-            }
-        });
-
-        // Initial board size setting
+        // Initial board size setting - actual pixel size will be determined by CSS
         d3.select("#board")
-            .attr("width", gridSize)
-            .attr("height", gridSize);
+            .attr("viewBox", `0 0 ${gridDimension} ${gridDimension}`)
+            .attr("preserveAspectRatio", "xMidYMid meet");
 
         // Sync controls between desktop and mobile
         function syncControls() {
@@ -171,7 +143,7 @@
         setTimeout(widget.playRandomly.bind(widget), widget.waitTime);
     
         // create game
-        let game = new Game(gridSize, cellSize, playerColors, currentPlayer, scores, progress);
+        let game = new Game(gridDimension, cellDimension, playerColors, currentPlayer, scores, progress);
 
         // game controls
         d3.select("#reset").on("click", game.reset.bind(game));
