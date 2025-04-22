@@ -96,14 +96,10 @@
     
     <script type="module">
         import {Game} from "./js/game.js";
-        
-        // TODO: 
-        // * fix alert message happening too soon
-        // * bug: reset doesn't remove active transitions
-        
+                
         // Use a standard size for the game board, then scale with percentages
-        let gridDimension = 100; // Representing 100%
-        let cellDimension = gridDimension / 6; // 6 cells per grid, each 16.667%
+        let gridDimension = 100;
+        let cellDimension = gridDimension / 6;
         let playerColors = ["#00FF00", "#1E90FF"];
         let currentPlayer = 0;
         let scores = [0, 0];
