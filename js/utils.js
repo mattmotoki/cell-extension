@@ -55,7 +55,7 @@ export function getScoringDescription(mechanism) {
         'cell-connection': 'The total number of edges (connections)',
         'cell-multiplication': 'Product of the size (number of cells) of the connected components',
         'cell-maximization': 'The size of the largest connected component',
-        'cell-extension': 'The largest diameter of the graph',
+        'cell-extension': 'The total number of extensions',
     };
     
     return descriptions[mechanism] || 'Unknown scoring mechanism';
