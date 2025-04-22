@@ -87,6 +87,7 @@ export class Board {
         const components = [];
         const visited = {};
         const cells = Object.keys(this.occupiedCells[playerIndex]);
+        const tolerance = 0.01; // Add tolerance for floating point comparison
         
         // Skip if no cells for this player
         if (cells.length === 0) return [];
@@ -112,19 +113,26 @@ export class Board {
                 component.push(currentCellKey);
                 
                 // Get coordinates of current cell
-                const [x, y] = currentCellKey.split('-').map(parseFloat);
+                const [currentX, currentY] = currentCellKey.split('-').map(parseFloat);
                 
-                // Check all four neighbors
-                const neighbors = [
-                    `${x + this.cellSize}-${y}`,
-                    `${x - this.cellSize}-${y}`,
-                    `${x}-${y + this.cellSize}`,
-                    `${x}-${y - this.cellSize}`
-                ];
-                
-                // Add unvisited neighbors that belong to the player
-                for (let neighborKey of neighbors) {
-                    if (this.occupiedCells[playerIndex][neighborKey] && !visited[neighborKey]) {
+                // Find all cells that belong to this player
+                for (let neighborKey of cells) {
+                    // Skip if already visited or if it's the current cell
+                    if (visited[neighborKey] || neighborKey === currentCellKey) continue;
+                    
+                    const [neighborX, neighborY] = neighborKey.split('-').map(parseFloat);
+                    
+                    // Check if cells are neighbors (using tolerance for floating point)
+                    const isHorizontalNeighbor = 
+                        Math.abs(Math.abs(neighborX - currentX) - this.cellSize) < tolerance && 
+                        Math.abs(neighborY - currentY) < tolerance;
+                    
+                    const isVerticalNeighbor = 
+                        Math.abs(neighborX - currentX) < tolerance && 
+                        Math.abs(Math.abs(neighborY - currentY) - this.cellSize) < tolerance;
+                    
+                    // If they're neighbors, add to stack
+                    if (isHorizontalNeighbor || isVerticalNeighbor) {
                         stack.push(neighborKey);
                     }
                 }
@@ -146,13 +154,8 @@ export class Board {
         // If no components, score is 0
         if (components.length === 0) return 0;
         
-        let score = 1;
-        for (let component of components) {
-            score *= component.length;
-            console.log(component);
-        }
-        
-        return score;
+        // Calculate product of component sizes
+        return components.reduce((product, component) => product * component.length, 1);
     }
 
     // game functions

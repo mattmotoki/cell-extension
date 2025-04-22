@@ -1,27 +1,63 @@
-export class ScoreDisplay {
+import { getScoringMechanism } from "./utils.js";
 
-    constructor(currentPlayer, playerColors) {
-        this.display = d3.select(("#score-display"));
+export class ScoreBreakdown {
+    constructor(playerColors) {
+        this.display = d3.select("#score-breakdown");
         this.playerColors = playerColors;
-        this.reset(currentPlayer);
+        this.reset();
     }
-
-    update(currentPlayer, scores) {
-        if (currentPlayer === 0) {
-            this.display.html(` 
-                <span style='border-bottom: 2px solid ${this.playerColors[0]};'>Player 1: ${scores[0]}</span> &nbsp;&nbsp;&nbsp;&nbsp;
-                Player 2: ${scores[1]}`);
-        } else {
-            this.display.html(` 
-                Player 1: ${scores[0]} &nbsp;&nbsp;&nbsp;&nbsp;
-                <span style='border-bottom: 2px solid ${this.playerColors[1]};'>Player 2: ${scores[1]}</span>`);
+    
+    update(currentPlayer, scores, components1, components2) {
+        const scoring = getScoringMechanism();
+        
+        // Generate breakdown text for each player
+        let breakdownText1 = "";
+        let breakdownText2 = "";
+        
+        if (scoring === 'cell-multiplication' && components1 && components2) {
+            // Format player 1 breakdown - only show if there are multiple components
+            const componentSizes1 = components1.map(comp => comp.length).sort((a, b) => b - a);
+            if (componentSizes1.length > 1) {
+                const breakdown1 = componentSizes1.join('×');
+                breakdownText1 = `(${scores[0]} = ${breakdown1})`;
+            }
+            
+            // Format player 2 breakdown - only show if there are multiple components
+            const componentSizes2 = components2.map(comp => comp.length).sort((a, b) => b - a);
+            if (componentSizes2.length > 1) {
+                const breakdown2 = componentSizes2.join('×');
+                breakdownText2 = `(${scores[1]} = ${breakdown2})`;
+            }
         }
+        
+        // Style based on current player - apply underline to player label with score
+        const player1Label = currentPlayer === 0 
+            ? `<span style='border-bottom: 2px solid ${this.playerColors[0]};'>Player 1: ${scores[0]}</span>` 
+            : `Player 1: ${scores[0]}`;
+            
+        const player2Label = currentPlayer === 1 
+            ? `<span style='border-bottom: 2px solid ${this.playerColors[1]};'>Player 2: ${scores[1]}</span>` 
+            : `Player 2: ${scores[1]}`;
+        
+        // Create a justified display with labels and breakdowns on separate lines
+        this.display.html(`
+            <div style="display: flex; justify-content: space-between; width: 100%;">
+                <div style="text-align: left; padding-right: 10px;">
+                    <div style="font-weight: 500; margin-bottom: 3px;">${player1Label}</div>
+                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em;">${breakdownText1}</div>
+                </div>
+                <div style="text-align: right; padding-left: 10px;">
+                    <div style="font-weight: 500; margin-bottom: 3px;">${player2Label}</div>
+                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em;">${breakdownText2}</div>
+                </div>
+            </div>
+        `);
     }
-
-    reset(currentPlayer) {
-        this.update(currentPlayer, [0, 0]);
+    
+    reset(currentPlayer = 0) {
+        // Just initialize empty display, game will call updateScoreBreakdown after reset
+        this.display.html('');
     }
-
 }
 
 
@@ -179,7 +215,6 @@ export class ScoreChart {
         const moveLabel = moveCount - 1;
         
         if (moveCount > 1) {
-
             // Add the move count label above the axis
             this.xAxis.append("text")
                 .attr("x", this.xScale(moveLabel))
@@ -187,7 +222,7 @@ export class ScoreChart {
                 .attr("dy", "-0.2em")  // Small adjustment for better vertical positioning
                 .attr("text-anchor", "middle")
                 .style("font-size", "2.5")
-                .style("fill", "#000000")
+                .style("fill", "#000000")  // Black color for better visibility
                 .text(moveLabel);
         }
     }
