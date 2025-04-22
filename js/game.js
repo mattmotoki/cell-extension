@@ -147,17 +147,29 @@ export class Game {
 
 
     reset() {
+        // Store original player to preserve it during scoring mechanism changes
+        const originalPlayer = this.currentPlayer;
+        
         // reset variables
         this.scores = [0, 0];
         this.progress = "playing";
+        
+        // Get previous scoring mechanism
+        const previousMechanism = this.scoringMechanism;
         
         // Update the scoring mechanism from UI
         this.scoringMechanism = getScoringMechanism();
         this.updateScoreTooltip();
 
-        // change first player
-        if (this.board.getAvailableCells().length == (this.gridSize/this.cellSize)**2) {
+        // Only change first player if this is a new game, not a scoring mechanism change
+        const isNewGame = this.board.getAvailableCells().length == (this.gridSize/this.cellSize)**2;
+        const isScoringChange = previousMechanism !== this.scoringMechanism;
+        
+        if (isNewGame && !isScoringChange) {
             this.currentPlayer = (this.currentPlayer + 1) % 2;
+        } else if (isScoringChange) {
+            // If scoring mechanism changed, keep the same player
+            this.currentPlayer = originalPlayer;
         }
         
         // reset board
