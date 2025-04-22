@@ -178,6 +178,10 @@ export class ScoreChart {
         let maxScore = d3.max(this.scoreHistory1.concat(this.scoreHistory2)) || 1;
         this.yScale.domain([0, maxScore]);
         
+        // Determine which player has the highest score for coloring the max score label
+        const player1HasMax = Math.max(...this.scoreHistory1) >= Math.max(...this.scoreHistory2);
+        const maxScoreColor = player1HasMax ? this.playerColors[0] : this.playerColors[1];
+        
         // Update line paths
         this.svg.selectAll(".line1")
             .attr("stroke", this.playerColors[0])
@@ -220,23 +224,14 @@ export class ScoreChart {
             .style("stroke", "#aaaaaa")
             .style("stroke-width", "0.2");
             
-        // Add only two labels: 0 and max score
-        this.yAxis.append("text")
-            .attr("x", -2)
-            .attr("y", this.yScale(0))
-            .attr("dy", "0.3em")
-            .style("text-anchor", "end")
-            .style("font-size", "2.5")
-            .style("fill", "#cccccc")
-            .text("0");
-            
+        // Add only the max score label
         this.yAxis.append("text")
             .attr("x", -2)
             .attr("y", this.yScale(maxScore))
             .attr("dy", "0.3em")
             .style("text-anchor", "end")
             .style("font-size", "2.5")
-            .style("fill", "#cccccc")
+            .style("fill", maxScoreColor)  // Use color of player with highest score
             .text(maxScore);
             
         // Create a custom minimalist x-axis (showing only the most recent player's move count)
@@ -252,20 +247,28 @@ export class ScoreChart {
             .style("stroke", "#aaaaaa")
             .style("stroke-width", "0.2");
             
-        // Only show the last move count (for the player who just moved)
-        const prevPlayer = (currentPlayer + 1) % 2;
-        const moveLabel = moveCount - 1;
+        // Show the round number instead of move count
+        const roundNumber = Math.floor((moveCount - 1) / 2);
         
         if (moveCount > 1) {
-            // Add the move count label above the axis
+            // Add a tick mark for the round number position
+            this.xAxis.append("line")
+                .attr("x1", this.xScale(moveCount - 1))
+                .attr("y1", 0)
+                .attr("x2", this.xScale(moveCount - 1))
+                .attr("y2", -2)
+                .style("stroke", "#aaaaaa")
+                .style("stroke-width", "0.2");
+                
+            // Add the round number label above the axis
             this.xAxis.append("text")
-                .attr("x", this.xScale(moveLabel))
-                .attr("y", -1)  // Negative value to position above the axis
+                .attr("x", this.xScale(moveCount - 1))
+                .attr("y", -2)  // Negative value to position above the axis
                 .attr("dy", "-0.2em")  // Small adjustment for better vertical positioning
                 .attr("text-anchor", "middle")
                 .style("font-size", "2.5")
-                .style("fill", "#cccccc")  // Light gray color for dark mode
-                .text(moveLabel);
+                .style("fill", "#aaaaaa")
+                .text(roundNumber);
         }
     }
     
@@ -290,8 +293,45 @@ export class ScoreChart {
 
     reset() {
         this.scoreHistory1 = [];
-        this.scoreHistory2 = [];            
-        this.update(0, [0, 0]);
+        this.scoreHistory2 = [];
+        
+        // Set up initial state with no labels
+        let moveCount = 0;
+        this.xScale.domain([0, 1]);
+        this.yScale.domain([0, 1]);
+        
+        // Clear existing elements
+        this.yAxis.selectAll("*").remove();
+        this.xAxis.selectAll("*").remove();
+        
+        // Add the y-axis line
+        this.yAxis.append("line")
+            .attr("x1", 0)
+            .attr("y1", 0)
+            .attr("x2", 0)
+            .attr("y2", this.yScale.range()[0])
+            .style("stroke", "#aaaaaa")
+            .style("stroke-width", "0.2");
+            
+        // Add the x-axis line
+        this.xAxis.append("line")
+            .attr("x1", 0)
+            .attr("y1", 0)
+            .attr("x2", this.xScale.range()[1])
+            .attr("y2", 0)
+            .style("stroke", "#aaaaaa")
+            .style("stroke-width", "0.2");
+            
+        // Initialize empty paths for score lines
+        this.svg.selectAll(".line1")
+            .attr("stroke", this.playerColors[0])
+            .datum([])
+            .attr("d", this.line1);
+
+        this.svg.selectAll(".line2")
+            .attr("stroke", this.playerColors[1])
+            .datum([])
+            .attr("d", this.line2);
     }
 
 } 

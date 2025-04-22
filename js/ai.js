@@ -74,7 +74,8 @@ export class AIPlayer extends Player {
         if (!board.occupiedCells[playerIndex]) board.occupiedCells[playerIndex] = {};
         if (!board.occupiedCells[opponentIndex]) board.occupiedCells[opponentIndex] = {};
         
-        const cellKey = `${cell.x}-${cell.y}`;
+        // Convert floating point coordinates to integer grid positions
+        const cellKey = board.toPositionKey(cell.x, cell.y);
 
         // Check if the cell is occupied by opponent or self (invalid move)
         if (board.occupiedCells[opponentIndex][cellKey] || board.occupiedCells[playerIndex][cellKey]) {
