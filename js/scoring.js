@@ -104,8 +104,8 @@ export class ScoreChart {
 
     constructor(playerColors, gridSize) {
 
-        this.scoreHistory1 = [];
-        this.scoreHistory2 = [];
+        this.scoreHistory1 = [0];
+        this.scoreHistory2 = [0];
         this.playerColors = playerColors;
 
         let svgWidth = 100;
@@ -171,7 +171,7 @@ export class ScoreChart {
         this.scoreHistory2.push(scores[1]);
 
         // Update the domain of the x scale
-        let moveCount = Math.max(this.scoreHistory1.length, this.scoreHistory2.length);
+        let moveCount = Math.max(this.scoreHistory1.length, this.scoreHistory2.length) - 1;
         this.xScale.domain([0, moveCount]);
 
         // Update the domain of the y scale
@@ -290,8 +290,8 @@ export class ScoreChart {
     }
 
     reset() {
-        this.scoreHistory1 = [];
-        this.scoreHistory2 = [];
+        this.scoreHistory1 = [0];
+        this.scoreHistory2 = [0];
         
         // Set up initial state with just axes and labels
         let moveCount = 0;

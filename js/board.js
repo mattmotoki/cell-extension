@@ -130,12 +130,12 @@ export class Board {
                     
                     // Check if cells are neighbors (using tolerance for floating point)
                     const isHorizontalNeighbor = 
-                        Math.abs(Math.abs(neighborX - currentX) - this.cellSize) < tolerance && 
+                        Math.abs(Math.abs(neighborX - currentX) - 1) < tolerance && 
                         Math.abs(neighborY - currentY) < tolerance;
                     
                     const isVerticalNeighbor = 
                         Math.abs(neighborX - currentX) < tolerance && 
-                        Math.abs(Math.abs(neighborY - currentY) - this.cellSize) < tolerance;
+                        Math.abs(Math.abs(neighborY - currentY) - 1) < tolerance;
                     
                     // If they're neighbors, add to stack
                     if (isHorizontalNeighbor || isVerticalNeighbor) {
