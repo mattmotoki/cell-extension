@@ -51,10 +51,9 @@ The game is built using JavaScript with D3.js for visualization and interactions
 
 ## TODO
 
+* Bug fix: sometimes we skip the AI's move
 * UI/UX
     * Undo move
-* Multi-level modeling
-    * Create layers
 
 ## Scoring Mechanisms
 
@@ -64,7 +63,7 @@ The game is built using JavaScript with D3.js for visualization and interactions
 Players earn points based on the product of their connected clusters. If a player has clusters containing 2, 3, and 4 cells, their score is 2 x 3 x 4 = 24 points. The challenge is in strategically grouping cells to maximize the overall multiplication effect.
 
 ### Cell-Connection
-> The total number of edges (connections)
+> The total number of directed edges (connections)
 
 Players score points by creating as many connections as possible between their cells. The more connected a player's cells are, the higher their score. Blocking opponents by strategically placing cells can also play a key role in controlling the board.
 
@@ -74,7 +73,7 @@ Players score points by creating as many connections as possible between their c
 Only the largest connected cluster of a player's cells contributes to their score. The goal is to build the biggest continuous group while preventing opponents from forming larger ones.
 
 ### Cell-Extension
-> The largest diameter of the graph
+> The total number of undirected edges (extensions)
 
-Players aim to create the longest continuous path of connected cells. The length of this path, or the 'diameter' of the group, determines the score. Effective planning and placement are crucial to forming an extensive network.
+This is not a very interesting scoring mechanism.
 

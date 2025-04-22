@@ -74,13 +74,21 @@ export class AIPlayer extends Player {
         if (!board.occupiedCells[playerIndex]) board.occupiedCells[playerIndex] = {};
         if (!board.occupiedCells[opponentIndex]) board.occupiedCells[opponentIndex] = {};
         
-        const cellKey = `${cell.x}-${cell.y}`;
+        // Convert floating point coordinates to integer grid positions
+        const cellKey = board.toPositionKey(cell.x, cell.y);
 
         // Check if the cell is occupied by opponent or self (invalid move)
         if (board.occupiedCells[opponentIndex][cellKey] || board.occupiedCells[playerIndex][cellKey]) {
             return -Infinity; // Invalid move
         }
         
+        // For cell-extension, find the number of neighbors
+        if (scoringMechanism === 'cell-extension') {
+            const neighbors = board.canPlaceRectangle(cell.x, cell.y, playerIndex);
+            return neighbors.length; // Score is the number of extensions
+        }
+        
+        // For other scoring mechanisms
         // Simulate the move by adding the cell
         board.occupiedCells[playerIndex][cellKey] = true;
         

@@ -171,12 +171,16 @@ export class ScoreChart {
         this.scoreHistory2.push(scores[1]);
 
         // Update the domain of the x scale
-        let moveCount = this.scoreHistory1.length;
-        this.xScale.domain([0, moveCount > 1 ? moveCount - 1 : 1]);
+        let moveCount = Math.max(this.scoreHistory1.length, this.scoreHistory2.length);
+        this.xScale.domain([0, moveCount]);
 
         // Update the domain of the y scale
         let maxScore = d3.max(this.scoreHistory1.concat(this.scoreHistory2)) || 1;
         this.yScale.domain([0, maxScore]);
+        
+        // Determine which player has the highest score for coloring the max score label
+        const player1HasMax = Math.max(...this.scoreHistory1) >= Math.max(...this.scoreHistory2);
+        const maxScoreColor = player1HasMax ? this.playerColors[0] : this.playerColors[1];
         
         // Update line paths
         this.svg.selectAll(".line1")
@@ -220,23 +224,14 @@ export class ScoreChart {
             .style("stroke", "#aaaaaa")
             .style("stroke-width", "0.2");
             
-        // Add only two labels: 0 and max score
-        this.yAxis.append("text")
-            .attr("x", -2)
-            .attr("y", this.yScale(0))
-            .attr("dy", "0.3em")
-            .style("text-anchor", "end")
-            .style("font-size", "2.5")
-            .style("fill", "#cccccc")
-            .text("0");
-            
+        // Add only the max score label
         this.yAxis.append("text")
             .attr("x", -2)
             .attr("y", this.yScale(maxScore))
             .attr("dy", "0.3em")
             .style("text-anchor", "end")
             .style("font-size", "2.5")
-            .style("fill", "#cccccc")
+            .style("fill", maxScoreColor)  // Use color of player with highest score
             .text(maxScore);
             
         // Create a custom minimalist x-axis (showing only the most recent player's move count)
@@ -252,21 +247,27 @@ export class ScoreChart {
             .style("stroke", "#aaaaaa")
             .style("stroke-width", "0.2");
             
-        // Only show the last move count (for the player who just moved)
-        const prevPlayer = (currentPlayer + 1) % 2;
-        const moveLabel = moveCount - 1;
-        
-        if (moveCount > 1) {
-            // Add the move count label above the axis
-            this.xAxis.append("text")
-                .attr("x", this.xScale(moveLabel))
-                .attr("y", -1)  // Negative value to position above the axis
-                .attr("dy", "-0.2em")  // Small adjustment for better vertical positioning
-                .attr("text-anchor", "middle")
-                .style("font-size", "2.5")
-                .style("fill", "#cccccc")  // Light gray color for dark mode
-                .text(moveLabel);
-        }
+        // Show the round number instead of move count
+        const roundNumber = Math.floor((moveCount+1) / 2);
+    
+        // Add a tick mark for the round number position
+        this.xAxis.append("line")
+            .attr("x1", this.xScale(moveCount))
+            .attr("y1", 0)
+            .attr("x2", this.xScale(moveCount))
+            .attr("y2", -2)
+            .style("stroke", "#aaaaaa")
+            .style("stroke-width", "0.2");
+            
+        // Add the round number label above the axis
+        this.xAxis.append("text")
+            .attr("x", this.xScale(moveCount))
+            .attr("y", -2)  // Negative value to position above the axis
+            .attr("dy", "-0.2em")  // Small adjustment for better vertical positioning
+            .attr("text-anchor", "middle")
+            .style("font-size", "2.5")
+            .style("fill", "#aaaaaa")
+            .text(roundNumber);
     }
     
 
@@ -290,8 +291,84 @@ export class ScoreChart {
 
     reset() {
         this.scoreHistory1 = [];
-        this.scoreHistory2 = [];            
-        this.update(0, [0, 0]);
+        this.scoreHistory2 = [];
+        
+        // Set up initial state with just axes and labels
+        let moveCount = 0;
+        this.xScale.domain([0, 1]);
+        this.yScale.domain([0, 1]);
+        
+        // Clear ALL existing elements
+        this.svg.selectAll(".dot0, .dot1").remove(); // Clear all markers
+        this.yAxis.selectAll("*").remove();
+        this.xAxis.selectAll("*").remove();
+        
+        // Add the y-axis line
+        this.yAxis.append("line")
+            .attr("x1", 0)
+            .attr("y1", 0)
+            .attr("x2", 0)
+            .attr("y2", this.yScale.range()[0])
+            .style("stroke", "#aaaaaa")
+            .style("stroke-width", "0.2");
+            
+        // Add tick mark at the top for max value (1 initially)
+        this.yAxis.append("line")
+            .attr("x1", -2)
+            .attr("y1", this.yScale(1))
+            .attr("x2", 0)
+            .attr("y2", this.yScale(1))
+            .style("stroke", "#aaaaaa")
+            .style("stroke-width", "0.2");
+            
+        // Add the initial label for the y-axis
+        this.yAxis.append("text")
+            .attr("x", -2)
+            .attr("y", this.yScale(1))
+            .attr("dy", "0.3em")
+            .style("text-anchor", "end")
+            .style("font-size", "2.5")
+            .style("fill", "#aaaaaa")
+            .text("1");
+            
+        // Add the x-axis line
+        this.xAxis.append("line")
+            .attr("x1", 0)
+            .attr("y1", 0)
+            .attr("x2", this.xScale.range()[1])
+            .attr("y2", 0)
+            .style("stroke", "#aaaaaa")
+            .style("stroke-width", "0.2");
+            
+        // Add a tick mark for the first round
+        this.xAxis.append("line")
+            .attr("x1", this.xScale(1))
+            .attr("y1", 0)
+            .attr("x2", this.xScale(1))
+            .attr("y2", -2)
+            .style("stroke", "#aaaaaa")
+            .style("stroke-width", "0.2");
+            
+        // Add initial '1' label on x-axis 
+        this.xAxis.append("text")
+            .attr("x", this.xScale(1))
+            .attr("y", -2)
+            .attr("dy", "-0.2em")
+            .attr("text-anchor", "middle")
+            .attr("font-size", "2.5")
+            .attr("fill", "#aaaaaa")
+            .text("1");
+            
+        // Initialize empty paths for score lines
+        this.svg.selectAll(".line1")
+            .attr("stroke", this.playerColors[0])
+            .datum([])
+            .attr("d", this.line1);
+
+        this.svg.selectAll(".line2")
+            .attr("stroke", this.playerColors[1])
+            .datum([])
+            .attr("d", this.line2);
     }
 
 } 

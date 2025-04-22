@@ -1,3 +1,5 @@
+import { getScoringMechanism } from "./utils.js";
+
 class Cell {
 
     constructor(x, y, player, color) {
@@ -164,46 +166,52 @@ export class Board {
     
     // Calculate the score for Cell-Connection scoring mechanism
     getConnectionScore(playerIndex) {
-        const components = this.getConnectedComponents(playerIndex);
-        
-        // If no components, score is 0
-        if (components.length === 0) return 0;
-        
         // Get all occupied cells for this player
         const cells = Object.keys(this.occupiedCells[playerIndex] || {});
         
         // Count the number of connections (edges) between cells
         let connections = 0;
-        const tolerance = 0.01; // Add tolerance for floating point comparison
         
         // For each cell, check connections to other cells
         for (let cellKey of cells) {
-            const [x, y] = cellKey.split('-').map(parseFloat);
-            
+            const [x, y] = cellKey.split('-').map(Number);
+
             // Check adjacent cells
             const adjacentPositions = [
-                [x + this.cellSize, y], // right
-                [x - this.cellSize, y], // left
-                [x, y + this.cellSize], // down
-                [x, y - this.cellSize]  // up
+                [x + 1, y], // right
+                [x - 1, y], // left
+                [x, y + 1], // down
+                [x, y - 1]  // up
             ];
             
             // For each adjacent position, check if it's occupied by the same player
             for (let [adjX, adjY] of adjacentPositions) {
                 const adjKey = `${adjX}-${adjY}`;
-                
-                // If this adjacent cell is occupied by the same player, we have a connection
                 if (this.occupiedCells[playerIndex][adjKey]) {
-                    // Only count each connection once (when x1 < x2 or y1 < y2)
-                    if (adjX > x || (Math.abs(adjX - x) < tolerance && adjY > y)) {
-                        connections++;
-                    }
+                    connections++;
                 }
             }
         }
         
         // The score is the number of connections
         return connections;
+    }
+
+    // Helper method to convert floating point coordinates to integer position
+    toPositionKey(x, y) {
+        // Convert floating point coordinates to integer grid coordinates
+        const gridX = Math.round(x / this.cellSize);
+        const gridY = Math.round(y / this.cellSize);
+        return `${gridX}-${gridY}`;
+    }
+
+    // Helper method to convert integer position back to floating point coordinates
+    fromPositionKey(key) {
+        const [gridX, gridY] = key.split('-').map(Number);
+        return {
+            x: gridX * this.cellSize,
+            y: gridY * this.cellSize
+        };
     }
 
     // game functions
@@ -219,26 +227,31 @@ export class Board {
             this.occupiedCells[(currentPlayer + 1) % 2] = {};
         }
         
+        // Convert to integer position
+        const posKey = this.toPositionKey(x, y);
+        const [gridX, gridY] = posKey.split('-').map(Number);
+        
         let neighbors = [];
-        const tolerance = 0.01; // Add a small tolerance for floating point comparison
-
-        // Check if the cell is adjacent to any occupied cell
-        for (let key in this.occupiedCells[currentPlayer]) {
-            let cell = key.split("-").map(parseFloat);
+        
+        // Get adjacent cell positions
+        const adjacentPositions = [
+            [gridX + 1, gridY], // right
+            [gridX - 1, gridY], // left
+            [gridX, gridY + 1], // down
+            [gridX, gridY - 1]  // up
+        ];
+        
+        // Check for neighbors
+        for (let [adjX, adjY] of adjacentPositions) {
+            const adjKey = `${adjX}-${adjY}`;
             
-            // Use approximate equality for floating point coordinates
-            const isHorizontalNeighbor = 
-                Math.abs(Math.abs(cell[0] - x) - this.cellSize) < tolerance && 
-                Math.abs(cell[1] - y) < tolerance;
-                
-            const isVerticalNeighbor = 
-                Math.abs(cell[0] - x) < tolerance && 
-                Math.abs(Math.abs(cell[1] - y) - this.cellSize) < tolerance;
-
-            if (isHorizontalNeighbor || isVerticalNeighbor) {
-                // Check if the other player hasn't occupied the cell
-                if (!this.occupiedCells[(currentPlayer + 1) % 2][`${x}-${y}`]) {
-                    neighbors.push(cell); // Cell is adjacent to an occupied cell
+            // If adjacent cell is occupied by current player
+            if (this.occupiedCells[currentPlayer][adjKey]) {
+                // And target cell is not occupied by opponent
+                if (!this.occupiedCells[(currentPlayer + 1) % 2][posKey]) {
+                    // Add the actual coordinates for compatibility with existing code
+                    const coords = this.fromPositionKey(adjKey);
+                    neighbors.push([coords.x, coords.y]);
                 }
             }
         }
@@ -335,8 +348,13 @@ export class Board {
             .attr("width", width)
             .attr("height", height)
             .on("end", () => {
+                const currentScoring = getScoringMechanism();
+                const showConnectionCount = currentScoring === 'cell-connection';
+
                 if (width === 2*this.cellSize) {  // horizontal extension
-                    let y_mid = y_start  + this.cellSize / 2;
+                    let y_mid = y_start + this.cellSize / 2;
+                    
+                    // Always add the connecting line
                     this.linesGroup.append("line")
                         .attr("x1", x_end + this.cellSize / 2)
                         .attr("y1", y_mid)
@@ -344,18 +362,69 @@ export class Board {
                         .attr("y2", y_mid)
                         .attr("stroke", this.lineColors[player - 1])
                         .attr("stroke-width", 0.3);
-                    this.linesGroup.append("circle")
-                        .attr("cx", x_end + this.cellSize / 2)
-                        .attr("cy", y_mid)
-                        .attr("r", 0.7)
-                        .attr("fill", this.lineColors[player - 1]);
-                    this.linesGroup.append("circle")
-                        .attr("cx", x_end + 3*this.cellSize / 2)
-                        .attr("cy", y_mid)
-                        .attr("r", 0.7)
-                        .attr("fill", this.lineColors[player - 1]);
+                    
+                    if (showConnectionCount) {
+                        // For first cell, get its position key and count connections
+                        const pos1Key = this.toPositionKey(x_end, y_start);
+                        const [x1, y1] = pos1Key.split('-').map(Number);
+                        const count1 = this.countConnections(x1, y1, player - 1);
+                        
+                        // For second cell, get its position key and count connections
+                        const pos2Key = this.toPositionKey(x_end + this.cellSize, y_start);
+                        const [x2, y2] = pos2Key.split('-').map(Number);
+                        const count2 = this.countConnections(x2, y2, player - 1);
+                        
+                        // Add text showing connection counts
+                        this.linesGroup.append("circle")
+                            .attr("cx", x_end + this.cellSize / 2)
+                            .attr("cy", y_mid)
+                            .attr("r", 2)
+                            .attr("fill", this.playerColors[player - 1])
+                            .attr("class", "number-background");
+                            
+                        this.linesGroup.append("circle")
+                            .attr("cx", x_end + 3*this.cellSize / 2)
+                            .attr("cy", y_mid)
+                            .attr("r", 2)
+                            .attr("fill", this.playerColors[player - 1])
+                            .attr("class", "number-background");
+                        
+                        this.linesGroup.append("text")
+                            .attr("x", x_end + this.cellSize / 2)
+                            .attr("y", y_mid)
+                            .attr("text-anchor", "middle")
+                            .attr("dominant-baseline", "central")
+                            .attr("font-size", "3")
+                            .attr("fill", this.lineColors[player - 1])
+                            .attr("class", "connection-number")
+                            .text(count1);
+                            
+                        this.linesGroup.append("text")
+                            .attr("x", x_end + 3*this.cellSize / 2)
+                            .attr("y", y_mid)
+                            .attr("text-anchor", "middle")
+                            .attr("dominant-baseline", "central")
+                            .attr("font-size", "3")
+                            .attr("fill", this.lineColors[player - 1])
+                            .attr("class", "connection-number")
+                            .text(count2);
+                    } else {
+                        // Show circles for other scoring mechanisms
+                        this.linesGroup.append("circle")
+                            .attr("cx", x_end + this.cellSize / 2)
+                            .attr("cy", y_mid)
+                            .attr("r", 0.7)
+                            .attr("fill", this.lineColors[player - 1]);
+                        this.linesGroup.append("circle")
+                            .attr("cx", x_end + 3*this.cellSize / 2)
+                            .attr("cy", y_mid)
+                            .attr("r", 0.7)
+                            .attr("fill", this.lineColors[player - 1]);
+                    }
                 } else if (height === 2*this.cellSize) {  // vertical extension
                     let x_mid = x_start + this.cellSize / 2;
+                    
+                    // Always add the connecting line
                     this.linesGroup.append("line")
                         .attr("x1", x_mid)
                         .attr("y1", y_end + this.cellSize / 2)
@@ -363,36 +432,116 @@ export class Board {
                         .attr("y2", y_end + 3*this.cellSize / 2)
                         .attr("stroke", this.lineColors[player - 1])
                         .attr("stroke-width", 0.3);
-                    this.linesGroup.append("circle")
-                        .attr("cx", x_mid)
-                        .attr("cy", y_end + this.cellSize / 2)
-                        .attr("r", 0.7)
-                        .attr("fill", this.lineColors[player - 1]);
-                    this.linesGroup.append("circle")
-                        .attr("cx", x_mid)
-                        .attr("cy", y_end + 3*this.cellSize / 2)
-                        .attr("r", 0.7)
-                        .attr("fill", this.lineColors[player - 1]);                        
+                    
+                    if (showConnectionCount) {
+                        // For first cell, get its position key and count connections
+                        const pos1Key = this.toPositionKey(x_start, y_end);
+                        const [x1, y1] = pos1Key.split('-').map(Number);
+                        const count1 = this.countConnections(x1, y1, player - 1);
+                        
+                        // For second cell, get its position key and count connections
+                        const pos2Key = this.toPositionKey(x_start, y_end + this.cellSize);
+                        const [x2, y2] = pos2Key.split('-').map(Number);
+                        const count2 = this.countConnections(x2, y2, player - 1);
+                        
+                        // Add text showing connection counts
+                        this.linesGroup.append("circle")
+                            .attr("cx", x_mid)
+                            .attr("cy", y_end + this.cellSize / 2)
+                            .attr("r", 2)
+                            .attr("fill", this.playerColors[player - 1])
+                            .attr("class", "number-background");
+                            
+                        this.linesGroup.append("circle")
+                            .attr("cx", x_mid)
+                            .attr("cy", y_end + 3*this.cellSize / 2)
+                            .attr("r", 2)
+                            .attr("fill", this.playerColors[player - 1])
+                            .attr("class", "number-background");
+                        
+                        this.linesGroup.append("text")
+                            .attr("x", x_mid)
+                            .attr("y", y_end + this.cellSize / 2)
+                            .attr("text-anchor", "middle")
+                            .attr("dominant-baseline", "central")
+                            .attr("font-size", "3")
+                            .attr("fill", this.lineColors[player - 1])
+                            .attr("class", "connection-number")
+                            .text(count1);
+                            
+                        this.linesGroup.append("text")
+                            .attr("x", x_mid)
+                            .attr("y", y_end + 3*this.cellSize / 2)
+                            .attr("text-anchor", "middle")
+                            .attr("dominant-baseline", "central")
+                            .attr("font-size", "3")
+                            .attr("fill", this.lineColors[player - 1])
+                            .attr("class", "connection-number")
+                            .text(count2);
+                    } else {
+                        // Show circles for other scoring mechanisms
+                        this.linesGroup.append("circle")
+                            .attr("cx", x_mid)
+                            .attr("cy", y_end + this.cellSize / 2)
+                            .attr("r", 0.7)
+                            .attr("fill", this.lineColors[player - 1]);
+                        this.linesGroup.append("circle")
+                            .attr("cx", x_mid)
+                            .attr("cy", y_end + 3*this.cellSize / 2)
+                            .attr("r", 0.7)
+                            .attr("fill", this.lineColors[player - 1]);
+                    }
                 }
             });            
     }
     
+    // Count the number of connections (undirected edges) for a specific cell
+    countConnections(gridX, gridY, playerIndex) {
+        let connections = 0;
+        const cellKey = `${gridX}-${gridY}`;
+        
+        // Check if this cell exists
+        if (!this.occupiedCells[playerIndex][cellKey]) {
+            return 0;
+        }
+        
+        // Check adjacent cells
+        const adjacentPositions = [
+            [gridX + 1, gridY], // right
+            [gridX - 1, gridY], // left
+            [gridX, gridY + 1], // down
+            [gridX, gridY - 1]  // up
+        ];
+        
+        // Count occupied adjacent cells
+        for (let [adjX, adjY] of adjacentPositions) {
+            const adjKey = `${adjX}-${adjY}`;
+            if (this.occupiedCells[playerIndex][adjKey]) {
+                connections++;
+            }
+        }
+        
+        return connections;
+    }
+
     update(x, y, currentPlayer) {
+        // Convert to integer position
+        const posKey = this.toPositionKey(x, y);
 
         // Check if cell is not occupied by the other player
         let n_extensions = 0;
-        if (!this.occupiedCells[(currentPlayer + 1) % 2][`${x}-${y}`]) {
+        if (!this.occupiedCells[(currentPlayer + 1) % 2][posKey]) {
 
             // check if there are neighbors to extend
             let neighbors = this.canPlaceRectangle(x, y, currentPlayer);
             if (neighbors.length > 0) {
                 n_extensions = this.drawRectangle(x, y, neighbors, currentPlayer + 1);
-                this.occupiedCells[currentPlayer][`${x}-${y}`] = true;
+                this.occupiedCells[currentPlayer][posKey] = true;
 
             // otherwise draw new cell
             } else {
                 n_extensions = this.drawRectangle(x, y, [], currentPlayer + 1);
-                this.occupiedCells[currentPlayer][`${x}-${y}`] = true;
+                this.occupiedCells[currentPlayer][posKey] = true;
             }
 
         } else {
@@ -407,6 +556,8 @@ export class Board {
         this.cellsGroup.selectAll(".rectangle1, .rectangle2").remove();
         this.linesGroup.selectAll("circle").remove();
         this.linesGroup.selectAll("line").remove();
+        this.linesGroup.selectAll("text.connection-number").remove();
+        this.linesGroup.selectAll(".number-background").remove();
         this.occupiedCells = [{}, {}];
     }
 

@@ -23,7 +23,7 @@
     <nav class="navbar">
         <div class="navbar-logo">
             <img src="favicons/favicon-32x32.png" alt="Cell Extension Logo">
-            <h1 class="navbar-title">Cell Multiplication</h1>
+            <h1 class="navbar-title">Cell Collection</h1>
         </div>
         <div class="hamburger-menu" id="hamburger-menu">
             <span></span>
@@ -45,10 +45,10 @@
             <li class="mobile-menu-item">
                 <span class="mobile-menu-item-label">Scoring Mechanism</span>
                 <select id="scoring-mechanism-mobile" title="Select a scoring mechanism">
-                    <option value="cell-multiplication" title="Product of the size (number of cells) of the connected components" selected>Cell-Multiplication</option>                        
-                    <option value="cell-connection" title="The total number of edges (connections)">Cell-Connection</option>
+                    <option value="cell-multiplication" title="Product of the size (number of cells) of the connected components">Cell-Multiplication</option>                        
+                    <option value="cell-connection" title="The total number of directed edges (connections)" selected>Cell-Connection</option>
+                    <option value="cell-extension" title="The total number of undirected edges (extensions)">Cell-Extension</option>                    
                     <option value="cell-maximization" title="The size of the largest connected component" disabled>Cell-Maximization (Coming soon)</option>
-                    <option value="cell-extension" title="The largest diameter of the graph" disabled>Cell-Extension (Coming soon)</option>
                 </select>
             </li>
         </ul>
@@ -81,10 +81,10 @@
                     <!-- Scoring Mechanism Dropdown -->
                     <div class="scoring-dropdown">
                         <select id="scoring-mechanism" title="Select a scoring mechanism">
-                            <option value="cell-multiplication" title="Product of the size (number of cells) of the connected components" selected>Cell-Multiplication</option>                        
-                            <option value="cell-connection" title="The total number of edges (connections)">Cell-Connection</option>
+                            <option value="cell-multiplication" title="Product of the size (number of cells) of the connected components">Cell-Multiplication</option>                        
+                            <option value="cell-connection" title="The total number of directed edges (connections)" selected>Cell-Connection</option>
+                            <option value="cell-extension" title="The total number of undirected edges (extensions)">Cell-Extension</option>                    
                             <option value="cell-maximization" title="The size of the largest connected component" disabled>Cell-Maximization (Coming soon)</option>
-                            <option value="cell-extension" title="The largest diameter of the graph" disabled>Cell-Extension (Coming soon)</option>
                         </select>
                     </div>
                 </div>
