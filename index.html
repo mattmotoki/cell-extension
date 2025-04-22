@@ -19,40 +19,82 @@
         </script>        
     </head>
 <body>
-    <div id="game">
-        <div id="game-header">
-            <svg id="widget"></svg>        
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-logo">
+            <img src="favicons/favicon-32x32.png" alt="Cell Extension Logo">
+            <h1 class="navbar-title">Cell Extension</h1>
         </div>
-        <div id="score-breakdown"></div>
-        <svg id="board"></svg>        
-        <svg id="score-chart"></svg>
-        <div id="game-controls">
-            <div class="control-group">
-                <!-- Player Mode Dropdown for both desktop and mobile -->
-                <div class="player-dropdown">
-                    <select id="player-mode">
-                        <option value="ai">AI Player</option>
-                        <option value="user">Two Player</option>
-                    </select>
+        <div class="hamburger-menu" id="hamburger-menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+    
+    <!-- Mobile Menu with Static List Structure -->
+    <div class="mobile-menu" id="mobile-menu">
+        <ul class="mobile-menu-list">
+            <li class="mobile-menu-item">
+                <span class="mobile-menu-item-label">Player Mode</span>
+                <select id="player-mode-mobile">
+                    <option value="ai">AI Player</option>
+                    <option value="user">Two Player</option>
+                </select>
+            </li>
+            <li class="mobile-menu-item">
+                <span class="mobile-menu-item-label">Scoring Mechanism</span>
+                <select id="scoring-mechanism-mobile" title="Select a scoring mechanism">
+                    <option value="cell-multiplication" title="Product of the size (number of cells) of the connected components" selected>Cell-Multiplication</option>                        
+                    <option value="cell-connection" title="The total number of edges (connections)">Cell-Connection</option>
+                    <option value="cell-maximization" title="The size of the largest connected component" disabled>Cell-Maximization (Coming soon)</option>
+                    <option value="cell-extension" title="The largest diameter of the graph" disabled>Cell-Extension (Coming soon)</option>
+                </select>
+            </li>
+        </ul>
+        <!-- Close button -->
+        <div class="mobile-menu-close">
+            <button id="mobile-menu-close-btn">Close Menu</button>
+        </div>
+    </div>
+    
+    <!-- Remove overlay -->
+    <!-- <div class="mobile-menu-overlay"></div> -->
+    
+    <div id="game">
+        <!-- Game content wrapper for vertical centering -->
+        <div class="game-content-wrapper">
+            <div id="player-scores"></div>
+            <svg id="board"></svg>        
+            <svg id="score-chart"></svg>
+            <div id="score-breakdown"></div>
+            <div id="game-controls">
+                <div class="control-group">
+                    <!-- Player Mode Dropdown for both desktop and mobile -->
+                    <div class="player-dropdown">
+                        <select id="player-mode">
+                            <option value="ai">AI Player</option>
+                            <option value="user">Two Player</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Scoring Mechanism Dropdown -->
+                    <div class="scoring-dropdown">
+                        <select id="scoring-mechanism" title="Select a scoring mechanism">
+                            <option value="cell-multiplication" title="Product of the size (number of cells) of the connected components" selected>Cell-Multiplication</option>                        
+                            <option value="cell-connection" title="The total number of edges (connections)">Cell-Connection</option>
+                            <option value="cell-maximization" title="The size of the largest connected component" disabled>Cell-Maximization (Coming soon)</option>
+                            <option value="cell-extension" title="The largest diameter of the graph" disabled>Cell-Extension (Coming soon)</option>
+                        </select>
+                    </div>
                 </div>
                 
-                <!-- Scoring Mechanism Dropdown -->
-                <div class="scoring-dropdown">
-                    <select id="scoring-mechanism" title="Select a scoring mechanism">
-                        <option value="cell-multiplication" title="Product of the size (number of cells) of the connected components" selected>Cell-Multiplication</option>                        
-                        <option value="cell-connection" title="The total number of edges (connections)">Cell-Connection</option>
-                        <option value="cell-maximization" title="The size of the largest connected component" disabled>Cell-Maximization (Coming soon)</option>
-                        <option value="cell-extension" title="The largest diameter of the graph" disabled>Cell-Extension (Coming soon)</option>
-                    </select>
-                </div>
+                <button id="reset">Reset Game</button>
             </div>
-            
-            <button id="reset">Reset Game</button>
         </div>
     </div>
     
     <script type="module">
-        import {Widget} from "./js/widget.js";
         import {Game} from "./js/game.js";
         
         // TODO: 
@@ -76,22 +118,49 @@
         function syncControls() {
             // Player mode dropdown change handler
             let playerModeDropdown = document.getElementById("player-mode");
+            let playerModeMobile = document.getElementById("player-mode-mobile");
+            
+            // Sync desktop to mobile
             playerModeDropdown.addEventListener("change", function() {
+                playerModeMobile.value = this.value;
+                game.reset();
+            });
+            
+            // Sync mobile to desktop
+            playerModeMobile.addEventListener("change", function() {
+                playerModeDropdown.value = this.value;
                 game.reset();
             });
             
             // Setup scoring mechanism tooltip and change handler
             const scoringSelect = document.getElementById("scoring-mechanism");
+            const scoringSelectMobile = document.getElementById("scoring-mechanism-mobile");
             
-            // Add tooltip to the select element showing description of current selection
+            // Sync desktop to mobile
             scoringSelect.addEventListener("change", function() {
                 // Reset the game when scoring mechanism changes
                 if (!this.options[this.selectedIndex].disabled) {
+                    scoringSelectMobile.value = this.value;
                     game.reset();
                 } else {
                     // If user selects a disabled option, reset to the previous value
                     alert("This scoring mechanism is not yet implemented.");
                     this.value = "cell-connection";
+                    scoringSelectMobile.value = "cell-connection";
+                }
+            });
+            
+            // Sync mobile to desktop
+            scoringSelectMobile.addEventListener("change", function() {
+                // Reset the game when scoring mechanism changes
+                if (!this.options[this.selectedIndex].disabled) {
+                    scoringSelect.value = this.value;
+                    game.reset();
+                } else {
+                    // If user selects a disabled option, reset to the previous value
+                    alert("This scoring mechanism is not yet implemented.");
+                    this.value = "cell-connection";
+                    scoringSelect.value = "cell-connection";
                 }
             });
             
@@ -103,11 +172,80 @@
                     option.setAttribute("title", title);
                 }
             });
+            
+            // Simplify mobile menu toggle
+            const hamburgerBtn = document.getElementById('hamburger-menu');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            // Toggle mobile menu when hamburger is clicked
+            hamburgerBtn.addEventListener('click', function() {
+                toggleMobileMenu();
+            });
+            
+            // Function to toggle mobile menu state
+            function toggleMobileMenu(forceClose = false) {
+                if (forceClose) {
+                    mobileMenu.classList.remove('active');
+                    hamburgerBtn.classList.remove('active');
+                } else {
+                    mobileMenu.classList.toggle('active');
+                    hamburgerBtn.classList.toggle('active');
+                }
+            }
+            
+            // Close menu with close button
+            const closeBtn = document.getElementById('mobile-menu-close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    toggleMobileMenu(true);
+                });
+            }
+            
+            // Close menu when clicking anywhere on the page (except dropdown menus)
+            document.addEventListener('click', function(e) {
+                // Only proceed if menu is open
+                if (!mobileMenu.classList.contains('active')) return;
+                
+                // Keep menu open if clicked element is a dropdown or inside a dropdown
+                if (e.target.closest('select') || e.target.tagName === 'SELECT' || 
+                    e.target.closest('.mobile-menu-item')) {
+                    return;
+                }
+                
+                // Close menu if click is not on hamburger button
+                if (!hamburgerBtn.contains(e.target)) {
+                    toggleMobileMenu(true);
+                }
+            });
+            
+            // Stop propgation on hamburger clicks to prevent document click from triggering
+            hamburgerBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            
+            // Only handle window resize to close menu if needed
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    toggleMobileMenu(true);
+                }
+            });
+            
+            // Handle scroll effect for navbar
+            function handleScroll() {
+                const navbar = document.querySelector('.navbar');
+                if (window.scrollY > 10) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            }
+            
+            // Add scroll event listener
+            window.addEventListener('scroll', handleScroll);
+            
+            // Check on initial load
+            handleScroll();
         }
-
-        // create widget
-        let widget = new Widget("widget", 32, 8, 250);
-        setTimeout(widget.playRandomly.bind(widget), widget.waitTime);
     
         // create game
         let game = new Game(gridDimension, cellDimension, playerColors, currentPlayer, scores, progress);
