@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Cell Extension</title>
         <link rel="stylesheet" type="text/css" href="styles.css">
         <link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-touch-icon.png">
@@ -25,18 +27,52 @@
         <svg id="board"></svg>        
         <svg id="score-chart"></svg>
         <div id="game-controls">
-            <div id="player-mode">
-                <input type="radio" id="ai" name="player-mode" value="ai" checked>
-                <label for="ai">AI Player</label>
-                <input type="radio" id="user" name="player-mode" value="user">
-                <label for="user">Two Player</label>
+            <div class="control-group">
+                <!-- Desktop: Radio buttons for player mode -->
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="ai-radio" name="player-mode-radio" value="ai" checked>
+                        <label for="ai-radio">AI Player</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="user-radio" name="player-mode-radio" value="user">
+                        <label for="user-radio">Two Player</label>
+                    </div>
+                </div>
+                
+                <!-- Desktop: Checkbox for display options -->
+                <div class="checkbox-group">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="edges-checkbox" checked>
+                        <label for="edges-checkbox">Show Edges</label>
+                    </div>
+                </div>
+                
+                <!-- Mobile: Dropdown for player mode -->
+                <div class="dropdown">
+                    <select id="player-mode">
+                        <option value="ai">AI Player</option>
+                        <option value="user">Two Player</option>
+                    </select>
+                </div>
+                
+                <!-- Mobile: Dropdown for display options -->
+                <details class="display-dropdown">
+                    <summary>Display</summary>
+                    <div class="dropdown-content">
+                        <div class="dropdown-option">
+                            <input type="checkbox" id="toggle-connections" checked>
+                            <label for="toggle-connections">Show Edges</label>
+                        </div>
+                    </div>
+                </details>
             </div>
-            <button id="toggle-connections">Toggle Connections</button>
+            
             <button id="reset">Reset Game</button>
         </div>
     </div>
+    
     <script type="module">
-
         import {Widget} from "./js/widget.js";
         import {Game} from "./js/game.js";
         
@@ -44,12 +80,91 @@
         // * fix alert message happening too soon
         // * bug: reset doesn't remove active transitions
         
-        let gridSize = 600;
-        let cellSize = 100;
+        // Responsive sizing variables
+        let gridSize = calculateGridSize();
+        let cellSize = gridSize / 6; // 6 cells per grid
         let playerColors = ["#00FF00", "#1E90FF"];
         let currentPlayer = 0;
         let scores = [0, 0];
         let progress = "playing";
+        
+        // Function to calculate grid size based on screen width
+        function calculateGridSize() {
+            if (window.innerWidth < 768) {
+                // For mobile: use a higher percentage of viewport width
+                return Math.min(window.innerWidth - 16, 600);
+            } else {
+                return 600; // Desktop size
+            }
+        }
+        
+        // Handle resize events
+        window.addEventListener('resize', function() {
+            let newGridSize = calculateGridSize();
+            let newCellSize = newGridSize / 6;
+            
+            // Update SVG dimensions
+            d3.select("#board")
+                .attr("width", newGridSize)
+                .attr("height", newGridSize);
+                
+            // Only create a new game if the size has changed significantly
+            if (Math.abs(newGridSize - gridSize) > 20) {
+                gridSize = newGridSize;
+                cellSize = newCellSize;
+                game.reset();
+            }
+        });
+
+        // Initial board size setting
+        d3.select("#board")
+            .attr("width", gridSize)
+            .attr("height", gridSize);
+
+        // Sync controls between desktop and mobile
+        function syncControls() {
+            // Sync player mode
+            let playerModeRadios = document.getElementsByName("player-mode-radio");
+            let playerModeDropdown = document.getElementById("player-mode");
+            
+            // From radio to dropdown
+            for (let radio of playerModeRadios) {
+                if (radio.checked) {
+                    playerModeDropdown.value = radio.value;
+                }
+                
+                radio.addEventListener("change", function() {
+                    playerModeDropdown.value = this.value;
+                    game.reset();
+                });
+            }
+            
+            // From dropdown to radio
+            playerModeDropdown.addEventListener("change", function() {
+                for (let radio of playerModeRadios) {
+                    if (radio.value === this.value) {
+                        radio.checked = true;
+                    }
+                }
+                game.reset();
+            });
+            
+            // Sync display options
+            let edgesCheckbox = document.getElementById("edges-checkbox");
+            let toggleConnectionsCheckbox = document.getElementById("toggle-connections");
+            
+            // From desktop to mobile
+            edgesCheckbox.addEventListener("change", function() {
+                toggleConnectionsCheckbox.checked = this.checked;
+                game.toggleConnections({ target: { checked: this.checked } });
+            });
+            
+            // From mobile to desktop
+            toggleConnectionsCheckbox.addEventListener("change", function() {
+                edgesCheckbox.checked = this.checked;
+                game.toggleConnections({ target: { checked: this.checked } });
+            });
+        }
 
         // create widget
         let widget = new Widget("widget", 32, 8, 250);
@@ -60,9 +175,9 @@
 
         // game controls
         d3.select("#reset").on("click", game.reset.bind(game));
-        d3.select("#player-mode").on("change", game.reset.bind(game));
-        d3.select("#toggle-connections").on("click", game.toggleConnections.bind(game));
-
+        
+        // Initialize synced controls
+        syncControls();
     </script>    
 </body>
 </html>
