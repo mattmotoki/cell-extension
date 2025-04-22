@@ -379,16 +379,14 @@ export class Board {
                             .attr("cx", x_end + this.cellSize / 2)
                             .attr("cy", y_mid)
                             .attr("r", 2)
-                            .attr("fill", "white")
-                            .attr("opacity", 0.8)
+                            .attr("fill", this.playerColors[player - 1])
                             .attr("class", "number-background");
                             
                         this.linesGroup.append("circle")
                             .attr("cx", x_end + 3*this.cellSize / 2)
                             .attr("cy", y_mid)
                             .attr("r", 2)
-                            .attr("fill", "white")
-                            .attr("opacity", 0.8)
+                            .attr("fill", this.playerColors[player - 1])
                             .attr("class", "number-background");
                         
                         this.linesGroup.append("text")
@@ -451,16 +449,14 @@ export class Board {
                             .attr("cx", x_mid)
                             .attr("cy", y_end + this.cellSize / 2)
                             .attr("r", 2)
-                            .attr("fill", "white")
-                            .attr("opacity", 0.8)
+                            .attr("fill", this.playerColors[player - 1])
                             .attr("class", "number-background");
                             
                         this.linesGroup.append("circle")
                             .attr("cx", x_mid)
                             .attr("cy", y_end + 3*this.cellSize / 2)
                             .attr("r", 2)
-                            .attr("fill", "white")
-                            .attr("opacity", 0.8)
+                            .attr("fill", this.playerColors[player - 1])
                             .attr("class", "number-background");
                         
                         this.linesGroup.append("text")
