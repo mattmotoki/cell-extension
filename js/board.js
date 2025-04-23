@@ -358,15 +358,35 @@ export class Board {
                         .attr("stroke-width", 0.3);
                     
                     if (showConnectionCount) {
-                        // For first cell, get its position key and count connections
-                        const pos1Key = this.createPositionKey(x_end, y_start);
-                        const [x1, y1] = this.parsePositionKey(pos1Key);
-                        const count1 = this.countConnections(x1, y1, player - 1);
+                        // Get grid coordinates for both cells
+                        const gridY = Math.round(y_start / this.cellSize);
+                        const gridX1 = Math.round(x_end / this.cellSize);
+                        const gridX2 = gridX1 + 1;
                         
-                        // For second cell, get its position key and count connections
-                        const pos2Key = this.createPositionKey(x_end + this.cellSize, y_start);
-                        const [x2, y2] = this.parsePositionKey(pos2Key);
-                        const count2 = this.countConnections(x2, y2, player - 1);
+                        // Create position keys for both cells
+                        const pos1Key = this.createPositionKey(gridX1, gridY);
+                        const pos2Key = this.createPositionKey(gridX2, gridY);
+                        
+                        // Make sure both cells are marked as occupied temporarily for connection counting
+                        const playerIndex = player - 1;
+                        const wasOccupied1 = this.occupiedCells[playerIndex][pos1Key];
+                        const wasOccupied2 = this.occupiedCells[playerIndex][pos2Key];
+                        
+                        // Mark both cells as occupied for correct connection counting
+                        this.occupiedCells[playerIndex][pos1Key] = true;
+                        this.occupiedCells[playerIndex][pos2Key] = true;
+                        
+                        // Count connections for both cells
+                        const count1 = this.countConnections(gridX1, gridY, playerIndex);
+                        const count2 = this.countConnections(gridX2, gridY, playerIndex);
+                        
+                        // Restore original state if needed (though they should remain occupied)
+                        if (!wasOccupied1) {
+                            this.occupiedCells[playerIndex][pos1Key] = wasOccupied1;
+                        }
+                        if (!wasOccupied2) {
+                            this.occupiedCells[playerIndex][pos2Key] = wasOccupied2;
+                        }
                         
                         // Add text showing connection counts
                         this.linesGroup.append("circle")
@@ -428,15 +448,35 @@ export class Board {
                         .attr("stroke-width", 0.3);
                     
                     if (showConnectionCount) {
-                        // For first cell, get its position key and count connections
-                        const pos1Key = this.createPositionKey(x_start, y_end);
-                        const [x1, y1] = this.parsePositionKey(pos1Key);
-                        const count1 = this.countConnections(x1, y1, player - 1);
+                        // Get grid coordinates for both cells
+                        const gridX = Math.round(x_start / this.cellSize);
+                        const gridY1 = Math.round(y_end / this.cellSize);
+                        const gridY2 = gridY1 + 1;
                         
-                        // For second cell, get its position key and count connections
-                        const pos2Key = this.createPositionKey(x_start, y_end + this.cellSize);
-                        const [x2, y2] = this.parsePositionKey(pos2Key);
-                        const count2 = this.countConnections(x2, y2, player - 1);
+                        // Create position keys for both cells
+                        const pos1Key = this.createPositionKey(gridX, gridY1);
+                        const pos2Key = this.createPositionKey(gridX, gridY2);
+                        
+                        // Make sure both cells are marked as occupied temporarily for connection counting
+                        const playerIndex = player - 1;
+                        const wasOccupied1 = this.occupiedCells[playerIndex][pos1Key];
+                        const wasOccupied2 = this.occupiedCells[playerIndex][pos2Key];
+                        
+                        // Mark both cells as occupied for correct connection counting
+                        this.occupiedCells[playerIndex][pos1Key] = true;
+                        this.occupiedCells[playerIndex][pos2Key] = true;
+                        
+                        // Count connections for both cells
+                        const count1 = this.countConnections(gridX, gridY1, playerIndex);
+                        const count2 = this.countConnections(gridX, gridY2, playerIndex);
+                        
+                        // Restore original state if needed (though they should remain occupied)
+                        if (!wasOccupied1) {
+                            this.occupiedCells[playerIndex][pos1Key] = wasOccupied1;
+                        }
+                        if (!wasOccupied2) {
+                            this.occupiedCells[playerIndex][pos2Key] = wasOccupied2;
+                        }
                         
                         // Add text showing connection counts
                         this.linesGroup.append("circle")
