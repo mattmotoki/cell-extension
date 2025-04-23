@@ -59,15 +59,15 @@ export class AIPlayer extends Player {
     getMove(board, scoringMechanism) {
         this.moveCount++;
         
+        // Get available cells (contains both pixel and grid coordinates)
         const availableCells = board.getAvailableCells();
         if (availableCells.length === 0) return null;
         
-        // Filter out cells with invalid coordinates (must be multiples of cellSize)
-        const validCells = availableCells.filter(cell => {
-            return Number.isFinite(cell.x) && Number.isFinite(cell.y) && 
-                   cell.x >= 0 && cell.y >= 0 &&
-                   cell.x % board.cellSize === 0 && cell.y % board.cellSize === 0;
-        });
+        // Filter out any invalid cells
+        const validCells = availableCells.filter(cell => 
+            Number.isFinite(cell.x) && Number.isFinite(cell.y) && 
+            Number.isFinite(cell.gridX) && Number.isFinite(cell.gridY)
+        );
         
         if (validCells.length === 0) {
             console.warn("No valid cells available for AI move");
@@ -91,7 +91,7 @@ export class AIPlayer extends Player {
             };
         });
         
-        // Filter out any invalid scores (e.g., NaN, undefined)
+        // Filter out any invalid scores
         const validScores = cellScores.filter(item => 
             Number.isFinite(item.score)
         );
@@ -117,8 +117,10 @@ export class AIPlayer extends Player {
         if (!board.occupiedCells[playerIndex]) board.occupiedCells[playerIndex] = {};
         if (!board.occupiedCells[opponentIndex]) board.occupiedCells[opponentIndex] = {};
         
-        // Convert floating point coordinates to integer grid positions
-        const cellKey = board.toPositionKey(cell.x, cell.y);
+        // Use grid coordinates directly from cell object if available
+        const gridX = cell.gridX !== undefined ? cell.gridX : board.pixelToGrid(cell.x, cell.y).x;
+        const gridY = cell.gridY !== undefined ? cell.gridY : board.pixelToGrid(cell.x, cell.y).y;
+        const cellKey = board.createPositionKey(gridX, gridY);
 
         // Check if the cell is occupied by opponent or self (invalid move)
         if (board.occupiedCells[opponentIndex][cellKey] || board.occupiedCells[playerIndex][cellKey]) {
@@ -152,9 +154,7 @@ export class AIPlayer extends Player {
 }
 
 export class HumanPlayer extends Player {
-
     constructor(playerID) {
         super(playerID);
     }
-
 }

@@ -70,16 +70,22 @@ export class Game {
     }
 
     handleCellClick(event) {
-                
         // Check if we're waiting for opponent's move
         if (this.progress === "waiting") {return;}
                                 
+        // Get the cell element and its coordinates
         let cell = d3.select(event.target);
-        let x = parseFloat(cell.attr("x"));
-        let y = parseFloat(cell.attr("y"));
+        
+        // Get pixel coordinates for rendering
+        let pixelX = parseFloat(cell.attr("x"));
+        let pixelY = parseFloat(cell.attr("y"));
+        
+        // Get grid coordinates (can also be retrieved from data attributes)
+        let gridX = parseInt(cell.attr("data-grid-x"));
+        let gridY = parseInt(cell.attr("data-grid-y"));
 
-        // update board
-        let n_extensions = this.board.update(x, y, this.currentPlayer);
+        // update board using pixel coordinates (board will convert to grid internally)
+        let n_extensions = this.board.update(pixelX, pixelY, this.currentPlayer);
 
         if (n_extensions >= 0) {
             // Update score based on the selected scoring mechanism
@@ -172,11 +178,16 @@ export class Game {
             return;
         }
         
-        let x = cell.x;
-        let y = cell.y;
+        // The cell object now contains both pixel and grid coordinates
+        let pixelX = cell.x;
+        let pixelY = cell.y;
+        
+        // Use grid coordinates directly if available, otherwise compute them
+        let gridX = cell.gridX !== undefined ? cell.gridX : null;
+        let gridY = cell.gridY !== undefined ? cell.gridY : null;
 
-        // Try to update the board with AI's move
-        let n_extensions = this.board.update(x, y, this.currentPlayer);
+        // Try to update the board with AI's move (using pixel coordinates)
+        let n_extensions = this.board.update(pixelX, pixelY, this.currentPlayer);
 
         // Check if the move was valid and actually placed
         if (n_extensions >= 0) {
@@ -189,7 +200,7 @@ export class Game {
             this.progress = "playing";
         } else {
             // Move was invalid, try again with a different move
-            console.warn("AI attempted invalid move at", x, y);
+            console.warn("AI attempted invalid move at", pixelX, pixelY, "grid:", gridX, gridY);
             
             // Find a random valid move instead
             const availableCells = this.board.getAvailableCells();
