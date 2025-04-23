@@ -1,3 +1,25 @@
+/**
+ * utils.js - Utility Functions for Cell Collection
+ * 
+ * This file provides shared utility functions used throughout the application.
+ * 
+ * Key functionality:
+ * - Game mode management (retrieving player mode)
+ * - Scoring mechanism management (retrieval and descriptions)
+ * - UI utilities (title formatting and updates)
+ * - Game state utilities (winner determination and messaging)
+ * - Array utilities (shuffle)
+ * 
+ * These utilities provide a central location for common functionality
+ * that is needed across multiple components, promoting code reuse and
+ * consistent behavior throughout the application.
+ * 
+ * Relationships with other files:
+ * - game.js: Uses these utilities for scoring, player modes, and UI
+ * - scoring.js: Uses scoring mechanism information
+ * - board.js: Uses scoring mechanism detection
+ */
+
 // shuffle list
 export function shuffle(array) {
     let currentIndex = array.length, temporaryValue, randomIndex;

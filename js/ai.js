@@ -1,3 +1,23 @@
+/**
+ * ai.js - AI Player Implementation for Cell Collection
+ * 
+ * This file implements the AI opponent and player base classes for the game.
+ * 
+ * Key components:
+ * - Player: Base class with core player functionality
+ * - AIPlayer: AI opponent that evaluates and selects moves
+ * - HumanPlayer: Simple representation of a human player
+ * 
+ * The AI uses different strategies based on:
+ * - Current scoring mechanism (adapts evaluation for each scoring type)
+ * - Game progress (uses random moves early, strategic moves later)
+ * - Board state (evaluates potential moves by simulating their outcome)
+ * 
+ * Relationships with other files:
+ * - game.js: Instantiates AIPlayer to handle opponent moves
+ * - board.js: AI queries board methods to evaluate positions
+ */
+
 export class Player {
     constructor(playerID) {
         this.score = 0;
@@ -39,30 +59,53 @@ export class AIPlayer extends Player {
     getMove(board, scoringMechanism) {
         this.moveCount++;
         
+        // Get available cells (contains both pixel and grid coordinates)
         const availableCells = board.getAvailableCells();
         if (availableCells.length === 0) return null;
         
-        // Simple strategy:
-        // Moves 1-4: Completely random
-        // Move 5+: Completely greedy (always choose the best move)
-        if (this.moveCount < 8) {
-            return availableCells[Math.floor(Math.random() * availableCells.length)];
+        // Filter out any invalid cells
+        const validCells = availableCells.filter(cell => 
+            Number.isFinite(cell.x) && Number.isFinite(cell.y) && 
+            Number.isFinite(cell.gridX) && Number.isFinite(cell.gridY)
+        );
+        
+        if (validCells.length === 0) {
+            console.warn("No valid cells available for AI move");
+            return null;
         }
         
-        // After move 4, play greedily
+        // Simple strategy:
+        // Moves 1-7: Completely random
+        // Move 8+: Completely greedy (always choose the best move)
+        if (this.moveCount < 8) {
+            return validCells[Math.floor(Math.random() * validCells.length)];
+        }
+        
+        // After move 8, play greedily
         // Calculate scores for each available cell
-        const cellScores = availableCells.map(cell => {
+        const cellScores = validCells.map(cell => {
+            const score = this.calculateCellScore(cell, board, scoringMechanism);
             return {
                 cell: cell,
-                score: this.calculateCellScore(cell, board, scoringMechanism)
+                score: score
             };
         });
         
+        // Filter out any invalid scores
+        const validScores = cellScores.filter(item => 
+            Number.isFinite(item.score)
+        );
+        
+        if (validScores.length === 0) {
+            // If no valid scores, fall back to random
+            return validCells[Math.floor(Math.random() * validCells.length)];
+        }
+        
         // Sort by score (descending)
-        cellScores.sort((a, b) => b.score - a.score);
+        validScores.sort((a, b) => b.score - a.score);
         
         // Always choose the best move
-        return cellScores[0].cell;
+        return validScores[0].cell;
     }
     
     calculateCellScore(cell, board, scoringMechanism) {
@@ -74,8 +117,10 @@ export class AIPlayer extends Player {
         if (!board.occupiedCells[playerIndex]) board.occupiedCells[playerIndex] = {};
         if (!board.occupiedCells[opponentIndex]) board.occupiedCells[opponentIndex] = {};
         
-        // Convert floating point coordinates to integer grid positions
-        const cellKey = board.toPositionKey(cell.x, cell.y);
+        // Use grid coordinates directly from cell object if available
+        const gridX = cell.gridX !== undefined ? cell.gridX : board.pixelToGrid(cell.x, cell.y).x;
+        const gridY = cell.gridY !== undefined ? cell.gridY : board.pixelToGrid(cell.x, cell.y).y;
+        const cellKey = board.createPositionKey(gridX, gridY);
 
         // Check if the cell is occupied by opponent or self (invalid move)
         if (board.occupiedCells[opponentIndex][cellKey] || board.occupiedCells[playerIndex][cellKey]) {
@@ -109,9 +154,7 @@ export class AIPlayer extends Player {
 }
 
 export class HumanPlayer extends Player {
-
     constructor(playerID) {
         super(playerID);
     }
-
 }

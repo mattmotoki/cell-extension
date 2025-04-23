@@ -1,64 +1,42 @@
+/**
+ * board.js - Game Board Implementation for Cell Collection
+ * 
+ * This file implements the core game mechanics and visual representation of the game board.
+ * It manages the grid, cell placement, scoring calculations, and visual rendering.
+ * 
+ * The Board class is responsible for:
+ * - Rendering the game grid and cells
+ * - Handling cell placement and extensions between cells
+ * - Implementing scoring mechanisms (Cell-Connection, Cell-Multiplication, Cell-Extension)
+ * - Tracking occupied cells using an integer-based grid system
+ * - Visualizing connections between cells with lines, circles, or connection counts
+ * 
+ * Relationships with other files:
+ * - game.js: Uses Board methods for updating the game state, calculating scores, and managing turns
+ * - ai.js: Queries Board methods to evaluate potential moves and make decisions
+ * - scoring.js: Visualizes scores that are calculated by Board methods
+ * - utils.js: Provides utility functions like scoring mechanism detection
+ * 
+ * The grid uses integer positions throughout, converting to floating-point coordinates
+ * only when necessary for rendering. This prevents precision issues and simplifies logic.
+ */
+
 import { getScoringMechanism } from "./utils.js";
-
-class Cell {
-
-    constructor(x, y, player, color) {
-        this.x = x;
-        this.y = y;
-        this.player = player;
-        this.neighbors = [];
-    }
-
-    updateNeighbors(cell) {
-        if (cell.x)
-        this.neighbors.push(cell);
-    }
-
-    isNeighbor(cell) {
-        return this.neighbors.includes(cell);
-    }
-
-}
-
-
-class ConnectedComponents {
-    constructor() {
-        this.components = [];
-    }
-
-    addCell(component) {
-        this.components.push(component);
-    }
-
-    getComponent(x, y) {
-        for (let i = 0; i < this.components.length; i++) {
-            if (this.components[i].hasCell(x, y)) {
-                return this.components[i];
-            }
-        }
-        return null;
-    }
-
-    getComponents() {
-        return this.components;
-    }
-
-    reset() {
-        this.components = [];
-    }
-
-}
-
 
 export class Board {
 
     constructor(gridSize, cellSize, playerColors, clickHandler) {
-
         this.gridSize = gridSize;
         this.cellSize = cellSize;
         this.playerColors = playerColors;
         this.lineColors = ["rgba(216, 191, 216, 0.8)", "rgba(216, 191, 216, 0.8)"];
         this.clickHandler = clickHandler;
+        
+        // Grid dimensions in integer units
+        this.gridWidth = Math.floor(gridSize / cellSize); 
+        this.gridHeight = Math.floor(gridSize / cellSize);
+        
+        // Initialize empty occupied cells using integer grid positions
         this.occupiedCells = [{}, {}];
         
         // Create the SVG with viewBox (already done in index.html)
@@ -69,20 +47,52 @@ export class Board {
         this.linesGroup = this.svg.append("g");  // Always visible, no toggle
 
         // Initialize board with percentage-based cells
-        for (let x = 0; x < 99; x += this.cellSize) {
-            for (let y = 0; y < 99; y += this.cellSize) {
+        for (let gridX = 0; gridX < this.gridWidth; gridX++) {
+            for (let gridY = 0; gridY < this.gridHeight; gridY++) {
+                // Convert grid position to pixel coordinates for rendering
+                const pixelX = gridX * this.cellSize;
+                const pixelY = gridY * this.cellSize;
+                
                 this.gridGroup.append("rect")
                     .attr("class", "grid-cell")
-                    .attr("x", x)
-                    .attr("y", y)
-                    .attr("width", this.cellSize * 0.99)  // Larger cells with less space between them (was 0.98)
+                    .attr("x", pixelX)
+                    .attr("y", pixelY)
+                    .attr("width", this.cellSize * 0.99)  // Larger cells with less space between them
                     .attr("height", this.cellSize * 0.99)
+                    .attr("data-grid-x", gridX)  // Store grid coordinates as data attributes
+                    .attr("data-grid-y", gridY)
                     .on("click", this.clickHandler);
             }
         }
     }
 
-    // Get connected components for a player
+    // Convert grid position to pixel coordinates (for rendering)
+    gridToPixel(gridX, gridY) {
+        return {
+            x: gridX * this.cellSize,
+            y: gridY * this.cellSize
+        };
+    }
+
+    // Convert pixel coordinates to grid position (for logic)
+    pixelToGrid(pixelX, pixelY) {
+        return {
+            x: Math.round(pixelX / this.cellSize),
+            y: Math.round(pixelY / this.cellSize)
+        };
+    }
+
+    // Create a grid position key for the occupiedCells map
+    createPositionKey(gridX, gridY) {
+        return `${gridX}-${gridY}`;
+    }
+
+    // Parse a position key into grid coordinates
+    parsePositionKey(key) {
+        return key.split('-').map(Number);
+    }
+
+    // Get connected components for a player using grid positions
     getConnectedComponents(playerIndex) {
         const components = [];
         const visited = {};
@@ -93,7 +103,6 @@ export class Board {
         }
         
         const cells = Object.keys(this.occupiedCells[playerIndex]);
-        const tolerance = 0.01; // Add tolerance for floating point comparison
         
         // Skip if no cells for this player
         if (cells.length === 0) return [];
@@ -119,26 +128,22 @@ export class Board {
                 component.push(currentCellKey);
                 
                 // Get coordinates of current cell
-                const [currentX, currentY] = currentCellKey.split('-').map(parseFloat);
+                const [currentX, currentY] = this.parsePositionKey(currentCellKey);
                 
                 // Find all cells that belong to this player
                 for (let neighborKey of cells) {
                     // Skip if already visited or if it's the current cell
                     if (visited[neighborKey] || neighborKey === currentCellKey) continue;
                     
-                    const [neighborX, neighborY] = neighborKey.split('-').map(parseFloat);
+                    const [neighborX, neighborY] = this.parsePositionKey(neighborKey);
                     
-                    // Check if cells are neighbors (using tolerance for floating point)
-                    const isHorizontalNeighbor = 
-                        Math.abs(Math.abs(neighborX - currentX) - 1) < tolerance && 
-                        Math.abs(neighborY - currentY) < tolerance;
-                    
-                    const isVerticalNeighbor = 
-                        Math.abs(neighborX - currentX) < tolerance && 
-                        Math.abs(Math.abs(neighborY - currentY) - 1) < tolerance;
+                    // Check if cells are adjacent on the grid (Manhattan distance of 1)
+                    const isNeighbor = 
+                        (Math.abs(neighborX - currentX) === 1 && neighborY === currentY) ||
+                        (Math.abs(neighborY - currentY) === 1 && neighborX === currentX);
                     
                     // If they're neighbors, add to stack
-                    if (isHorizontalNeighbor || isVerticalNeighbor) {
+                    if (isNeighbor) {
                         stack.push(neighborKey);
                     }
                 }
@@ -174,19 +179,19 @@ export class Board {
         
         // For each cell, check connections to other cells
         for (let cellKey of cells) {
-            const [x, y] = cellKey.split('-').map(Number);
+            const [gridX, gridY] = this.parsePositionKey(cellKey);
 
             // Check adjacent cells
             const adjacentPositions = [
-                [x + 1, y], // right
-                [x - 1, y], // left
-                [x, y + 1], // down
-                [x, y - 1]  // up
+                [gridX + 1, gridY], // right
+                [gridX - 1, gridY], // left
+                [gridX, gridY + 1], // down
+                [gridX, gridY - 1]  // up
             ];
             
             // For each adjacent position, check if it's occupied by the same player
             for (let [adjX, adjY] of adjacentPositions) {
-                const adjKey = `${adjX}-${adjY}`;
+                const adjKey = this.createPositionKey(adjX, adjY);
                 if (this.occupiedCells[playerIndex][adjKey]) {
                     connections++;
                 }
@@ -196,26 +201,9 @@ export class Board {
         // The score is the number of connections
         return connections;
     }
-
-    // Helper method to convert floating point coordinates to integer position
-    toPositionKey(x, y) {
-        // Convert floating point coordinates to integer grid coordinates
-        const gridX = Math.round(x / this.cellSize);
-        const gridY = Math.round(y / this.cellSize);
-        return `${gridX}-${gridY}`;
-    }
-
-    // Helper method to convert integer position back to floating point coordinates
-    fromPositionKey(key) {
-        const [gridX, gridY] = key.split('-').map(Number);
-        return {
-            x: gridX * this.cellSize,
-            y: gridY * this.cellSize
-        };
-    }
-
-    // game functions
-    canPlaceRectangle(x, y, currentPlayer) {
+    
+    // game functions - check if a cell can be placed/extended
+    canPlaceRectangle(pixelX, pixelY, currentPlayer) {
         // Safety check to ensure occupiedCells exists
         if (!this.occupiedCells) {
             this.occupiedCells = [{}, {}];
@@ -227,13 +215,13 @@ export class Board {
             this.occupiedCells[(currentPlayer + 1) % 2] = {};
         }
         
-        // Convert to integer position
-        const posKey = this.toPositionKey(x, y);
-        const [gridX, gridY] = posKey.split('-').map(Number);
+        // Convert to grid coordinates
+        const {x: gridX, y: gridY} = this.pixelToGrid(pixelX, pixelY);
+        const posKey = this.createPositionKey(gridX, gridY);
         
         let neighbors = [];
         
-        // Get adjacent cell positions
+        // Get adjacent grid positions
         const adjacentPositions = [
             [gridX + 1, gridY], // right
             [gridX - 1, gridY], // left
@@ -243,20 +231,20 @@ export class Board {
         
         // Check for neighbors
         for (let [adjX, adjY] of adjacentPositions) {
-            const adjKey = `${adjX}-${adjY}`;
+            const adjKey = this.createPositionKey(adjX, adjY);
             
             // If adjacent cell is occupied by current player
             if (this.occupiedCells[currentPlayer][adjKey]) {
                 // And target cell is not occupied by opponent
                 if (!this.occupiedCells[(currentPlayer + 1) % 2][posKey]) {
-                    // Add the actual coordinates for compatibility with existing code
-                    const coords = this.fromPositionKey(adjKey);
-                    neighbors.push([coords.x, coords.y]);
+                    // Return the pixel coordinates for the neighbor (for rendering)
+                    const pixelCoords = this.gridToPixel(adjX, adjY);
+                    neighbors.push([pixelCoords.x, pixelCoords.y]);
                 }
             }
         }
 
-        return neighbors; // Return array of all adjacent cells
+        return neighbors; // Return array of all adjacent cells in pixel coordinates
     }        
 
     
@@ -273,39 +261,45 @@ export class Board {
         }
         
         let availableCells = [];
-        this.svg.selectAll(".grid-cell").each((d, i, nodes) => {
-            let cell = d3.select(nodes[i]);
-            let x = parseFloat(cell.attr("x"));
-            let y = parseFloat(cell.attr("y"));
-            if (!this.occupiedCells[0][`${x}-${y}`] && !this.occupiedCells[1][`${x}-${y}`]) {
-                availableCells.push({x: x, y: y});
+        
+        // Iterate through the grid using integer coordinates
+        for (let gridX = 0; gridX < this.gridWidth; gridX++) {
+            for (let gridY = 0; gridY < this.gridHeight; gridY++) {
+                const posKey = this.createPositionKey(gridX, gridY);
+                
+                // Check if the cell is occupied by either player
+                if (!this.occupiedCells[0][posKey] && !this.occupiedCells[1][posKey]) {
+                    // Return pixel coordinates for rendering compatibility
+                    const pixelCoords = this.gridToPixel(gridX, gridY);
+                    availableCells.push({x: pixelCoords.x, y: pixelCoords.y, gridX: gridX, gridY: gridY});
+                }
             }
-        });        
+        }
+        
         return availableCells;
     }
 
 
-    drawRectangle(x, y, neighbors, player) {
-
+    drawRectangle(pixelX, pixelY, neighbors, player) {
         // extend cells
         let n_extensions = 0;
         for (let i = 0; i < neighbors.length; i++) {
             let neighbor = neighbors[i];
-            if (x > neighbor[0]) {  // right
-                this.extendCell(neighbor[0], y, neighbor[0], y, this.cellSize * 2, this.cellSize, player);
-            } else if (x < neighbor[0]) {  // left
-                this.extendCell(neighbor[0], y, x, y, this.cellSize * 2, this.cellSize, player);
-            } else if (y > neighbor[1]) {  // down
-                this.extendCell(x, neighbor[1], x, neighbor[1], this.cellSize, this.cellSize * 2, player);
-            } else if (y < neighbor[1]) {  // up
-                this.extendCell(x, neighbor[1], x, y, this.cellSize, this.cellSize * 2, player);
+            if (pixelX > neighbor[0]) {  // right
+                this.extendCell(neighbor[0], pixelY, neighbor[0], pixelY, this.cellSize * 2, this.cellSize, player);
+            } else if (pixelX < neighbor[0]) {  // left
+                this.extendCell(neighbor[0], pixelY, pixelX, pixelY, this.cellSize * 2, this.cellSize, player);
+            } else if (pixelY > neighbor[1]) {  // down
+                this.extendCell(pixelX, neighbor[1], pixelX, neighbor[1], this.cellSize, this.cellSize * 2, player);
+            } else if (pixelY < neighbor[1]) {  // up
+                this.extendCell(pixelX, neighbor[1], pixelX, pixelY, this.cellSize, this.cellSize * 2, player);
             }    
             n_extensions++;
         }
 
         // If there are no neighbors, draw a new rectangle
         if (neighbors.length === 0) {
-            this.expandCell(x, y, this.cellSize, this.cellSize, player);
+            this.expandCell(pixelX, pixelY, this.cellSize, this.cellSize, player);
         }
 
         return n_extensions;
@@ -364,15 +358,35 @@ export class Board {
                         .attr("stroke-width", 0.3);
                     
                     if (showConnectionCount) {
-                        // For first cell, get its position key and count connections
-                        const pos1Key = this.toPositionKey(x_end, y_start);
-                        const [x1, y1] = pos1Key.split('-').map(Number);
-                        const count1 = this.countConnections(x1, y1, player - 1);
+                        // Get grid coordinates for both cells
+                        const gridY = Math.round(y_start / this.cellSize);
+                        const gridX1 = Math.round(x_end / this.cellSize);
+                        const gridX2 = gridX1 + 1;
                         
-                        // For second cell, get its position key and count connections
-                        const pos2Key = this.toPositionKey(x_end + this.cellSize, y_start);
-                        const [x2, y2] = pos2Key.split('-').map(Number);
-                        const count2 = this.countConnections(x2, y2, player - 1);
+                        // Create position keys for both cells
+                        const pos1Key = this.createPositionKey(gridX1, gridY);
+                        const pos2Key = this.createPositionKey(gridX2, gridY);
+                        
+                        // Make sure both cells are marked as occupied temporarily for connection counting
+                        const playerIndex = player - 1;
+                        const wasOccupied1 = this.occupiedCells[playerIndex][pos1Key];
+                        const wasOccupied2 = this.occupiedCells[playerIndex][pos2Key];
+                        
+                        // Mark both cells as occupied for correct connection counting
+                        this.occupiedCells[playerIndex][pos1Key] = true;
+                        this.occupiedCells[playerIndex][pos2Key] = true;
+                        
+                        // Count connections for both cells
+                        const count1 = this.countConnections(gridX1, gridY, playerIndex);
+                        const count2 = this.countConnections(gridX2, gridY, playerIndex);
+                        
+                        // Restore original state if needed (though they should remain occupied)
+                        if (!wasOccupied1) {
+                            this.occupiedCells[playerIndex][pos1Key] = wasOccupied1;
+                        }
+                        if (!wasOccupied2) {
+                            this.occupiedCells[playerIndex][pos2Key] = wasOccupied2;
+                        }
                         
                         // Add text showing connection counts
                         this.linesGroup.append("circle")
@@ -434,15 +448,35 @@ export class Board {
                         .attr("stroke-width", 0.3);
                     
                     if (showConnectionCount) {
-                        // For first cell, get its position key and count connections
-                        const pos1Key = this.toPositionKey(x_start, y_end);
-                        const [x1, y1] = pos1Key.split('-').map(Number);
-                        const count1 = this.countConnections(x1, y1, player - 1);
+                        // Get grid coordinates for both cells
+                        const gridX = Math.round(x_start / this.cellSize);
+                        const gridY1 = Math.round(y_end / this.cellSize);
+                        const gridY2 = gridY1 + 1;
                         
-                        // For second cell, get its position key and count connections
-                        const pos2Key = this.toPositionKey(x_start, y_end + this.cellSize);
-                        const [x2, y2] = pos2Key.split('-').map(Number);
-                        const count2 = this.countConnections(x2, y2, player - 1);
+                        // Create position keys for both cells
+                        const pos1Key = this.createPositionKey(gridX, gridY1);
+                        const pos2Key = this.createPositionKey(gridX, gridY2);
+                        
+                        // Make sure both cells are marked as occupied temporarily for connection counting
+                        const playerIndex = player - 1;
+                        const wasOccupied1 = this.occupiedCells[playerIndex][pos1Key];
+                        const wasOccupied2 = this.occupiedCells[playerIndex][pos2Key];
+                        
+                        // Mark both cells as occupied for correct connection counting
+                        this.occupiedCells[playerIndex][pos1Key] = true;
+                        this.occupiedCells[playerIndex][pos2Key] = true;
+                        
+                        // Count connections for both cells
+                        const count1 = this.countConnections(gridX, gridY1, playerIndex);
+                        const count2 = this.countConnections(gridX, gridY2, playerIndex);
+                        
+                        // Restore original state if needed (though they should remain occupied)
+                        if (!wasOccupied1) {
+                            this.occupiedCells[playerIndex][pos1Key] = wasOccupied1;
+                        }
+                        if (!wasOccupied2) {
+                            this.occupiedCells[playerIndex][pos2Key] = wasOccupied2;
+                        }
                         
                         // Add text showing connection counts
                         this.linesGroup.append("circle")
@@ -495,10 +529,10 @@ export class Board {
             });            
     }
     
-    // Count the number of connections (undirected edges) for a specific cell
+    // Count the number of connections for a specific cell
     countConnections(gridX, gridY, playerIndex) {
         let connections = 0;
-        const cellKey = `${gridX}-${gridY}`;
+        const cellKey = this.createPositionKey(gridX, gridY);
         
         // Check if this cell exists
         if (!this.occupiedCells[playerIndex][cellKey]) {
@@ -515,7 +549,7 @@ export class Board {
         
         // Count occupied adjacent cells
         for (let [adjX, adjY] of adjacentPositions) {
-            const adjKey = `${adjX}-${adjY}`;
+            const adjKey = this.createPositionKey(adjX, adjY);
             if (this.occupiedCells[playerIndex][adjKey]) {
                 connections++;
             }
@@ -524,23 +558,33 @@ export class Board {
         return connections;
     }
 
-    update(x, y, currentPlayer) {
-        // Convert to integer position
-        const posKey = this.toPositionKey(x, y);
+    update(pixelX, pixelY, currentPlayer) {
+        // Ensure coordinates are valid
+        if (!Number.isFinite(pixelX) || !Number.isFinite(pixelY)) {
+            console.error("Invalid coordinates for update:", pixelX, pixelY);
+            return -1;
+        }
+        
+        // Convert to grid coordinates
+        const {x: gridX, y: gridY} = this.pixelToGrid(pixelX, pixelY);
+        const posKey = this.createPositionKey(gridX, gridY);
+        
+        // Get pixel coordinates from grid for consistent rendering
+        const pixelCoords = this.gridToPixel(gridX, gridY);
 
         // Check if cell is not occupied by the other player
         let n_extensions = 0;
         if (!this.occupiedCells[(currentPlayer + 1) % 2][posKey]) {
 
             // check if there are neighbors to extend
-            let neighbors = this.canPlaceRectangle(x, y, currentPlayer);
+            let neighbors = this.canPlaceRectangle(pixelCoords.x, pixelCoords.y, currentPlayer);
             if (neighbors.length > 0) {
-                n_extensions = this.drawRectangle(x, y, neighbors, currentPlayer + 1);
+                n_extensions = this.drawRectangle(pixelCoords.x, pixelCoords.y, neighbors, currentPlayer + 1);
                 this.occupiedCells[currentPlayer][posKey] = true;
 
             // otherwise draw new cell
             } else {
-                n_extensions = this.drawRectangle(x, y, [], currentPlayer + 1);
+                n_extensions = this.drawRectangle(pixelCoords.x, pixelCoords.y, [], currentPlayer + 1);
                 this.occupiedCells[currentPlayer][posKey] = true;
             }
 
@@ -560,5 +604,4 @@ export class Board {
         this.linesGroup.selectAll(".number-background").remove();
         this.occupiedCells = [{}, {}];
     }
-
 }
