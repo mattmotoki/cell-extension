@@ -175,6 +175,15 @@ export class ScoreChart {
         this.xAxis = this.svg.append("g")
             .attr("class", "x axis")
             .attr("transform", `translate(0,${chartHeight})`);
+            
+        // Create an overlay group that will always be on top
+        this.labelsOverlay = this.svg.append("g")
+            .attr("class", "labels-overlay");
+            
+        // Specifically create a group for x-axis labels within the overlay
+        this.xAxisLabels = this.labelsOverlay.append("g")
+            .attr("class", "x-axis-labels")
+            .attr("transform", `translate(0,${chartHeight})`);
 
         // Style the axis lines to match score lines
         this.svg.selectAll(".axis path, .axis line")
@@ -226,6 +235,9 @@ export class ScoreChart {
             this._updateMarkers(1, this.scoreHistory2, this.playerColors[1], currentPlayer === 1);
             this._updateMarkers(0, this.scoreHistory1, this.playerColors[0], currentPlayer === 0);
         }
+        
+        // Bring the labels overlay to the front after updating markers
+        this.labelsOverlay.raise();
 
         // Create a custom minimalist y-axis
         // First clear the existing axis
@@ -272,23 +284,27 @@ export class ScoreChart {
             .style("stroke", "#aaaaaa")
             .style("stroke-width", "0.2");
             
+        // Clear existing labels in the overlay
+        this.xAxisLabels.selectAll("*").remove();
+        
         // Show the round number instead of move count
         const roundNumber = Math.floor((moveCount+1) / 2);
-    
-        // Add a tick mark for the round number position
-        this.xAxis.append("line")
-            .attr("x1", this.xScale(moveCount))
-            .attr("y1", 0)
-            .attr("x2", this.xScale(moveCount))
-            .attr("y2", -2)
-            .style("stroke", "#aaaaaa")
-            .style("stroke-width", "0.2");
             
-        // Add the round number label above the axis
-        this.xAxis.append("text")
+        // Add the round number label in the overlay (above everything else)
+        this.xAxisLabels.append("rect")
+            .attr("x", this.xScale(moveCount)-2.5)
+            .attr("y", -6)
+            .attr("width", 5)
+            .attr("height", 5)
+            .attr("rx", 1)
+            .attr("ry", 1)
+            .style("fill", "#121212")
+            .style("opacity", 0.75);
+            
+        this.xAxisLabels.append("text")
             .attr("x", this.xScale(moveCount))
-            .attr("y", -2)  // Negative value to position above the axis
-            .attr("dy", "-0.2em")  // Small adjustment for better vertical positioning
+            .attr("y", -2)
+            .attr("dy", "-0.2em")
             .attr("text-anchor", "middle")
             .style("font-size", "2.5")
             .style("fill", "#aaaaaa")
@@ -327,7 +343,18 @@ export class ScoreChart {
         this.svg.selectAll(".dot0, .dot1").remove(); // Clear all markers
         this.yAxis.selectAll("*").remove();
         this.xAxis.selectAll("*").remove();
-        
+                    
+        // Initialize empty paths for score lines
+        this.svg.selectAll(".line1")
+            .attr("stroke", this.playerColors[0])
+            .datum([])
+            .attr("d", this.line1);
+
+        this.svg.selectAll(".line2")
+            .attr("stroke", this.playerColors[1])
+            .datum([])
+            .attr("d", this.line2);
+
         // Add the y-axis line
         this.yAxis.append("line")
             .attr("x1", 0)
@@ -374,8 +401,21 @@ export class ScoreChart {
             .style("stroke", "#aaaaaa")
             .style("stroke-width", "0.2");
             
-        // Add initial '1' label on x-axis 
-        this.xAxis.append("text")
+        // Clear the labels overlay as well
+        this.xAxisLabels.selectAll("*").remove();
+            
+        // Add initial '1' label on x-axis with background in the overlay
+        this.xAxisLabels.append("rect")
+            .attr("x", this.xScale(1)-2.5)
+            .attr("y", -6)
+            .attr("width", 5)
+            .attr("height", 5)
+            .attr("rx", 1)
+            .attr("ry", 1)
+            .style("fill", "#121212")
+            .style("opacity", 0.75);
+        
+        this.xAxisLabels.append("text")
             .attr("x", this.xScale(1))
             .attr("y", -2)
             .attr("dy", "-0.2em")
@@ -384,16 +424,8 @@ export class ScoreChart {
             .attr("fill", "#aaaaaa")
             .text("1");
             
-        // Initialize empty paths for score lines
-        this.svg.selectAll(".line1")
-            .attr("stroke", this.playerColors[0])
-            .datum([])
-            .attr("d", this.line1);
-
-        this.svg.selectAll(".line2")
-            .attr("stroke", this.playerColors[1])
-            .datum([])
-            .attr("d", this.line2);
+        // Bring the labels overlay to the front
+        this.labelsOverlay.raise();
     }
 
 } 
