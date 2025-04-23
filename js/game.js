@@ -1,3 +1,22 @@
+/**
+ * game.js - Game Controller for Cell Collection
+ * 
+ * This file implements the main game controller that orchestrates gameplay.
+ * 
+ * The Game class is responsible for:
+ * - Managing the game state (scores, current player, game progress)
+ * - Handling player interactions and turn management
+ * - Coordinating between the board, AI, and scoring visualization
+ * - Implementing scoring mechanism switching
+ * - Managing the game lifecycle (initialization, reset, game over)
+ * 
+ * Relationships with other files:
+ * - board.js: Game uses board to manage the visual and logical game grid
+ * - ai.js: Game instantiates and triggers AI opponent moves
+ * - scoring.js: Game updates the score displays and breakdown
+ * - utils.js: Game accesses utility functions for player modes and scoring
+ */
+
 import {getPlayerMode, displayWinnerMessage, getScoringMechanism, getScoringDescription} from "./utils.js";
 import {ScoreChart, ScoreBreakdown} from "./scoring.js";
 import {Board} from "./board.js";
@@ -51,16 +70,22 @@ export class Game {
     }
 
     handleCellClick(event) {
-                
         // Check if we're waiting for opponent's move
         if (this.progress === "waiting") {return;}
                                 
+        // Get the cell element and its coordinates
         let cell = d3.select(event.target);
-        let x = parseFloat(cell.attr("x"));
-        let y = parseFloat(cell.attr("y"));
+        
+        // Get pixel coordinates for rendering
+        let pixelX = parseFloat(cell.attr("x"));
+        let pixelY = parseFloat(cell.attr("y"));
+        
+        // Get grid coordinates (can also be retrieved from data attributes)
+        let gridX = parseInt(cell.attr("data-grid-x"));
+        let gridY = parseInt(cell.attr("data-grid-y"));
 
-        // update board
-        let n_extensions = this.board.update(x, y, this.currentPlayer);
+        // update board using pixel coordinates (board will convert to grid internally)
+        let n_extensions = this.board.update(pixelX, pixelY, this.currentPlayer);
 
         if (n_extensions >= 0) {
             // Update score based on the selected scoring mechanism
@@ -141,22 +166,59 @@ export class Game {
     }
 
     handleOpponentMove() {
+        // Get the current scoring mechanism instead of using potentially outdated value
+        const currentScoringMechanism = getScoringMechanism();
+        this.scoringMechanism = currentScoringMechanism;
             
         // Get opponent's move
-        let cell = this.opponent.getMove(this.board, this.scoringMechanism);
-        if (cell === null) {return;}
-        let x = cell.x;
-        let y = cell.y;
-
-        let n_extensions = this.board.update(x, y, this.currentPlayer);
-
-        // Update score based on the selected scoring mechanism
-        this.updateScore(n_extensions);
+        let cell = this.opponent.getMove(this.board, currentScoringMechanism);
+        if (cell === null) {
+            console.warn("AI couldn't find a valid move");
+            this.progress = "playing";
+            return;
+        }
         
-        // Change players
-        this.currentPlayer = (this.currentPlayer + 1) % 2;               
-        this.updateScoreBreakdown();
-        this.progress = "playing";
+        // The cell object now contains both pixel and grid coordinates
+        let pixelX = cell.x;
+        let pixelY = cell.y;
+        
+        // Use grid coordinates directly if available, otherwise compute them
+        let gridX = cell.gridX !== undefined ? cell.gridX : null;
+        let gridY = cell.gridY !== undefined ? cell.gridY : null;
+
+        // Try to update the board with AI's move (using pixel coordinates)
+        let n_extensions = this.board.update(pixelX, pixelY, this.currentPlayer);
+
+        // Check if the move was valid and actually placed
+        if (n_extensions >= 0) {
+            // Update score based on the selected scoring mechanism
+            this.updateScore(n_extensions);
+            
+            // Change players
+            this.currentPlayer = (this.currentPlayer + 1) % 2;               
+            this.updateScoreBreakdown();
+            this.progress = "playing";
+        } else {
+            // Move was invalid, try again with a different move
+            console.warn("AI attempted invalid move at", pixelX, pixelY, "grid:", gridX, gridY);
+            
+            // Find a random valid move instead
+            const availableCells = this.board.getAvailableCells();
+            if (availableCells.length > 0) {
+                const randomCell = availableCells[Math.floor(Math.random() * availableCells.length)];
+                setTimeout(() => {
+                    this.board.update(randomCell.x, randomCell.y, this.currentPlayer);
+                    this.updateScore(1); // Assume at least 1 extension for the random move
+                    this.currentPlayer = (this.currentPlayer + 1) % 2;
+                    this.updateScoreBreakdown();
+                    this.progress = "playing";
+                }, 300);
+            } else {
+                // No moves available, end the game
+                this.progress = "over";
+                setTimeout(displayWinnerMessage, 1000, this.scores);
+            }
+        }
     }
 
 
