@@ -273,15 +273,23 @@ export class ScoreChart {
         let chartHeight = svgHeight - margin.top - margin.bottom;
 
         this.xScale = d3.scaleLinear().range([0, chartWidth]);
-        this.yScale = d3.scaleLinear().range([chartHeight, 0]);
+        // Replace linear scale with log scale (with special handling for zero values)
+        this.yScale = d3.scaleLog()
+            .range([chartHeight, 0])
+            .clamp(true);  // Clamp values to avoid infinity issues
+
+        // Add a method to safely handle log scale values (replacing 0 with a small positive value)
+        this.safeLogValue = (value) => {
+            return value <= 0 ? 0.1 : value;  // Use 0.1 as the minimum positive value
+        };
 
         this.line1 = d3.line()
             .x((d, i) => { return this.xScale(i); })
-            .y((d) => { return this.yScale(d); });
+            .y((d) => { return this.yScale(this.safeLogValue(d)); });  // Use safe log value
 
         this.line2 = d3.line()
             .x((d, i) => { return this.xScale(i); })
-            .y((d) => { return this.yScale(d); });
+            .y((d) => { return this.yScale(this.safeLogValue(d)); });  // Use safe log value
 
         // Create a chart with viewBox for responsive scaling
         d3.select("#score-chart")
@@ -343,7 +351,10 @@ export class ScoreChart {
 
         // Update the domain of the y scale
         let maxScore = d3.max(this.scoreHistory1.concat(this.scoreHistory2)) || 1;
-        this.yScale.domain([0, maxScore]);
+        
+        // Set proper range for the y-axis domain to ensure max value is at the top
+        // Always use a fixed minimum value to maintain visual consistency
+        this.yScale.domain([this.safeLogValue(0.1), this.safeLogValue(maxScore)]);
         
         // Determine which player has the highest score for coloring the max score label
         const player1HasMax = Math.max(...this.scoreHistory1) >= Math.max(...this.scoreHistory2);
@@ -388,16 +399,16 @@ export class ScoreChart {
         // Add tick mark at the top (max value)
         this.yAxis.append("line")
             .attr("x1", -2)
-            .attr("y1", this.yScale(maxScore))
+            .attr("y1", this.yScale(this.safeLogValue(maxScore)))
             .attr("x2", 0)
-            .attr("y2", this.yScale(maxScore))
+            .attr("y2", this.yScale(this.safeLogValue(maxScore)))
             .style("stroke", "#aaaaaa")
             .style("stroke-width", "0.2");
             
         // Add only the max score label
         this.yAxis.append("text")
             .attr("x", -2)
-            .attr("y", this.yScale(maxScore))
+            .attr("y", this.yScale(this.safeLogValue(maxScore)))
             .attr("dy", "0.3em")
             .style("text-anchor", "end")
             .style("font-size", "2.5")
@@ -457,7 +468,7 @@ export class ScoreChart {
             .attr("stroke-width", 0.25) 
             .merge(dots)
             .attr("cx", (d, i) => this.xScale(i))
-            .attr("cy", d => this.yScale(d));
+            .attr("cy", d => this.yScale(this.safeLogValue(d)));  // Use safe log value
 
         dots.exit().remove();
     }
@@ -469,7 +480,10 @@ export class ScoreChart {
         // Set up initial state with just axes and labels
         let moveCount = 0;
         this.xScale.domain([0, 1]);
-        this.yScale.domain([0, 1]);
+        
+        // Fix for log scale - set a proper domain range with minimum and maximum values
+        // This will position the maximum value (1) at the top of the chart
+        this.yScale.domain([this.safeLogValue(0.1), this.safeLogValue(1)]);
         
         // Clear ALL existing elements
         this.svg.selectAll(".dot0, .dot1").remove(); // Clear all markers
@@ -499,16 +513,16 @@ export class ScoreChart {
         // Add tick mark at the top for max value (1 initially)
         this.yAxis.append("line")
             .attr("x1", -2)
-            .attr("y1", this.yScale(1))
+            .attr("y1", this.yScale(this.safeLogValue(1)))
             .attr("x2", 0)
-            .attr("y2", this.yScale(1))
+            .attr("y2", this.yScale(this.safeLogValue(1)))
             .style("stroke", "#aaaaaa")
             .style("stroke-width", "0.2");
             
         // Add the initial label for the y-axis
         this.yAxis.append("text")
             .attr("x", -2)
-            .attr("y", this.yScale(1))
+            .attr("y", this.yScale(this.safeLogValue(1)))
             .attr("dy", "0.3em")
             .style("text-anchor", "end")
             .style("font-size", "2.5")
