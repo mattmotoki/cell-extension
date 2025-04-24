@@ -63,17 +63,17 @@ The game is built using JavaScript with D3.js for visualization and interactions
 Players earn points based on the product of their connected clusters. If a player has clusters containing 2, 3, and 4 cells, their score is 2 x 3 x 4 = 24 points. The challenge is in strategically grouping cells to maximize the overall multiplication effect.
 
 ### Cell-Connection
-> The total number of directed edges (connections)
+> Product of the number of directed edges (connections)
 
-Players score points by creating as many connections as possible between their cells. The more connected a player's cells are, the higher their score. Blocking opponents by strategically placing cells can also play a key role in controlling the board.
+Players score points based on the product of connections for each cell. For example, if a player has cells with 2, 3, and 4 connections, their score is 2 x 3 x 4 = 24 points. This encourages creating cells with multiple connections rather than just maximizing the total number of connections.
 
-### Cell-Maximization
-> The size of the largest connected component
+### Cell-Multiplication
+> Product of the size (number of cells) of the connected components
 
-Only the largest connected cluster of a player's cells contributes to their score. The goal is to build the biggest continuous group while preventing opponents from forming larger ones.
+This is functionally equivalent to Cell-Multiplication. Players earn points based on the product of their connected clusters. If a player has clusters containing 2, 3, and 4 cells, their score is 2 x 3 x 4 = 24 points.
 
 ### Cell-Extension
-> The total number of undirected edges (extensions)
+> Product of the number of undirected edges (extensions)
 
-This is not a very interesting scoring mechanism.
+Players score points based on the product of extensions for each cell. This mechanism rewards creating configurations where cells have multiple extensions to other cells, leading to more complex structures rather than simple chains.
 

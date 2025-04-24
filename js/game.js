@@ -48,13 +48,11 @@ export class Game {
     // Helper method to update score breakdown with correct components
     updateScoreBreakdown() {
         const mechanism = getScoringMechanism();
-        if (mechanism === 'cell-multiplication') {
-            const components0 = this.board.getConnectedComponents(0);
-            const components1 = this.board.getConnectedComponents(1);
-            this.scoreBreakdown.update(this.currentPlayer, this.scores, components0, components1);
-        } else {
-            this.scoreBreakdown.update(this.currentPlayer, this.scores);
-        }
+        const components0 = this.board.getConnectedComponents(0);
+        const components1 = this.board.getConnectedComponents(1);
+        
+        // Always pass components to scoreBreakdown
+        this.scoreBreakdown.update(this.currentPlayer, this.scores, components0, components1);
     }
     
     updateScoreTooltip() {
@@ -130,8 +128,10 @@ export class Game {
                 this.scores[0] = player0Connections;
                 this.scores[1] = player1Connections;
                 
-                // Update score breakdown without components
-                this.scoreBreakdown.update(this.currentPlayer, this.scores);
+                // Update score breakdown with components
+                const components0Conn = this.board.getConnectedComponents(0);
+                const components1Conn = this.board.getConnectedComponents(1);
+                this.scoreBreakdown.update(this.currentPlayer, this.scores, components0Conn, components1Conn);
                 break;
             case 'cell-multiplication':
                 // Get connected components for both players
@@ -142,23 +142,26 @@ export class Game {
                 this.scores[0] = this.board.getMultiplicationScore(0);
                 this.scores[1] = this.board.getMultiplicationScore(1);
                 
-                // Update score breakdown
+                // Update score breakdown with components
                 this.scoreBreakdown.update(this.currentPlayer, this.scores, components0, components1);
                 break;
             case 'cell-extension':
-                // For Cell-Extension, just add the number of extensions to the current player's score
-                if (n_extensions > 0) {
-                    this.scores[this.currentPlayer] += n_extensions;
-                }
+                // For Cell-Extension, calculate the product of extensions using board method
+                this.scores[0] = this.board.getExtensionScore(0);
+                this.scores[1] = this.board.getExtensionScore(1);
                 
-                // Update score breakdown without components
-                this.scoreBreakdown.update(this.currentPlayer, this.scores);
+                // Update score breakdown with components
+                const components0Ext = this.board.getConnectedComponents(0);
+                const components1Ext = this.board.getConnectedComponents(1);
+                this.scoreBreakdown.update(this.currentPlayer, this.scores, components0Ext, components1Ext);
                 break;
             // Future implementations would go here
             default:
                 // Default to cell-connection
                 this.scores[this.currentPlayer] += n_extensions;
-                this.scoreBreakdown.update(this.currentPlayer, this.scores);
+                const components0Def = this.board.getConnectedComponents(0);
+                const components1Def = this.board.getConnectedComponents(1);
+                this.scoreBreakdown.update(this.currentPlayer, this.scores, components0Def, components1Def);
         }
         
         // Update the score chart
