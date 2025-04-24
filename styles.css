@@ -237,16 +237,20 @@ button:active {
     }
 }
 
-#score-chart {
-    border-radius: 8px;
-    margin: 3px auto 3px; /* Reduced from 5px auto 5px */
+#score-chart-container {
     width: 100%;
-    max-width: 600px;
-    min-height: 70px; /* Reduced from 80px */
-    box-sizing: border-box;
-    aspect-ratio: 4.5/1; /* Slightly thinner height */
-    background-color: transparent;
-    flex-shrink: 0;
+    margin: 10px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 800px;
+    height: 150px;
+    position: relative;
+}
+
+#score-chart {
+    width: 100%;
+    height: 100%;
 }
 
 #player-scores {

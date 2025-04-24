@@ -53,15 +53,29 @@ function initializeApp() {
         .attr("viewBox", `0 0 ${gridDimension} ${gridDimension}`)
         .attr("preserveAspectRatio", "xMidYMid meet");
     
-    // Ensure score chart container exists if ScoreChartRenderer relies on it
+    // Ensure score chart is correctly initialized
     if (!d3.select("#score-chart-container").node()) {
-        d3.select("#score-chart").attr("id", null); // Remove ID from SVG if container doesn't exist
-        console.warn("#score-chart-container not found, chart might not size correctly.");
-    } else {
-         d3.select("#score-chart-container") // Add container if needed
+        console.warn("#score-chart-container not found, chart might not render correctly. Adding a fallback container.");
+        // Create a container if missing
+        d3.select("#game .game-content-wrapper")
+            .append("div")
+            .attr("id", "score-chart-container")
             .append("svg")
             .attr("id", "score-chart")
-            .attr("viewBox", `0 0 100 25`) // Example default viewBox
+            .attr("viewBox", `0 0 100 25`)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+    } else {
+        // Ensure the chart SVG has correct attributes
+        let scoreChart = d3.select("#score-chart");
+        if (!scoreChart.node()) {
+            // If SVG doesn't exist in container, add it
+            scoreChart = d3.select("#score-chart-container")
+                .append("svg")
+                .attr("id", "score-chart");
+        }
+        // Set or update viewBox
+        scoreChart
+            .attr("viewBox", `0 0 100 25`)
             .attr("preserveAspectRatio", "xMidYMid meet");
     }
 
