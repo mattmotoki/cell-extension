@@ -23,7 +23,7 @@
  * - utils.js: Gets the current scoring mechanism
  */
 
-import { getScoringMechanism } from "./utils.js";
+// import { getScoringMechanism } from "../utils.js"; // Remove direct dependency
 
 export class ScoreBreakdown {
     constructor(playerColors) {
@@ -33,8 +33,9 @@ export class ScoreBreakdown {
         this.reset();
     }
     
-    update(currentPlayer, scores, components1, components2) {
-        const scoring = getScoringMechanism();
+    update(currentPlayer, scores, components1, components2, scoringMechanism) {
+        // const scoring = getScoringMechanism(); // Removed direct call
+        const scoring = scoringMechanism; // Use passed value
         
         // Generate breakdown text for each player using the appropriate sizing method
         let breakdownText1 = this.calculateBreakdownText(scores[0], components1, scoring);
@@ -78,7 +79,7 @@ export class ScoreBreakdown {
         `);
     }
     
-    reset(currentPlayer = 0) {
+    reset(currentPlayer = 0, scoringMechanism) {
         // Initialize with placeholders to maintain consistent height
         const player1Color = this.playerColors[0];
         const player2Color = this.playerColors[1];
@@ -95,8 +96,8 @@ export class ScoreBreakdown {
         `);
         
         // Display initial score breakdown with zeros
-        const breakdownText1 = this.calculateBreakdownText(0, [], getScoringMechanism());
-        const breakdownText2 = this.calculateBreakdownText(0, [], getScoringMechanism());
+        const breakdownText1 = this.calculateBreakdownText(0, [], scoringMechanism);
+        const breakdownText2 = this.calculateBreakdownText(0, [], scoringMechanism);
         
         this.breakdown.html(`
             <div style="display: flex; justify-content: space-between; width: 100%;">
@@ -258,17 +259,24 @@ export class ScoreBreakdown {
 }
 
 
-export class ScoreChart {
+// Renamed from ScoreChart to ScoreChartRenderer
+export class ScoreChartRenderer {
 
-    constructor(playerColors, gridSize) {
-
-        this.scoreHistory1 = [0];
-        this.scoreHistory2 = [0];
+    constructor(playerColors, /* gridSize */) { // Removed gridSize if only used for scaling?
         this.playerColors = playerColors;
 
-        let svgWidth = 100;
-        let svgHeight = 25;
-        let margin = {top: 4, right: 4, bottom: 5, left: 7};
+        // Use relative units for flexibility
+        const container = d3.select("#score-chart-container");
+        const svgWidth = container.node() ? container.node().getBoundingClientRect().width : 100;
+        const svgHeight = svgWidth * 0.25; // Maintain aspect ratio
+        
+        // Increase margins to make room for labels, especially on the left and bottom
+        let margin = {
+            top: svgHeight * 0.2,
+            right: svgWidth * 0.05,
+            bottom: svgHeight * 0.25, 
+            left: svgWidth * 0.1     
+        };
         let chartWidth = svgWidth - margin.left - margin.right;
         let chartHeight = svgHeight - margin.top - margin.bottom;
 
@@ -296,23 +304,25 @@ export class ScoreChart {
             .attr("viewBox", `0 0 ${svgWidth} ${svgHeight}`)
             .attr("preserveAspectRatio", "xMidYMid meet");
             
+        // Main SVG group with proper margins
         this.svg = d3.select("#score-chart")
             .append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
 
+        // Line paths
         this.svg.append("path")
             .attr("class", "line line1")
-            .style("stroke-width", "0.2");
+            .style("stroke-width", "1.2");  // Keep this same thickness
 
         this.svg.append("path")
             .attr("class", "line line2")
-            .style("stroke-width", "0.2");
+            .style("stroke-width", "1.2");  // Keep this same thickness
 
-        // Create a simplified y-axis
+        // Create a simplified y-axis with improved positioning
         this.yAxis = this.svg.append("g")
             .attr("class", "y axis");
 
-        // Create a simplified x-axis
+        // Create a simplified x-axis with improved positioning
         this.xAxis = this.svg.append("g")
             .attr("class", "x axis")
             .attr("transform", `translate(0,${chartHeight})`);
@@ -326,58 +336,54 @@ export class ScoreChart {
             .attr("class", "x-axis-labels")
             .attr("transform", `translate(0,${chartHeight})`);
 
-        // Style the axis lines to match score lines
+        // Style the axis lines to match score lines but make them more visible
         this.svg.selectAll(".axis path, .axis line")
-            .style("stroke-width", "0.2")
+            .style("stroke-width", "1.2")  // Match line width
             .style("stroke", "#aaaaaa");
 
         this.svg.selectAll(".axis text")
-            .style("font-size", "2.5")
-            .style("fill", "#cccccc");
+            .style("font-size", "14")
+            .style("fill", "#ffffff");  // White for better visibility
 
         this.reset();
     }
 
-
-    update(currentPlayer, scores) {
-
-        // Add the scores to the history arrays
-        this.scoreHistory1.push(scores[0]);
-        this.scoreHistory2.push(scores[1]);
+    // Update now takes score history as arguments
+    update(currentPlayer, scores, scoreHistory1, scoreHistory2) {
+        // Ensure histories are valid arrays
+        const history1 = Array.isArray(scoreHistory1) ? scoreHistory1 : [0];
+        const history2 = Array.isArray(scoreHistory2) ? scoreHistory2 : [0];
 
         // Update the domain of the x scale
-        let moveCount = Math.max(this.scoreHistory1.length, this.scoreHistory2.length) - 1;
-        this.xScale.domain([0, moveCount]);
+        let moveCount = Math.max(history1.length, history2.length) - 1;
+        this.xScale.domain([0, moveCount <= 0 ? 1 : moveCount]); // Ensure domain is never zero or negative
 
         // Update the domain of the y scale
-        let maxScore = d3.max(this.scoreHistory1.concat(this.scoreHistory2)) || 1;
-        
-        // Set proper range for the y-axis domain to ensure max value is at the top
-        // Always use a fixed minimum value to maintain visual consistency
-        this.yScale.domain([this.safeLogValue(0.1), this.safeLogValue(maxScore)]);
+        let maxScore = Math.max(d3.max(history1) || 1, d3.max(history2) || 1);
+        this.yScale.domain([this.safeLogValue(0.1), this.safeLogValue(maxScore * 1.1)]); // Add 10% headroom
         
         // Determine which player has the highest score for coloring the max score label
-        const player1HasMax = Math.max(...this.scoreHistory1) >= Math.max(...this.scoreHistory2);
+        const player1HasMax = (d3.max(history1) ?? 0) >= (d3.max(history2) ?? 0);
         const maxScoreColor = player1HasMax ? this.playerColors[0] : this.playerColors[1];
         
-        // Update line paths
+        // Update line paths using the passed history
         this.svg.selectAll(".line1")
             .attr("stroke", this.playerColors[0])
-            .datum(this.scoreHistory1)
+            .datum(history1)
             .attr("d", this.line1);
 
         this.svg.selectAll(".line2")
             .attr("stroke", this.playerColors[1])
-            .datum(this.scoreHistory2)
+            .datum(history2)
             .attr("d", this.line2);
 
-        // Update markers
+        // Update markers using the passed history
         if (currentPlayer === 0) {
-            this._updateMarkers(0, this.scoreHistory1, this.playerColors[0], currentPlayer === 0);
-            this._updateMarkers(1, this.scoreHistory2, this.playerColors[1], currentPlayer === 1);
+            this._updateMarkers(0, history1, this.playerColors[0], currentPlayer === 0);
+            this._updateMarkers(1, history2, this.playerColors[1], currentPlayer === 1);
         } else {
-            this._updateMarkers(1, this.scoreHistory2, this.playerColors[1], currentPlayer === 1);
-            this._updateMarkers(0, this.scoreHistory1, this.playerColors[0], currentPlayer === 0);
+            this._updateMarkers(1, history2, this.playerColors[1], currentPlayer === 1);
+            this._updateMarkers(0, history1, this.playerColors[0], currentPlayer === 0);
         }
         
         // Bring the labels overlay to the front after updating markers
@@ -394,88 +400,90 @@ export class ScoreChart {
             .attr("x2", 0)
             .attr("y2", this.yScale.range()[0])
             .style("stroke", "#aaaaaa")
-            .style("stroke-width", "0.2");
+            .style("stroke-width", "1.2");  // Match line width
             
         // Add tick mark at the top (max value)
         this.yAxis.append("line")
-            .attr("x1", -2)
+            .attr("x1", -10)  
             .attr("y1", this.yScale(this.safeLogValue(maxScore)))
             .attr("x2", 0)
             .attr("y2", this.yScale(this.safeLogValue(maxScore)))
             .style("stroke", "#aaaaaa")
-            .style("stroke-width", "0.2");
+            .style("stroke-width", "1.2");  // Match line width
             
-        // Add only the max score label
+        // Add only the max score label with improved visibility
         this.yAxis.append("text")
-            .attr("x", -2)
+            .attr("x", -15)
             .attr("y", this.yScale(this.safeLogValue(maxScore)))
             .attr("dy", "0.3em")
             .style("text-anchor", "end")
-            .style("font-size", "2.5")
-            .style("fill", maxScoreColor)  // Use color of player with highest score
+            .style("font-size", "14")
+            .style("font-weight", "bold")
+            .style("fill", maxScoreColor)
             .text(maxScore);
             
-        // Create a custom minimalist x-axis (showing only the most recent player's move count)
-        // Clear the existing x-axis
+        // Create a custom minimalist x-axis 
         this.xAxis.selectAll("*").remove();
-        
-        // Add the axis line
         this.xAxis.append("line")
-            .attr("x1", 0)
-            .attr("y1", 0)
-            .attr("x2", this.xScale.range()[1])
-            .attr("y2", 0)
-            .style("stroke", "#aaaaaa")
-            .style("stroke-width", "0.2");
+            .attr("x1", 0).attr("y1", 0)
+            .attr("x2", this.xScale.range()[1]).attr("y2", 0)
+            .style("stroke", "#aaaaaa").style("stroke-width", "1.2");  // Match line width
             
-        // Clear existing labels in the overlay
         this.xAxisLabels.selectAll("*").remove();
         
         // Show the round number instead of move count
-        const roundNumber = Math.floor((moveCount+1) / 2);
-            
-        // Add the round number label in the overlay (above everything else)
-        this.xAxisLabels.append("rect")
-            .attr("x", this.xScale(moveCount)-2)
-            .attr("y", -2)
-            .attr("width", 4)
-            .attr("height", 4)
-            .attr("rx", 2)
-            .attr("ry", 2)
-            .style("fill", "#121212");
-            
-        this.xAxisLabels.append("text")
-            .attr("x", this.xScale(moveCount))
-            .attr("y", 1)
-            .attr("dy", "-0.2em")
-            .attr("text-anchor", "middle")
-            .style("font-size", "2.5")
-            .style("fill", "#aaaaaa")
-            .text(roundNumber);
+        const roundNumber = Math.floor((moveCount + 1) / 2);
+        if (moveCount >= 0) {
+                
+            const xPos = this.xScale.range()[1];
+
+            // Add a translucent background rectangle for better visibility
+            this.xAxisLabels.append("rect")
+                .attr("x", xPos+30)  
+                .attr("y", 5)
+                .attr("width", 30)  
+                .attr("height", 20)  
+                .attr("rx", 4).attr("ry", 4)  
+                .style("fill", "#121212")
+                .style("opacity", 0.8);  // Slightly translucent
+                
+            // Add the round number label with improved visibility
+            this.xAxisLabels.append("text")
+                .attr("x", xPos+15)
+                .attr("y", 5)  
+                .attr("text-anchor", "middle")
+                .style("font-size", "14")
+                .style("font-weight", "bold")
+                .style("fill", "#ffffff")
+                .text(roundNumber > 0 ? roundNumber : 1);
+            }
     }
     
 
     _updateMarkers(player, history, color, isCurrentPlayer) {
+        // Ensure history is an array
+        const validHistory = Array.isArray(history) ? history : [0];
+        
         let dots = this.svg.selectAll(`.dot${player}`)
-            .data(history, (d, i) => i);
+            .data(validHistory, (d, i) => i);
 
         dots.enter()
             .append("circle")
             .attr("class", `dot${player}`)
-            .attr("r", 0.5)
+            .attr("r", 3)  
             .attr("fill", isCurrentPlayer ? color : "none")
             .attr("stroke", color)
-            .attr("stroke-width", 0.25) 
+            .attr("stroke-width", 1.2)  
             .merge(dots)
             .attr("cx", (d, i) => this.xScale(i))
-            .attr("cy", d => this.yScale(this.safeLogValue(d)));  // Use safe log value
+            .attr("cy", d => this.yScale(this.safeLogValue(d)));
 
         dots.exit().remove();
     }
 
+    // Reset does not manage history anymore, just visuals
     reset() {
-        this.scoreHistory1 = [0];
-        this.scoreHistory2 = [0];
+        // Removed history reset
         
         // Set up initial state with just axes and labels
         let moveCount = 0;
@@ -508,25 +516,26 @@ export class ScoreChart {
             .attr("x2", 0)
             .attr("y2", this.yScale.range()[0])
             .style("stroke", "#aaaaaa")
-            .style("stroke-width", "0.2");
+            .style("stroke-width", "1.2");  // Match line width
             
         // Add tick mark at the top for max value (1 initially)
         this.yAxis.append("line")
-            .attr("x1", -2)
+            .attr("x1", -4)  
             .attr("y1", this.yScale(this.safeLogValue(1)))
             .attr("x2", 0)
             .attr("y2", this.yScale(this.safeLogValue(1)))
             .style("stroke", "#aaaaaa")
-            .style("stroke-width", "0.2");
+            .style("stroke-width", "1.2");  // Match line width
             
-        // Add the initial label for the y-axis
+        // Add the initial label for the y-axis with improved visibility
         this.yAxis.append("text")
-            .attr("x", -2)
+            .attr("x", -10)  // Move further left for better visibility
             .attr("y", this.yScale(this.safeLogValue(1)))
             .attr("dy", "0.3em")
             .style("text-anchor", "end")
-            .style("font-size", "2.5")
-            .style("fill", "#aaaaaa")
+            .style("font-size", "14")
+            .style("font-weight", "bold")  // Added bold
+            .style("fill", "#ffffff")  // Brighter color for better visibility
             .text("1");
             
         // Add the x-axis line
@@ -536,28 +545,28 @@ export class ScoreChart {
             .attr("x2", this.xScale.range()[1])
             .attr("y2", 0)
             .style("stroke", "#aaaaaa")
-            .style("stroke-width", "0.2");
+            .style("stroke-width", "1.2");  // Match line width
                        
         // Clear the labels overlay as well
         this.xAxisLabels.selectAll("*").remove();
             
-        // Add initial '1' label on x-axis with background in the overlay
+        // Add initial '1' label on x-axis with background in the overlay with improved visibility
         this.xAxisLabels.append("rect")
-            .attr("x", this.xScale(1)-2)
-            .attr("y", -2)
-            .attr("width", 4)
-            .attr("height", 4)
-            .attr("rx", 2)
-            .attr("ry", 2)
-            .style("fill", "#121212");
+            .attr("x", this.xScale(1)+30)  
+            .attr("y", 5)
+            .attr("width", 30)  
+            .attr("height", 20)  
+            .attr("rx", 4).attr("ry", 4)  
+            .style("fill", "#121212")
+            .style("opacity", 0.8);
         
         this.xAxisLabels.append("text")
-            .attr("x", this.xScale(1))
-            .attr("y", 1)
-            .attr("dy", "-0.2em")
+            .attr("x", this.xScale(1)+15)
+            .attr("y", 5)  
             .attr("text-anchor", "middle")
-            .attr("font-size", "2.5")
-            .attr("fill", "#aaaaaa")
+            .attr("font-size", "14")  
+            .attr("font-weight", "bold")
+            .attr("fill", "#ffffff")
             .text("1");
             
         // Bring the labels overlay to the front

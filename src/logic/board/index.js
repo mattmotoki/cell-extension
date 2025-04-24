@@ -5,4 +5,4 @@
  * allowing imports to be made from the top level board module.
  */
 
-export { Board } from './Board.js'; 
+export { GameBoardLogic } from './GameBoardLogic.js'; 
