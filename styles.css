@@ -71,27 +71,19 @@ body {
 
 #game-controls {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    flex-wrap: nowrap; /* Prevent wrapping on desktop */
-    margin: 3px 0 10px; /* Reduced from 5px 0 15px */
+    gap: 20px; /* Space between buttons */
+    margin: 10px 0;
     width: 100%;
     max-width: 600px;
-    box-sizing: border-box;
-    gap: 10px;
-    flex-shrink: 0;
+    flex-direction: row; /* Ensure buttons are side by side by default */
 }
 
-.control-group {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    flex: 1;
-}
-
-button#reset {
-    min-width: 120px;
-    flex-shrink: 0; /* Prevent button from shrinking */
+#game-controls button {
+    flex: 1 1 auto; /* Allow buttons to grow and shrink */
+    min-width: 120px; /* Minimum width for buttons */
+    padding: 8px 16px;
+    font-size: 15px;
 }
 
 #score-display {
@@ -150,15 +142,37 @@ svg {
     transition: stroke-width 0.2s ease;
 }
 
+/* Button icon styling */
+.button-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px; /* Increased from 6px to add more space between icon and text */
+}
+
+.button-icon svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    margin: 0;
+    stroke-width: 0.5; /* Add stroke-width to make icons appear bolder */
+    font-weight: bold; /* Make icons bold */
+}
+
+/* Regular button styling */
 button {
     background-color: var(--primary-color);
-    color: white;
+    color: var(--primary-text-color);
     border: none;
-    padding: 8px 16px;
-    font-size: 14px;
     border-radius: 6px;
+    padding: 10px 20px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    font-size: 15px;
+    font-weight: 600;
+    transition: background-color 0.3s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 button:hover {
@@ -277,15 +291,15 @@ button:active {
     min-height: 20px;
 }
 
-/* Navbar Styling - changed from fixed to normal flow */
+/* Navbar Styling */
 .navbar {
     display: flex;
-    justify-content: center;
+    justify-content: space-between; /* Changed from center to space-between for better layout */
     align-items: center;
     width: 100%;
-    position: relative; /* Changed from fixed to relative */
+    position: relative;
     padding: 10px 20px;
-    z-index: 100; /* Reduced z-index since it's no longer overlapping */
+    z-index: 100;
     background-color: var(--bg-color);
     box-sizing: border-box;
     transition: border-color 0.3s ease;
@@ -569,24 +583,25 @@ button:active {
         aspect-ratio: 3/1;
     }
     
-    /* Game controls on mobile - only contains reset button */
+    /* Game controls on mobile - make buttons appear on the same line */
     #game-controls {
-        width: 95%;
-        margin: 1vh auto 3vh; /* Reduced from 6vh to 3vh bottom margin */
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 10px; /* Reduced gap for mobile */
+        margin: 10px auto;
+        width: 95%; /* Prevent horizontal scrolling */
+        max-width: 450px;
     }
     
-    /* Fix the control group styles for mobile */
-    #game-controls .control-group {
-        display: none !important; /* Force hide on mobile */
-    }
-    
-    button#reset {
-        width: 100%;
-        max-width: 200px;
-        margin: 0 auto;
-        padding: 12px;
-        font-size: 16px;
-        border-radius: 8px;
+    #game-controls button {
+        flex: 1; /* Allow buttons to grow equally */
+        min-width: 0; /* Remove minimum width constraint */
+        max-width: 48%; /* Slightly increased from 45% to use more space */
+        padding: 8px 5px; /* Slightly reduced padding */
+        font-size: 14px; /* Slightly smaller font size */
+        white-space: nowrap; /* Prevent text wrapping */
+        justify-content: center; /* Center content */
     }
     
     /* Remove the overlay as it's not needed */
@@ -604,6 +619,21 @@ button:active {
     /* Prevent horizontal scrolling */
     html, body {
         overflow-x: hidden;
+    }
+    
+    /* Hide the settings dropdown in mobile view, as these settings are in the mobile menu */
+    .settings-dropdown {
+        display: none;
+    }
+    
+    .button-icon {
+        margin-right: 6px; /* Slightly less spacing on mobile but still more than original */
+    }
+    
+    .button-icon svg {
+        width: 14px;
+        height: 14px;
+        stroke-width: 0.5; /* Maintain bold appearance at smaller size */
     }
 }
 
@@ -861,6 +891,150 @@ button:active {
     
     #game-controls {
         margin: 3px auto 8px;
+    }
+}
+
+/* Game Settings Menu in Navbar */
+.settings-dropdown {
+    position: relative;
+    margin-right: 20px;
+}
+
+.settings-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent; /* Remove background color */
+    border: none;
+    color: var(--primary-color); /* Match navbar title color */
+    padding: 8px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.settings-toggle .settings-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0;
+}
+
+.settings-toggle .settings-icon svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+    margin: 0;
+}
+
+/* Media query for larger screens to show only the gear icon */
+@media (min-width: 769px) {
+    .settings-toggle {
+        padding: 8px;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        justify-content: center;
+        background-color: transparent; /* Ensure transparent background on larger screens too */
+    }
+    
+    .settings-toggle .settings-icon {
+        margin-right: 0;
+    }
+    
+    .settings-toggle .settings-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .settings-toggle span:not(.settings-icon) {
+        display: none;
+    }
+}
+
+/* Hover styles for settings-toggle */
+.settings-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* Subtle hover effect */
+    color: var(--secondary-color);
+}
+
+.settings-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: var(--input-bg);
+    border-radius: 6px;
+    padding: 15px;
+    margin-top: 5px;
+    min-width: 220px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    display: none;
+    z-index: 101;
+}
+
+.settings-dropdown:hover .settings-menu,
+.settings-menu:hover {
+    display: block;
+}
+
+.settings-group {
+    margin-bottom: 12px;
+}
+
+.settings-group:last-child {
+    margin-bottom: 0;
+}
+
+.settings-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.settings-group select {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    background-color: var(--dark-color);
+    color: var(--text-color);
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 20px;
+    padding-right: 32px;
+}
+
+/* Media query for larger screens - smaller buttons */
+@media (min-width: 1024px) {
+    #game-controls button {
+        padding: 8px 16px;
+        font-size: 14px;
+        max-width: 100px;
+    }
+    
+    button {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+    
+    .button-icon {
+        margin-right: 8px; /* Slightly reduced spacing for smaller buttons but still more than before */
+    }
+    
+    .button-icon svg {
+        width: 14px;
+        height: 14px;
+        stroke-width: 0.5; /* Maintain bold appearance at smaller size */
     }
 }
 

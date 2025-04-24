@@ -342,7 +342,7 @@ export class ScoreChartRenderer {
             .style("stroke", "#aaaaaa");
 
         this.svg.selectAll(".axis text")
-            .style("font-size", "12")
+            .style("font-size", "14")
             .style("fill", "#ffffff");  // White for better visibility
 
         this.reset();
@@ -417,7 +417,7 @@ export class ScoreChartRenderer {
             .attr("y", this.yScale(this.safeLogValue(maxScore)))
             .attr("dy", "0.3em")
             .style("text-anchor", "end")
-            .style("font-size", "12")
+            .style("font-size", "14")
             .style("font-weight", "bold")
             .style("fill", maxScoreColor)
             .text(maxScore);
@@ -433,9 +433,10 @@ export class ScoreChartRenderer {
         
         // Show the round number instead of move count
         const roundNumber = Math.floor((moveCount + 1) / 2);
-        if (moveCount >= 0) { // Only show if there are moves
-            const xPos = this.xScale(moveCount);
-            
+        if (moveCount >= 0) {
+                
+            const xPos = this.xScale.range()[1];
+
             // Add a translucent background rectangle for better visibility
             this.xAxisLabels.append("rect")
                 .attr("x", xPos+30)  
@@ -451,11 +452,11 @@ export class ScoreChartRenderer {
                 .attr("x", xPos+15)
                 .attr("y", 5)  
                 .attr("text-anchor", "middle")
-                .style("font-size", "12")
+                .style("font-size", "14")
                 .style("font-weight", "bold")
                 .style("fill", "#ffffff")
                 .text(roundNumber > 0 ? roundNumber : 1);
-        }
+            }
     }
     
 
@@ -532,7 +533,7 @@ export class ScoreChartRenderer {
             .attr("y", this.yScale(this.safeLogValue(1)))
             .attr("dy", "0.3em")
             .style("text-anchor", "end")
-            .style("font-size", "12")
+            .style("font-size", "14")
             .style("font-weight", "bold")  // Added bold
             .style("fill", "#ffffff")  // Brighter color for better visibility
             .text("1");
@@ -563,7 +564,7 @@ export class ScoreChartRenderer {
             .attr("x", this.xScale(1)+15)
             .attr("y", 5)  
             .attr("text-anchor", "middle")
-            .attr("font-size", "12")  
+            .attr("font-size", "14")  
             .attr("font-weight", "bold")
             .attr("fill", "#ffffff")
             .text("1");

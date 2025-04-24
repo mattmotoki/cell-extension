@@ -184,6 +184,12 @@ function updateUI() {
     const description = getScoringDescription(currentState.scoringMechanism);
     d3.select("#player-scores").attr("title", `Scoring: ${description}`);
     d3.select("#score-breakdown").attr("title", `Scoring: ${description}`);
+    
+    // Update settings menu tooltip - add this
+    const scoringTitle = document.querySelector(".settings-group:last-child");
+    if (scoringTitle) {
+        scoringTitle.setAttribute("title", `Scoring: ${description}`);
+    }
 
     // Update Undo Button State
     updateUndoButtons(currentState.historyLength || game.history.length); // Pass history length
@@ -282,6 +288,26 @@ function setupEventListeners() {
         closeMobileMenu(); 
     });
 
+    // Settings Toggle (new UI element)
+    const settingsToggle = document.getElementById("settings-toggle");
+    const settingsMenu = document.querySelector(".settings-menu");
+    
+    if (settingsToggle && settingsMenu) {
+        // Add click handler to toggle the menu manually (in addition to hover)
+        settingsToggle.addEventListener("click", function(e) {
+            e.stopPropagation();
+            const isVisible = settingsMenu.style.display === "block";
+            settingsMenu.style.display = isVisible ? "none" : "block";
+        });
+        
+        // Close when clicking elsewhere
+        document.addEventListener("click", function(e) {
+            if (!settingsMenu.contains(e.target) && e.target !== settingsToggle) {
+                settingsMenu.style.display = "none";
+            }
+        });
+    }
+
     // Player Mode Dropdowns
     const playerModeDropdown = document.getElementById("player-mode");
     const playerModeMobile = document.getElementById("player-mode-mobile");
@@ -333,6 +359,8 @@ function setupEventListeners() {
     window.addEventListener('resize', function() {
         if (window.innerWidth > 768) {
             closeMobileMenu();
+            // Also close settings menu if open
+            if (settingsMenu) settingsMenu.style.display = "none";
         }
     });
 
