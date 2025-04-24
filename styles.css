@@ -107,7 +107,7 @@ svg {
     display: block; /* Makes margin auto work */
     margin: 5px auto; /* Center horizontally */
     border: none;
-    border-radius: 8px;
+    border-radius: 0; /* Remove rounding from all SVGs */
     max-width: 100%;
     height: auto;
 }
@@ -123,18 +123,17 @@ svg {
     height: auto;
     aspect-ratio: 1/1;
     object-fit: contain;
-    margin: 5px auto; /* Reduced margin (from 8px) */
+    margin: 5px auto;
     padding: 0;
     box-sizing: border-box;
-    background-color: var(--board-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    flex-shrink: 0; /* Prevent the board from shrinking */
-    max-height: min(calc((100vh - var(--navbar-height) - 150px) * 0.58), 52vh); /* Reduced max height */
+    background-color: transparent;
+    border-radius: 5px;
+    flex-shrink: 0;
+    max-height: min(calc((100vh - var(--navbar-height) - 150px) * 0.58), 52vh);
 }
 
 .grid-cell {
-    fill: transparent;
+    fill: #1e1e1e; /* Changed from transparent to dark gray */
     stroke: #555555;
     stroke-width: 0.1;
     cursor: pointer;
@@ -142,7 +141,7 @@ svg {
 }
 
 .grid-cell:hover {
-    fill: rgba(74, 111, 255, 0.2);
+    fill: rgba(74, 111, 255, 0.3); /* Made hover state more visible */
 }
 
 .line {
