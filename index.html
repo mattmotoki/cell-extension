@@ -102,6 +102,11 @@
         </div>
     </div>
     
+    <!-- Load the main application script -->
+    <script type="module" src="src/main.js"></script>
+    
+    <!-- Removed old inline script -->
+    <!-- 
     <script type="module">
         import { Game } from "./js/game.js"; // Game class now orchestrates everything
         import { updateNavbarTitle } from "./js/utils.js";
@@ -252,13 +257,14 @@
         }
         
         // Initialize UI Controls and Syncing
-        syncControls();
+        // syncControls();
         
         // Set the initial navbar title based on the default scoring mechanism
-        updateNavbarTitle();
+        // updateNavbarTitle();
         
-        console.log("index.html script setup complete.");
+        // console.log("index.html script setup complete.");
 
     </script>    
+    -->
 </body>
 </html>

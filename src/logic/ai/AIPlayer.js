@@ -18,8 +18,8 @@
  * - board.js: AI queries board methods to evaluate positions
  */
 
-import { evaluateBoard } from './ai/eval.js';
-import { getScoringMechanism } from './utils.js';
+import { evaluateBoard } from './evaluateBoard.js';
+// import { getScoringMechanism } from '../utils.js'; // Removed, get mechanism passed to getMove
 
 export class Player {
     constructor(playerID) {

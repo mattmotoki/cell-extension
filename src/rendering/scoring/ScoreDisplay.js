@@ -23,7 +23,7 @@
  * - utils.js: Gets the current scoring mechanism
  */
 
-import { getScoringMechanism } from "./utils.js";
+// import { getScoringMechanism } from "../utils.js"; // Remove direct dependency
 
 export class ScoreBreakdown {
     constructor(playerColors) {
@@ -33,8 +33,9 @@ export class ScoreBreakdown {
         this.reset();
     }
     
-    update(currentPlayer, scores, components1, components2) {
-        const scoring = getScoringMechanism();
+    update(currentPlayer, scores, components1, components2, scoringMechanism) {
+        // const scoring = getScoringMechanism(); // Removed direct call
+        const scoring = scoringMechanism; // Use passed value
         
         // Generate breakdown text for each player using the appropriate sizing method
         let breakdownText1 = this.calculateBreakdownText(scores[0], components1, scoring);
@@ -78,7 +79,7 @@ export class ScoreBreakdown {
         `);
     }
     
-    reset(currentPlayer = 0) {
+    reset(currentPlayer = 0, scoringMechanism) {
         // Initialize with placeholders to maintain consistent height
         const player1Color = this.playerColors[0];
         const player2Color = this.playerColors[1];
@@ -95,8 +96,8 @@ export class ScoreBreakdown {
         `);
         
         // Display initial score breakdown with zeros
-        const breakdownText1 = this.calculateBreakdownText(0, [], getScoringMechanism());
-        const breakdownText2 = this.calculateBreakdownText(0, [], getScoringMechanism());
+        const breakdownText1 = this.calculateBreakdownText(0, [], scoringMechanism);
+        const breakdownText2 = this.calculateBreakdownText(0, [], scoringMechanism);
         
         this.breakdown.html(`
             <div style="display: flex; justify-content: space-between; width: 100%;">
@@ -261,12 +262,16 @@ export class ScoreBreakdown {
 // Renamed from ScoreChart to ScoreChartRenderer
 export class ScoreChartRenderer {
 
-    constructor(playerColors, gridSize) {
+    constructor(playerColors, /* gridSize */) { // Removed gridSize if only used for scaling?
         this.playerColors = playerColors;
 
-        let svgWidth = 100;
-        let svgHeight = 25;
-        let margin = {top: 4, right: 4, bottom: 5, left: 7};
+        // let svgWidth = 100;
+        // Use relative units or get container size for flexibility
+        const container = d3.select("#score-chart-container"); // Assume a container div
+        const svgWidth = container.node() ? container.node().getBoundingClientRect().width : 100;
+        const svgHeight = svgWidth * 0.25; // Maintain aspect ratio
+        
+        let margin = {top: svgHeight * 0.16, right: svgWidth * 0.04, bottom: svgHeight * 0.20, left: svgWidth * 0.07};
         let chartWidth = svgWidth - margin.left - margin.right;
         let chartHeight = svgHeight - margin.top - margin.bottom;
 
@@ -294,7 +299,7 @@ export class ScoreChartRenderer {
             .attr("viewBox", `0 0 ${svgWidth} ${svgHeight}`)
             .attr("preserveAspectRatio", "xMidYMid meet");
             
-        this.svg = d3.select("#score-chart")
+        this.svg = d3.select("#score-chart") // Select the SVG element directly
             .append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -330,7 +335,7 @@ export class ScoreChartRenderer {
             .style("stroke", "#aaaaaa");
 
         this.svg.selectAll(".axis text")
-            .style("font-size", "2.5")
+            .style("font-size", "2.5") // Use relative units? e.g., "0.8em"
             .style("fill", "#cccccc");
 
         this.reset();
