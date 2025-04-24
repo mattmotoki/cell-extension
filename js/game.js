@@ -37,12 +37,16 @@ export class Game {
         this.scoreChart = new ScoreChart(playerColors, gridSize);
         this.board = new Board(gridSize, cellSize, this.playerColors, this.handleCellClick.bind(this));
         this.opponent = new AIPlayer(1); // Initialize with AI as player 1
+        this.history = []; // Add history array
         
         // Initialize the score display
         this.updateScoreBreakdown();
         
         // Add a tooltip to the score display with scoring mechanism description
         this.updateScoreTooltip();
+        
+        // Store initial state for undo functionality
+        this.storeInitialState();
     }
 
     // Helper method to update score breakdown with correct components
@@ -71,6 +75,9 @@ export class Game {
         // Check if we're waiting for opponent's move
         if (this.progress === "waiting") {return;}
                                 
+        // *** Store current state before making the move ***
+        this.storeState();
+
         // Get the cell element and its coordinates
         let cell = d3.select(event.target);
         
@@ -96,6 +103,9 @@ export class Game {
             // Get AI opponent's move
             if (getPlayerMode() === "ai") {
                 this.progress = "waiting";
+                // *** Store state again before AI move (in case player move was undone) ***
+                // Note: AI move logic might need adjustment if undo is frequent
+                // this.storeState(); // Consider if needed here or inside handleOpponentMove
                 setTimeout(this.handleOpponentMove.bind(this), 500);
             }
         }
@@ -173,6 +183,10 @@ export class Game {
         const currentScoringMechanism = getScoringMechanism();
         this.scoringMechanism = currentScoringMechanism;
             
+        // *** Store current state before AI makes the move ***
+        // Store state *before* AI calculates its move in case undo happens between player turn and AI turn
+        this.storeState(); 
+
         // Get opponent's move
         let cell = this.opponent.getMove(this.board, currentScoringMechanism);
         if (cell === null) {
@@ -224,6 +238,123 @@ export class Game {
         }
     }
 
+    // Store initial state separately to ensure we have a valid start point
+    storeInitialState() {
+        const state = {
+            boardState: this.board.getState(),
+            scores: [...this.scores], // Deep copy scores
+            currentPlayer: this.currentPlayer,
+            progress: this.progress,
+            scoreHistory1: [...this.scoreChart.scoreHistory1], 
+            scoreHistory2: [...this.scoreChart.scoreHistory2],
+            lastAction: "Initial game state",
+            timestamp: new Date().toISOString()
+        };
+        
+        console.log("Storing initial game state");
+        this.history = [state]; // Reset history and add initial state
+        
+        // Enable/disable undo button based on history
+        // We disable it initially since there are no moves to undo yet
+        d3.select("#undo").property("disabled", true);
+        d3.select("#undo-mobile").property("disabled", true);
+    }
+
+    // Method to store the current game state
+    storeState() {
+        // Only store state if game is playing or waiting
+        if (this.progress === "over") {
+            return; // Don't store state after game is over
+        }
+        
+        const state = {
+            boardState: this.board.getState(),
+            scores: [...this.scores], // Deep copy scores
+            currentPlayer: this.currentPlayer,
+            progress: this.progress,
+            scoreHistory1: [...this.scoreChart.scoreHistory1], // Store score chart history
+            scoreHistory2: [...this.scoreChart.scoreHistory2],
+            // Add metadata to help with debugging
+            lastAction: `Before Player ${this.currentPlayer + 1}'s move`,
+            timestamp: new Date().toISOString()
+        };
+        
+        console.log(`Storing state: ${state.lastAction}, history length will be ${this.history.length + 1}`);
+        this.history.push(state);
+        
+        // Enable undo button when moves are made
+        d3.select("#undo").property("disabled", false);
+        d3.select("#undo-mobile").property("disabled", false);
+    }
+
+    // Debug method to log the current state history (add after storeState method)
+    debugHistory() {
+        console.log("Current history stack:");
+        this.history.forEach((state, index) => {
+            console.log(`[${index}] ${state.lastAction || 'Initial state'} - Player ${state.currentPlayer + 1}'s turn next, scores: [${state.scores}]`);
+        });
+    }
+
+    // Method to undo the last move
+    undo() {
+        console.log("Undo method called. History length:", this.history.length);
+        
+        // Debug the current history stack
+        this.debugHistory();
+        
+        // Check if game is in progress and there's a state to go back to
+        if (this.history.length <= 1) {
+            console.log("No moves to undo. At initial state.");
+            return; // Only initial state or no states at all
+        }
+
+        // Check if we're in AI player mode
+        const isAIMode = getPlayerMode() === "ai";
+        
+        // Remove current state (the one we're undoing)
+        this.history.pop();
+        
+        // In AI mode, if the current state would give us an AI's turn (player index 1),
+        // we should pop one more state to get back to the human player's turn
+        if (isAIMode && this.history.length > 1) {
+            const nextState = this.history[this.history.length - 1];
+            if (nextState.currentPlayer === 1) {
+                console.log("AI mode: Skipping AI state and undoing to previous human player turn");
+                this.history.pop(); // Remove one more state to skip the AI's turn
+            }
+        }
+        
+        // Get previous state (the one we're restoring to)
+        const prevState = this.history[this.history.length - 1];
+
+        console.log("Restoring to previous state:", {
+            player: prevState.currentPlayer + 1,
+            scores: prevState.scores,
+            progress: prevState.progress
+        });
+
+        // Restore game state variables
+        this.scores = [...prevState.scores]; // Use deep copy
+        this.currentPlayer = prevState.currentPlayer;
+        this.progress = prevState.progress;
+
+        // Restore board state and redraw
+        this.board.setState(prevState.boardState);
+
+        // Restore score chart state and redraw
+        this.scoreChart.setState(prevState.scoreHistory1, prevState.scoreHistory2);
+
+        // Update UI elements
+        this.updateScoreBreakdown(); // Update score display
+        this.updateScoreTooltip();   // Update tooltip
+
+        console.log("Undo complete. Player", this.currentPlayer + 1, "'s turn.");
+        
+        // Disable undo button if we're at the initial state now
+        const shouldDisableUndo = this.history.length <= 1;
+        d3.select("#undo").property("disabled", shouldDisableUndo);
+        d3.select("#undo-mobile").property("disabled", shouldDisableUndo);
+    }
 
     reset() {
         // Store original player to preserve it during scoring mechanism changes
@@ -253,6 +384,9 @@ export class Game {
         
         // reset board
         this.board.reset(this.playerColors);
+
+        // Reset history properly using the dedicated method
+        this.storeInitialState();
 
         // reset score display and chart
         this.scoreBreakdown.reset(this.currentPlayer);

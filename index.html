@@ -50,6 +50,9 @@
                     <option value="cell-extension" title="Product of the number of undirected edges (extensions)">Cell-Extension</option>
                 </select>
             </li>
+            <li class="mobile-menu-item">
+                <button id="undo-mobile" class="mobile-undo-button">Undo Last Move</button>
+            </li>
         </ul>
         <!-- Close button -->
         <div class="mobile-menu-close">
@@ -94,6 +97,7 @@
                 </div>
                 
                 <button id="reset">Reset Game</button>
+                <button id="undo" disabled>Undo Last Move</button>
             </div>
         </div>
     </div>
@@ -257,6 +261,22 @@
 
         // game controls
         d3.select("#reset").on("click", game.reset.bind(game));
+        d3.select("#undo").on("click", () => {
+            game.undo();
+            // Also disable button if history becomes empty after undo
+            d3.select("#undo").property("disabled", game.history.length === 0);
+            d3.select("#undo-mobile").property("disabled", game.history.length === 0);
+        });
+        d3.select("#undo-mobile").on("click", () => {
+            game.undo();
+            d3.select("#undo").property("disabled", game.history.length === 0);
+            d3.select("#undo-mobile").property("disabled", game.history.length === 0);
+             // Close mobile menu after clicking undo
+             const mobileMenu = document.getElementById('mobile-menu');
+             const hamburgerBtn = document.getElementById('hamburger-menu');
+             mobileMenu.classList.remove('active');
+             hamburgerBtn.classList.remove('active');
+        });
         
         // Initialize synced controls
         syncControls();

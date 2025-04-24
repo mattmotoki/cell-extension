@@ -471,6 +471,9 @@ export class ScoreChart {
             .attr("cy", d => this.yScale(this.safeLogValue(d)));  // Use safe log value
 
         dots.exit().remove();
+
+        // Bring the labels overlay to the front
+        this.labelsOverlay.raise();
     }
 
     reset() {
@@ -562,6 +565,35 @@ export class ScoreChart {
             
         // Bring the labels overlay to the front
         this.labelsOverlay.raise();
+    }
+
+    // Method to set the score chart state directly
+    setState(history1, history2) {
+        // Ensure we have valid arrays with at least one element each
+        if (!Array.isArray(history1) || history1.length === 0) {
+            history1 = [0];
+        }
+        if (!Array.isArray(history2) || history2.length === 0) {
+            history2 = [0];
+        }
+        
+        this.scoreHistory1 = [...history1]; // Use deep copies
+        this.scoreHistory2 = [...history2];
+        
+        // Call update with the last known scores and player to redraw the chart correctly
+        // Need to determine the last player based on history length
+        const totalMoves = Math.max(history1.length, history2.length) - 1;
+        // If totalMoves is odd, player 1 made the last move (currentPlayer becomes 0)
+        // If totalMoves is even, player 0 made the last move (currentPlayer becomes 1)
+        const lastPlayerBeforeUndo = (totalMoves % 2 === 0) ? 0 : 1;
+        
+        const lastScores = [
+            history1[history1.length - 1] || 0,
+            history2[history2.length - 1] || 0
+        ];
+        
+        // Call update to redraw the chart with the restored state
+        this.update(lastPlayerBeforeUndo, lastScores);
     }
 
 } 

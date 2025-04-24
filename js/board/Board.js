@@ -164,6 +164,186 @@ export class Board {
         return components;
     }
     
+    // Method to get the current state of the board
+    getState() {
+        // Deep copy occupiedCells to avoid mutation issues
+        const occupiedCellsState = [
+            JSON.parse(JSON.stringify(this.occupiedCells[0])),
+            JSON.parse(JSON.stringify(this.occupiedCells[1]))
+        ];
+        return {
+            occupiedCells: occupiedCellsState
+        };
+    }
+
+    // Method to set the board state and redraw
+    setState(state) {
+        console.log("Board setState called with state:", state ? "valid state" : "invalid state");
+        
+        if (!state || !state.occupiedCells) {
+            console.error("Invalid state provided to board.setState");
+            return;
+        }
+        
+        // Restore occupiedCells from the state (using deep copy)
+        this.occupiedCells = [
+            JSON.parse(JSON.stringify(state.occupiedCells[0])),
+            JSON.parse(JSON.stringify(state.occupiedCells[1]))
+        ];
+
+        // Clear ALL existing visual elements
+        this.cellsGroup.selectAll("*").remove();
+        this.linesGroup.selectAll("*").remove();
+        
+        // First, redraw all cells
+        for (let playerIndex = 0; playerIndex < 2; playerIndex++) {
+            const playerCells = this.occupiedCells[playerIndex];
+            for (const posKey in playerCells) {
+                if (playerCells.hasOwnProperty(posKey)) {
+                    const [gridX, gridY] = this.parsePositionKey(posKey);
+                    const {x: pixelX, y: pixelY} = this.gridToPixel(gridX, gridY);
+                    
+                    // Redraw the cell (rectangle)
+                    this.cellsGroup.append("rect")
+                        .attr("class", `rectangle${playerIndex+1}`)
+                        .attr("x", pixelX)
+                        .attr("y", pixelY)
+                        .attr("width", this.cellSize * 0.99)
+                        .attr("height", this.cellSize * 0.99)
+                        .attr("fill", this.playerColors[playerIndex])
+                        .attr("rx", this.cellSize/5)
+                        .attr("ry", this.cellSize/5)
+                        .attr("data-grid-x", gridX)
+                        .attr("data-grid-y", gridY);
+                }
+            }
+        }
+        
+        const currentScoring = getScoringMechanism();
+        const showConnectionCount = currentScoring === 'cell-connection';
+                
+        // Then, redraw all connections (lines and annotations)
+        for (let playerIndex = 0; playerIndex < 2; playerIndex++) {
+            const playerCells = this.occupiedCells[playerIndex];
+            for (const posKey in playerCells) {
+                if (playerCells.hasOwnProperty(posKey)) {
+                    const [gridX, gridY] = this.parsePositionKey(posKey);
+                    const {x: pixelX, y: pixelY} = this.gridToPixel(gridX, gridY);
+                    
+                    // Add visual indicators for single cells
+                    if (this.countConnections(gridX, gridY, playerIndex) === 0 && showConnectionCount) {
+                        // Calculate cell center for isolated cells
+                        const x_mid = pixelX + this.cellSize / 2;
+                        const y_mid = pixelY + this.cellSize / 2;
+                        
+                        // Add circle background
+                        this.linesGroup.append("circle")
+                            .attr("cx", x_mid)
+                            .attr("cy", y_mid)
+                            .attr("r", 3)
+                            .attr("fill", this.playerColors[playerIndex])
+                            .attr("class", "number-background");
+                        
+                        // Add "1" text
+                        this.linesGroup.append("text")
+                            .attr("x", x_mid)
+                            .attr("y", y_mid)
+                            .attr("text-anchor", "middle")
+                            .attr("dominant-baseline", "central")
+                            .attr("font-size", "2.5")
+                            .attr("font-weight", "600")
+                            .attr("fill", this.annotationColor)
+                            .attr("class", "connection-number")
+                            .text("1");
+                    }
+                    
+                    // Redraw lines/connections to adjacent cells of the same player
+                    const adjacentPositions = this.getAdjacentPositions(gridX, gridY);
+                    for (let [adjX, adjY] of adjacentPositions) {
+                        const adjKey = this.createPositionKey(adjX, adjY);
+                        if (this.occupiedCells[playerIndex][adjKey]) {
+                            // Ensure lines are drawn only once (e.g., from lower to higher key)
+                            if (posKey < adjKey) {
+                                const {x: adjPixelX, y: adjPixelY} = this.gridToPixel(adjX, adjY);
+                                const x1 = pixelX + this.cellSize / 2;
+                                const y1 = pixelY + this.cellSize / 2;
+                                const x2 = adjPixelX + this.cellSize / 2;
+                                const y2 = adjPixelY + this.cellSize / 2;
+                                
+                                // Add the connecting line
+                                this.linesGroup.append("line")
+                                    .attr("x1", x1)
+                                    .attr("y1", y1)
+                                    .attr("x2", x2)
+                                    .attr("y2", y2)
+                                    .attr("stroke", this.playerColors[playerIndex])
+                                    .attr("stroke-width", this.cellSize * 0.1)
+                                    .attr("opacity", 0.6);
+                                    
+                                if (showConnectionCount) {
+                                    // Add connection count indicators
+                                    const count1 = this.countConnections(gridX, gridY, playerIndex);
+                                    const count2 = this.countConnections(adjX, adjY, playerIndex);
+                                    
+                                    // Add background circles and connection counts for both cells
+                                    this.linesGroup.append("circle")
+                                        .attr("cx", x1)
+                                        .attr("cy", y1)
+                                        .attr("r", 3)
+                                        .attr("fill", this.playerColors[playerIndex])
+                                        .attr("class", "number-background");
+                                        
+                                    this.linesGroup.append("circle")
+                                        .attr("cx", x2)
+                                        .attr("cy", y2)
+                                        .attr("r", 3)
+                                        .attr("fill", this.playerColors[playerIndex])
+                                        .attr("class", "number-background");
+                                    
+                                    this.linesGroup.append("text")
+                                        .attr("x", x1)
+                                        .attr("y", y1)
+                                        .attr("text-anchor", "middle")
+                                        .attr("dominant-baseline", "central")
+                                        .attr("font-size", "2.5")
+                                        .attr("font-weight", "600")
+                                        .attr("fill", this.annotationColor)
+                                        .attr("class", "connection-number")
+                                        .text(count1);
+                                        
+                                    this.linesGroup.append("text")
+                                        .attr("x", x2)
+                                        .attr("y", y2)
+                                        .attr("text-anchor", "middle")
+                                        .attr("dominant-baseline", "central")
+                                        .attr("font-size", "2.5")
+                                        .attr("font-weight", "600")
+                                        .attr("fill", this.annotationColor)
+                                        .attr("class", "connection-number")
+                                        .text(count2);
+                                } else {
+                                    // Add small circles for other scoring mechanisms
+                                    this.linesGroup.append("circle")
+                                        .attr("cx", x1)
+                                        .attr("cy", y1)
+                                        .attr("r", 0.7)
+                                        .attr("fill", this.annotationColor);
+                                    this.linesGroup.append("circle")
+                                        .attr("cx", x2)
+                                        .attr("cy", y2)
+                                        .attr("r", 0.7)
+                                        .attr("fill", this.annotationColor);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        console.log("Board state restored successfully");
+    }
+
     // Wrapper methods for scoring mechanisms
     getMultiplicationScore(playerIndex) {
         return getMultiplicationScore(this, playerIndex);
