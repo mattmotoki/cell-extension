@@ -46,15 +46,15 @@ export function displayWinnerMessage(scores) {
     // We could optionally replace alert with a custom modal in the future
     // for better styling, but for now we'll leave alert in place
     if (scores[0] > scores[1]) {
-        alert("🎮 Game Over! Player 1 wins. Congratulations! 🎉");
+        alert("Congratulations! Player 1 wins! 🎉");
     } else if (scores[0] < scores[1]) {
         if (getPlayerMode() == "ai") {
-            alert("🎮 Game Over! The AI player won this round. Try again! 🤖");
+            alert("The AI player won this round. Try again 🤖");
         } else {
-            alert("🎮 Game Over! Player 2 wins. Congratulations! 🎉");
+            alert("Congratulations! Player 2 wins! 🎉");
         }
     } else {
-        alert("🎮 Game Over! It's a tie. Great game by both players! 🏆");
+        alert("It's a tie. Great game by both players! 🏆");
     }            
 }
 
@@ -74,10 +74,10 @@ export function getScoringMechanism() {
 // Get description for a scoring mechanism
 export function getScoringDescription(mechanism) {
     const descriptions = {
-        'cell-connection': 'The total number of edges (connections)',
+        'cell-connection': 'Product of the number of directed edges (connections)',
         'cell-multiplication': 'Product of the size (number of cells) of the connected components',
-        'cell-maximization': 'The size of the largest connected component',
-        'cell-extension': 'The total number of extensions',
+        'cell-multiplication': 'Product of the size (number of cells) of the connected components',
+        'cell-extension': 'Product of the number of undirected edges (extensions)',
     };
     
     return descriptions[mechanism] || 'Unknown scoring mechanism';

@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Cell Extension</title>
+        <title>Cell Production</title>
         <link rel="stylesheet" type="text/css" href="styles.css">
         <link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-touch-icon.png">
         <link rel="icon" type="image/png" sizes="32x32" href="favicons/favicon-32x32.png">
@@ -23,7 +23,7 @@
     <nav class="navbar">
         <div class="navbar-logo">
             <img src="favicons/favicon-32x32.png" alt="Cell Extension Logo">
-            <h1 class="navbar-title">Cell Collection</h1>
+            <h1 class="navbar-title">Cell Production</h1>
         </div>
         <div class="hamburger-menu" id="hamburger-menu">
             <span></span>
@@ -45,10 +45,9 @@
             <li class="mobile-menu-item">
                 <span class="mobile-menu-item-label">Scoring Mechanism</span>
                 <select id="scoring-mechanism-mobile" title="Select a scoring mechanism">
-                    <option value="cell-multiplication" selected title="Product of the size (number of cells) of the connected components">Cell-Multiplication</option>                        
-                    <option value="cell-connection" title="The total number of directed edges (connections)">Cell-Connection</option>
-                    <option value="cell-extension" title="The total number of undirected edges (extensions)">Cell-Extension</option>                    
-                    <option value="cell-maximization" title="The size of the largest connected component" disabled>Cell-Maximization (Coming soon)</option>
+                    <option value="cell-multiplication" selected title="Product of the size of the cells">Cell-Multiplication</option>                        
+                    <option value="cell-connection" title="Product of the number of directed edges (connections)">Cell-Connection</option>
+                    <option value="cell-extension" title="Product of the number of undirected edges (extensions)">Cell-Extension</option>
                 </select>
             </li>
         </ul>
@@ -64,10 +63,16 @@
     <div id="game">
         <!-- Game content wrapper for vertical centering -->
         <div class="game-content-wrapper">
-            <div id="player-scores"></div>
-            <svg id="board"></svg>        
+            <!-- Board UI group for better spacing control -->
+            <div class="board-ui-group">
+                <div id="player-scores"></div>
+                <div id="score-breakdown"></div>
+                <svg id="board"></svg>
+            </div>
+                        
+            <!-- Score chart -->
             <svg id="score-chart"></svg>
-            <div id="score-breakdown"></div>
+            
             <div id="game-controls">
                 <div class="control-group">
                     <!-- Player Mode Dropdown for both desktop and mobile -->
@@ -81,10 +86,9 @@
                     <!-- Scoring Mechanism Dropdown -->
                     <div class="scoring-dropdown">
                         <select id="scoring-mechanism" title="Select a scoring mechanism">
-                            <option value="cell-multiplication" title="Product of the size (number of cells) of the connected components" selected>Cell-Multiplication</option>                        
-                            <option value="cell-connection" title="The total number of directed edges (connections)">Cell-Connection</option>
-                            <option value="cell-extension" title="The total number of undirected edges (extensions)">Cell-Extension</option>                    
-                            <option value="cell-maximization" title="The size of the largest connected component" disabled>Cell-Maximization (Coming soon)</option>
+                            <option value="cell-multiplication" selected title="Product of the size of the cells">Cell-Multiplication</option>                        
+                            <option value="cell-connection" title="Product of the number of directed edges (connections)">Cell-Connection</option>
+                            <option value="cell-extension" title="Product of the number of undirected edges (extensions)">Cell-Extension</option>                    
                         </select>
                     </div>
                 </div>
