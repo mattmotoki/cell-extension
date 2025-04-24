@@ -67,7 +67,7 @@ Players earn points based on the product of their connected clusters. If a playe
 
 Players score points based on the product of connections for each cell. For example, if a player has cells with 2, 3, and 4 connections, their score is 2 x 3 x 4 = 24 points. This encourages creating cells with multiple connections rather than just maximizing the total number of connections.
 
-### Cell-Expansion
+### Cell-Multiplication
 > Product of the size (number of cells) of the connected components
 
 This is functionally equivalent to Cell-Multiplication. Players earn points based on the product of their connected clusters. If a player has clusters containing 2, 3, and 4 cells, their score is 2 x 3 x 4 = 24 points.

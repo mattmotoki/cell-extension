@@ -133,7 +133,7 @@ export class ScoreBreakdown {
         
         switch(scoringMechanism) {
             case 'cell-multiplication':
-            case 'cell-expansion':
+            case 'cell-multiplication':
                 // For these mechanisms, size is the number of cells
                 return component.length;
                 
@@ -425,18 +425,17 @@ export class ScoreChart {
             
         // Add the round number label in the overlay (above everything else)
         this.xAxisLabels.append("rect")
-            .attr("x", this.xScale(moveCount)-2.5)
-            .attr("y", -6)
-            .attr("width", 5)
-            .attr("height", 5)
-            .attr("rx", 1)
-            .attr("ry", 1)
-            .style("fill", "#121212")
-            .style("opacity", 0.75);
+            .attr("x", this.xScale(moveCount)-2)
+            .attr("y", -2)
+            .attr("width", 4)
+            .attr("height", 4)
+            .attr("rx", 2)
+            .attr("ry", 2)
+            .style("fill", "#121212");
             
         this.xAxisLabels.append("text")
             .attr("x", this.xScale(moveCount))
-            .attr("y", -2)
+            .attr("y", 1)
             .attr("dy", "-0.2em")
             .attr("text-anchor", "middle")
             .style("font-size", "2.5")
@@ -524,33 +523,23 @@ export class ScoreChart {
             .attr("y2", 0)
             .style("stroke", "#aaaaaa")
             .style("stroke-width", "0.2");
-            
-        // Add a tick mark for the first round
-        this.xAxis.append("line")
-            .attr("x1", this.xScale(1))
-            .attr("y1", 0)
-            .attr("x2", this.xScale(1))
-            .attr("y2", -2)
-            .style("stroke", "#aaaaaa")
-            .style("stroke-width", "0.2");
-            
+                       
         // Clear the labels overlay as well
         this.xAxisLabels.selectAll("*").remove();
             
         // Add initial '1' label on x-axis with background in the overlay
         this.xAxisLabels.append("rect")
-            .attr("x", this.xScale(1)-2.5)
-            .attr("y", -6)
-            .attr("width", 5)
-            .attr("height", 5)
-            .attr("rx", 1)
-            .attr("ry", 1)
-            .style("fill", "#121212")
-            .style("opacity", 0.75);
+            .attr("x", this.xScale(1)-2)
+            .attr("y", -2)
+            .attr("width", 4)
+            .attr("height", 4)
+            .attr("rx", 2)
+            .attr("ry", 2)
+            .style("fill", "#121212");
         
         this.xAxisLabels.append("text")
             .attr("x", this.xScale(1))
-            .attr("y", -2)
+            .attr("y", 1)
             .attr("dy", "-0.2em")
             .attr("text-anchor", "middle")
             .attr("font-size", "2.5")

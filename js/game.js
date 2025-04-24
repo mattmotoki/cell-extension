@@ -134,7 +134,6 @@ export class Game {
                 this.scoreBreakdown.update(this.currentPlayer, this.scores, components0Conn, components1Conn);
                 break;
             case 'cell-multiplication':
-            case 'cell-expansion':
                 // Get connected components for both players
                 const components0 = this.board.getConnectedComponents(0);
                 const components1 = this.board.getConnectedComponents(1);
