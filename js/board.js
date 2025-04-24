@@ -29,8 +29,7 @@ export class Board {
         this.gridSize = gridSize;
         this.cellSize = cellSize;
         this.playerColors = playerColors;
-        this.lineColors = ["rgba(216, 191, 216, 0.8)", "rgba(216, 191, 216, 0.8)"];
-        this.connectionColor = "#333333"; // Color for connection indicators and lines
+        this.annotationColor = "#555555";
         this.clickHandler = clickHandler;
         
         // Grid dimensions in integer units
@@ -91,6 +90,16 @@ export class Board {
     // Parse a position key into grid coordinates
     parsePositionKey(key) {
         return key.split('-').map(Number);
+    }
+
+    // Get adjacent positions for a grid cell
+    getAdjacentPositions(gridX, gridY) {
+        return [
+            [gridX + 1, gridY], // right
+            [gridX - 1, gridY], // left
+            [gridX, gridY + 1], // down
+            [gridX, gridY - 1]  // up
+        ];
     }
 
     // Get connected components for a player using grid positions
@@ -178,37 +187,34 @@ export class Board {
         // If no components, score is 0
         if (components.length === 0) return 0;
         
-        // For each component, calculate its size as the sum of connections within it
+        // For each component, calculate its size as the total number of connections within it
         const componentSizes = components.map(component => {
-            let connectionSum = 0;
+            // If it's a single cell, the connection count is 1
+            if (component.length === 1) return 1;
+            
+            // Count the total number of connections in the component
+            let connectionCount = 0;
             
             // For each cell in the component, count its connections to other cells in the same component
             for (let cellKey of component) {
                 const [gridX, gridY] = this.parsePositionKey(cellKey);
                 
                 // Get adjacent positions
-                const adjacentPositions = [
-                    [gridX + 1, gridY], // right
-                    [gridX - 1, gridY], // left
-                    [gridX, gridY + 1], // down
-                    [gridX, gridY - 1]  // up
-                ];
+                const adjacentPositions = this.getAdjacentPositions(gridX, gridY);
                 
-                // Count connections within the component
+                // Count connections to other cells in the same component
                 for (let [adjX, adjY] of adjacentPositions) {
                     const adjKey = this.createPositionKey(adjX, adjY);
+                    
+                    // If the adjacent cell is in the same component
                     if (component.includes(adjKey)) {
-                        connectionSum++;
+                        connectionCount++;
                     }
                 }
             }
             
-            // Each connection is counted twice (once from each end)
-            // So we divide by 2 to get the actual number of connections
-            connectionSum = Math.floor(connectionSum / 2);
-            
-            // If there are no connections (single cell), return 1
-            return connectionSum > 0 ? connectionSum : 1;
+            // Return the total number of connections in the component
+            return connectionCount;
         });
         
         // Calculate the product of all component sizes
@@ -235,12 +241,7 @@ export class Board {
                 const [gridX, gridY] = this.parsePositionKey(cellKey);
                 
                 // Check adjacent positions
-                const adjacentPositions = [
-                    [gridX + 1, gridY], // right
-                    [gridX - 1, gridY], // left
-                    [gridX, gridY + 1], // down
-                    [gridX, gridY - 1]  // up
-                ];
+                const adjacentPositions = this.getAdjacentPositions(gridX, gridY);
                 
                 // For each adjacent position
                 for (let [adjX, adjY] of adjacentPositions) {
@@ -290,12 +291,7 @@ export class Board {
         let neighbors = [];
         
         // Get adjacent grid positions
-        const adjacentPositions = [
-            [gridX + 1, gridY], // right
-            [gridX - 1, gridY], // left
-            [gridX, gridY + 1], // down
-            [gridX, gridY - 1]  // up
-        ];
+        const adjacentPositions = this.getAdjacentPositions(gridX, gridY);
         
         // Check for neighbors
         for (let [adjX, adjY] of adjacentPositions) {
@@ -415,7 +411,8 @@ export class Board {
                         .attr("text-anchor", "middle")
                         .attr("dominant-baseline", "central")
                         .attr("font-size", "2.5")
-                        .attr("fill", this.connectionColor)
+                        .attr("font-weight", "600")
+                        .attr("fill", this.annotationColor)
                         .attr("class", "connection-number")
                         .text("1");
                 }
@@ -452,7 +449,7 @@ export class Board {
                         .attr("y1", y_mid)
                         .attr("x2", x_end + 3*this.cellSize / 2)
                         .attr("y2", y_mid)
-                        .attr("stroke", this.connectionColor)
+                        .attr("stroke", this.annotationColor)
                         .attr("stroke-width", 0.3);
                     
                     if (showConnectionCount) {
@@ -507,7 +504,8 @@ export class Board {
                             .attr("text-anchor", "middle")
                             .attr("dominant-baseline", "central")
                             .attr("font-size", "2.5")
-                            .attr("fill", this.connectionColor)
+                            .attr("font-weight", "600")
+                            .attr("fill", this.annotationColor)
                             .attr("class", "connection-number")
                             .text(count1);
                             
@@ -517,7 +515,8 @@ export class Board {
                             .attr("text-anchor", "middle")
                             .attr("dominant-baseline", "central")
                             .attr("font-size", "2.5")
-                            .attr("fill", this.connectionColor)
+                            .attr("font-weight", "600")
+                            .attr("fill", this.annotationColor)
                             .attr("class", "connection-number")
                             .text(count2);
                     } else {
@@ -526,12 +525,12 @@ export class Board {
                             .attr("cx", x_end + this.cellSize / 2)
                             .attr("cy", y_mid)
                             .attr("r", 0.7)
-                            .attr("fill", this.connectionColor);
+                            .attr("fill", this.annotationColor);
                         this.linesGroup.append("circle")
                             .attr("cx", x_end + 3*this.cellSize / 2)
                             .attr("cy", y_mid)
                             .attr("r", 0.7)
-                            .attr("fill", this.connectionColor);
+                            .attr("fill", this.annotationColor);
                     }
                 } else if (height === 2*this.cellSize) {  // vertical extension
                     let x_mid = x_start + this.cellSize / 2;
@@ -542,7 +541,7 @@ export class Board {
                         .attr("y1", y_end + this.cellSize / 2)
                         .attr("x2", x_mid)
                         .attr("y2", y_end + 3*this.cellSize / 2)
-                        .attr("stroke", this.connectionColor)
+                        .attr("stroke", this.annotationColor)
                         .attr("stroke-width", 0.3);
                     
                     if (showConnectionCount) {
@@ -597,7 +596,8 @@ export class Board {
                             .attr("text-anchor", "middle")
                             .attr("dominant-baseline", "central")
                             .attr("font-size", "2.5")
-                            .attr("fill", this.connectionColor)
+                            .attr("font-weight", "600")
+                            .attr("fill", this.annotationColor)
                             .attr("class", "connection-number")
                             .text(count1);
                             
@@ -607,7 +607,8 @@ export class Board {
                             .attr("text-anchor", "middle")
                             .attr("dominant-baseline", "central")
                             .attr("font-size", "2.5")
-                            .attr("fill", this.connectionColor)
+                            .attr("font-weight", "600")
+                            .attr("fill", this.annotationColor)
                             .attr("class", "connection-number")
                             .text(count2);
                     } else {
@@ -616,12 +617,12 @@ export class Board {
                             .attr("cx", x_mid)
                             .attr("cy", y_end + this.cellSize / 2)
                             .attr("r", 0.7)
-                            .attr("fill", this.connectionColor);
+                            .attr("fill", this.annotationColor);
                         this.linesGroup.append("circle")
                             .attr("cx", x_mid)
                             .attr("cy", y_end + 3*this.cellSize / 2)
                             .attr("r", 0.7)
-                            .attr("fill", this.connectionColor);
+                            .attr("fill", this.annotationColor);
                     }
                 }
             });            
@@ -638,12 +639,7 @@ export class Board {
         }
         
         // Check adjacent cells
-        const adjacentPositions = [
-            [gridX + 1, gridY], // right
-            [gridX - 1, gridY], // left
-            [gridX, gridY + 1], // down
-            [gridX, gridY - 1]  // up
-        ];
+        const adjacentPositions = this.getAdjacentPositions(gridX, gridY);
         
         // Count occupied adjacent cells
         for (let [adjX, adjY] of adjacentPositions) {

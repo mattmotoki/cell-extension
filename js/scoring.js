@@ -138,15 +138,77 @@ export class ScoreBreakdown {
                 return component.length;
                 
             case 'cell-connection':
+                // For cell-connection, calculate all connections within the component
+                // This matches the logic in Board.getConnectionScore()
+                let connectionCount = 0;
+                
+                // For each cell in the component, count connections to other cells
+                for (let cellKey of component) {
+                    const [gridX, gridY] = cellKey.split('-').map(Number);
+                    
+                    // Get adjacent positions
+                    const adjacentPositions = this.getAdjacentPositions(gridX, gridY);
+                    
+                    // Count connections to other cells in the same component
+                    for (let [adjX, adjY] of adjacentPositions) {
+                        const adjKey = `${adjX}-${adjY}`;
+                        if (component.includes(adjKey)) {
+                            connectionCount++;
+                        }
+                    }
+                }
+                
+                return connectionCount;
+                
             case 'cell-extension':
-                // For these mechanisms, size is the number of connections/extensions
-                // which is approximated as component.length - 1 for simple shapes
-                return Math.max(1, component.length - 1);
+                // For cell-extension, use the same logic as in Board.getExtensionScore()
+                let extensionSum = 0;
+                const processedEdges = new Set();
+                
+                // For each cell in the component
+                for (let cellKey of component) {
+                    const [gridX, gridY] = cellKey.split('-').map(Number);
+                    
+                    // Check adjacent positions
+                    const adjacentPositions = this.getAdjacentPositions(gridX, gridY);
+                    
+                    // For each adjacent position
+                    for (let [adjX, adjY] of adjacentPositions) {
+                        const adjKey = `${adjX}-${adjY}`;
+                        
+                        // If the adjacent cell is in the same component
+                        if (component.includes(adjKey)) {
+                            // Create an edge identifier (smaller key first to ensure uniqueness)
+                            const edge = cellKey < adjKey 
+                                ? `${cellKey}-${adjKey}` 
+                                : `${adjKey}-${cellKey}`;
+                            
+                            // Only count each edge once
+                            if (!processedEdges.has(edge)) {
+                                extensionSum++;
+                                processedEdges.add(edge);
+                            }
+                        }
+                    }
+                }
+                
+                // If there are no extensions (single cell), return 1
+                return extensionSum > 0 ? extensionSum : 1;
                 
             default:
                 // Default to using the number of cells
                 return component.length;
         }
+    }
+    
+    // Get adjacent positions for a grid cell
+    getAdjacentPositions(gridX, gridY) {
+        return [
+            [gridX + 1, gridY], // right
+            [gridX - 1, gridY], // left
+            [gridX, gridY + 1], // down
+            [gridX, gridY - 1]  // up
+        ];
     }
     
     // Helper function to get prime factors of a number for display or debugging
