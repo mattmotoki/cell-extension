@@ -52,9 +52,9 @@ body {
     box-sizing: border-box;
     margin: 0 auto; 
     text-align: center;
-    padding-top: 20px; /* Regular padding without navbar compensation */
-    padding-bottom: 20px;
-    height: calc(100vh - var(--navbar-height)); /* Still subtract navbar height but now it's part of the flow */
+    padding-top: 20px;
+    padding-bottom: 50px;
+    height: calc(100vh - var(--navbar-height));
     overflow-y: hidden;
 }
 
@@ -64,9 +64,9 @@ body {
     align-items: center;
     width: 100%;
     box-sizing: border-box;
-    margin-top: 0; /* No vertical offset */
-    flex: 0 1 auto; /* Don't flex grow but allow shrinking */
-    gap: 10px; /* Reduced gap between elements (from 15px) */
+    margin-top: 0;
+    flex: 0 1 auto;
+    gap: 5px; /* Reduced from 10px to 5px */
 }
 
 #game-controls {
@@ -74,12 +74,12 @@ body {
     align-items: center;
     justify-content: space-between;
     flex-wrap: nowrap; /* Prevent wrapping on desktop */
-    margin: 5px 0 5px; /* Reduced bottom margin */
+    margin: 5px 0 15px; /* Increased bottom margin from 5px to 15px */
     width: 100%;
     max-width: 600px;
     box-sizing: border-box;
-    gap: 10px; /* Reduced gap */
-    flex-shrink: 0; /* Prevent controls from shrinking */
+    gap: 10px;
+    flex-shrink: 0;
 }
 
 .control-group {
@@ -127,9 +127,9 @@ svg {
     padding: 0;
     box-sizing: border-box;
     background-color: transparent;
-    border-radius: 5px;
+    border-radius: 10px;
     flex-shrink: 0;
-    max-height: min(calc((100vh - var(--navbar-height) - 150px) * 0.58), 52vh);
+    max-height: min(calc((100vh - var(--navbar-height) - 180px) * 0.5), 48vh);
 }
 
 .grid-cell {
@@ -239,13 +239,14 @@ button:active {
 
 #score-chart {
     border-radius: 8px;
-    margin: 5px auto 10px; /* Reduced margins */
+    margin: 5px auto 5px; /* Reduced from 10px auto 15px to 5px auto 5px */
     width: 100%;
     max-width: 600px;
-    height: auto;
+    min-height: 80px;
     box-sizing: border-box;
     aspect-ratio: 4/1;
     background-color: transparent;
+    flex-shrink: 0;
 }
 
 #player-scores {
@@ -512,8 +513,8 @@ button:active {
     }
     
     #game {
-        padding-top: 10px; /* Regular padding without navbar compensation */
-        padding-bottom: 10px;
+        padding-top: 10px;
+        padding-bottom: 20px;
         height: calc(100vh - var(--navbar-height));
         overflow-y: hidden;
     }
@@ -522,7 +523,7 @@ button:active {
         --vertical-offset: 0; /* Reset the vertical offset */
         margin-top: 0; /* Start from the top of the container */
         padding-top: 5vh; /* Reduced padding at the top (from 15vh to 5vh) */
-        gap: 2vh; /* Use viewport-based spacing */
+        gap: 1vh; /* Reduced from 2vh */
         height: auto; /* Let content determine height */
     }
     
@@ -536,7 +537,8 @@ button:active {
     }
     
     #board {
-        width: 90%; /* Slightly reduced width */
+        width: 90%;
+        max-height: min(calc((100vh - var(--navbar-height) - 210px) * 0.48), 45vh);
         height: auto;
         margin: 0 auto;
         aspect-ratio: 1/1;
@@ -561,14 +563,15 @@ button:active {
     /* Increase score chart size */
     #score-chart {
         width: 100%;
-        margin: 1vh auto;
-        aspect-ratio: 3/1; /* Make taller (4/1 to 3/1) */
+        min-height: 60px;
+        margin: 3px auto; /* Reduced from 10px to 3px */
+        aspect-ratio: 3/1;
     }
     
     /* Game controls on mobile - only contains reset button */
     #game-controls {
         width: 95%;
-        margin: 1vh auto 3vh; /* Reduced bottom margin */
+        margin: 1vh auto 6vh;
     }
     
     /* Fix the control group styles for mobile */
@@ -612,7 +615,11 @@ button:active {
     }
     
     #board {
-        max-height: min(calc((100vh - var(--navbar-height) - 90px) * 0.55), 40vh); /* Further reduced board height */
+        max-height: min(calc((100vh - var(--navbar-height) - 130px) * 0.46), 36vh);
+    }
+    
+    #score-chart {
+        min-height: 50px;
     }
 }
 
@@ -663,7 +670,7 @@ button:active {
     }
     
     #score-chart {
-        margin: 5px auto 3px;
+        margin: 3px auto 3px; /* Reduced from 5px auto 3px */
         max-height: min(calc((100vh - var(--navbar-height)) * 0.15), 15vh);
     }
     
@@ -694,7 +701,7 @@ button:active {
     }
     
     #score-chart {
-        margin: 5px auto 8px;
+        margin: 3px auto 3px; /* Consistent 3px margins */
         aspect-ratio: 5/1;
     }
     
@@ -754,7 +761,7 @@ button:active {
 /* Update score-chart styles */
 #score-chart {
     border-radius: 8px;
-    margin: 10px auto 15px;
+    margin: 5px auto 5px; /* Reduced from 10px auto 15px to 5px auto 5px */
     width: 100%;
     max-width: 600px;
     height: auto;
@@ -774,7 +781,7 @@ button:active {
     }
     
     #score-chart {
-        margin: 8px auto 10px;
+        margin: 3px auto 3px; /* Updated from 8px auto 10px */
     }
 }
 
@@ -796,7 +803,7 @@ button:active {
     }
     
     #score-chart {
-        margin: 5px auto 8px;
+        margin: 3px auto 3px; /* Consistent 3px margins */
         aspect-ratio: 5/1;
     }
     
