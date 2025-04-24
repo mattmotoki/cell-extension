@@ -55,7 +55,7 @@ body {
     padding-top: 15px; /* Reduced from 20px */
     padding-bottom: 15px; /* Reduced from 20px */
     height: calc(100vh - var(--navbar-height));
-    overflow-y: hidden;
+    overflow-y: auto;
 }
 
 .game-content-wrapper {
@@ -514,7 +514,7 @@ button:active {
         padding-top: 5px; /* Reduced from 10px */
         padding-bottom: 15px; /* Reduced from 20px */
         height: calc(100vh - var(--navbar-height) - 15px); /* Adjust for body padding */
-        overflow-y: hidden;
+        overflow-y: auto;
     }
     
     .game-content-wrapper {
