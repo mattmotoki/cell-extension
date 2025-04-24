@@ -535,8 +535,8 @@ button:active {
     }
     
     #board {
-        width: 90%;
-        max-height: min(calc((100vh - var(--navbar-height) - 210px) * 0.48), 45vh);
+        width: 95%;
+        max-height: min(calc((100vh - var(--navbar-height) - 180px) * 0.55), 52vh);
         height: auto;
         margin: 0 auto;
         aspect-ratio: 1/1;
@@ -626,6 +626,11 @@ button:active {
     #game-controls {
         margin: 1vh auto 2vh; /* Reduced bottom margin */
     }
+    
+    #board {
+        width: 100%;
+        max-height: min(calc((100vh - var(--navbar-height) - 150px) * 0.52), 48vh);
+    }
 }
 
 /* Special handling for very short screens - only enable scrolling when truly needed */
@@ -642,7 +647,8 @@ button:active {
     }
     
     #board {
-        max-height: min(calc((100vh - var(--navbar-height) - 130px) * 0.46), 36vh);
+        max-height: min(calc((100vh - var(--navbar-height) - 120px) * 0.48), 42vh);
+        width: 100%;
     }
     
     #score-chart {
