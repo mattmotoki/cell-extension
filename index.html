@@ -23,7 +23,7 @@
     <nav class="navbar">
         <div class="navbar-logo">
             <img src="favicons/favicon-32x32.png" alt="Cell Extension Logo">
-            <h1 class="navbar-title">Cell Collection</h1>
+            <h1 class="navbar-title">Cell Production</h1>
         </div>
         <div class="hamburger-menu" id="hamburger-menu">
             <span></span>
@@ -63,10 +63,16 @@
     <div id="game">
         <!-- Game content wrapper for vertical centering -->
         <div class="game-content-wrapper">
-            <div id="player-scores"></div>
-            <svg id="board"></svg>        
+            <!-- Board UI group for better spacing control -->
+            <div class="board-ui-group">
+                <div id="player-scores"></div>
+                <div id="score-breakdown"></div>
+                <svg id="board"></svg>
+            </div>
+                        
+            <!-- Score chart -->
             <svg id="score-chart"></svg>
-            <div id="score-breakdown"></div>
+            
             <div id="game-controls">
                 <div class="control-group">
                     <!-- Player Mode Dropdown for both desktop and mobile -->
