@@ -74,10 +74,10 @@ export function getScoringMechanism() {
 // Get description for a scoring mechanism
 export function getScoringDescription(mechanism) {
     const descriptions = {
-        'cell-connection': 'The total number of edges (connections)',
+        'cell-connection': 'Product of the number of directed edges (connections)',
         'cell-multiplication': 'Product of the size (number of cells) of the connected components',
-        'cell-maximization': 'The size of the largest connected component',
-        'cell-extension': 'The total number of extensions',
+        'cell-expansion': 'Product of the size (number of cells) of the connected components',
+        'cell-extension': 'Product of the number of undirected edges (extensions)',
     };
     
     return descriptions[mechanism] || 'Unknown scoring mechanism';

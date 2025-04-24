@@ -127,13 +127,6 @@ export class AIPlayer extends Player {
             return -Infinity; // Invalid move
         }
         
-        // For cell-extension, find the number of neighbors
-        if (scoringMechanism === 'cell-extension') {
-            const neighbors = board.canPlaceRectangle(cell.x, cell.y, playerIndex);
-            return neighbors.length; // Score is the number of extensions
-        }
-        
-        // For other scoring mechanisms
         // Simulate the move by adding the cell
         board.occupiedCells[playerIndex][cellKey] = true;
         
@@ -141,8 +134,13 @@ export class AIPlayer extends Player {
         let totalScore;
         if (scoringMechanism === 'cell-multiplication') {
             totalScore = board.getMultiplicationScore(playerIndex);
+        } else if (scoringMechanism === 'cell-connection') {
+            totalScore = board.getConnectionScore(playerIndex);
+        } else if (scoringMechanism === 'cell-extension') {
+            totalScore = board.getExtensionScore(playerIndex);
         } else {
-            totalScore = board.getConnectionScore(playerIndex); 
+            // Default to connection scoring
+            totalScore = board.getConnectionScore(playerIndex);
         }
         
         // Restore the board state by removing the simulated cell

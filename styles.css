@@ -39,7 +39,7 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100%;
-    max-height: 100vh; /* Cap at viewport height */
+    max-height: 100vh; 
 }
 
 #game {
@@ -52,7 +52,7 @@ body {
     margin: 0 auto; 
     text-align: center;
     padding-top: var(--navbar-height); /* Use the navbar height variable */
-    height: calc(100vh - var(--navbar-height)); /* Subtract navbar height */
+    height: calc(99vh - var(--navbar-height)); /* Subtract navbar height */
     overflow-y: auto; /* Allow scrolling within game if needed */
     max-height: 100vh; /* Add an explicit max-height */
 }

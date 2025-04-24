@@ -36,25 +36,9 @@ export class ScoreBreakdown {
     update(currentPlayer, scores, components1, components2) {
         const scoring = getScoringMechanism();
         
-        // Generate breakdown text for each player
-        let breakdownText1 = "";
-        let breakdownText2 = "";
-        
-        if (scoring === 'cell-multiplication' && components1 && components2) {
-            // Format player 1 breakdown - only show if there are multiple components
-            const componentSizes1 = components1.map(comp => comp.length).sort((a, b) => b - a);
-            if (componentSizes1.length > 1) {
-                const breakdown1 = componentSizes1.join('×');
-                breakdownText1 = `(${scores[0]} = ${breakdown1})`;
-            }
-            
-            // Format player 2 breakdown - only show if there are multiple components
-            const componentSizes2 = components2.map(comp => comp.length).sort((a, b) => b - a);
-            if (componentSizes2.length > 1) {
-                const breakdown2 = componentSizes2.join('×');
-                breakdownText2 = `(${scores[1]} = ${breakdown2})`;
-            }
-        }
+        // Generate breakdown text for each player using the appropriate sizing method
+        let breakdownText1 = this.calculateBreakdownText(scores[0], components1, scoring);
+        let breakdownText2 = this.calculateBreakdownText(scores[1], components2, scoring);
         
         // Create label and score text with player colors
         const player1Color = this.playerColors[0];
@@ -82,14 +66,13 @@ export class ScoreBreakdown {
         `);
         
         // Always create the breakdown container with the same structure
-        // Use non-breaking spaces (&#160;) as placeholders when there's no content
         this.breakdown.html(`
             <div style="display: flex; justify-content: space-between; width: 100%;">
                 <div style="text-align: left; padding-right: 10px;">
-                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player1Color};">${breakdownText1 || '&#160;'}</div>
+                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player1Color};">${breakdownText1}</div>
                 </div>
                 <div style="text-align: right; padding-left: 10px;">
-                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player2Color};">${breakdownText2 || '&#160;'}</div>
+                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player2Color};">${breakdownText2}</div>
                 </div>
             </div>
         `);
@@ -111,16 +94,104 @@ export class ScoreBreakdown {
             </div>
         `);
         
+        // Display initial score breakdown with zeros
+        const breakdownText1 = this.calculateBreakdownText(0, [], getScoringMechanism());
+        const breakdownText2 = this.calculateBreakdownText(0, [], getScoringMechanism());
+        
         this.breakdown.html(`
             <div style="display: flex; justify-content: space-between; width: 100%;">
                 <div style="text-align: left; padding-right: 10px;">
-                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player1Color};">&#160;</div>
+                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player1Color};">${breakdownText1}</div>
                 </div>
                 <div style="text-align: right; padding-left: 10px;">
-                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player2Color};">&#160;</div>
+                    <div style="font-size: 0.9em; font-weight: 400; min-height: 1.2em; opacity: 0.9; color: ${player2Color};">${breakdownText2}</div>
                 </div>
             </div>
         `);
+    }
+    
+    // Unified method to calculate the breakdown text for any scoring mechanism
+    calculateBreakdownText(score, components, scoringMechanism) {
+        if (score === 0 || !components || components.length === 0) {
+            return `${score} = 0`;
+        }
+        
+        // Calculate the appropriate "size" for each component based on the scoring mechanism
+        const componentSizes = components.map(component => {
+            return this.calculateComponentSize(component, scoringMechanism);
+        });
+        
+        // Sort by size (largest first) and join with multiplication symbol
+        const sizesText = componentSizes.sort((a, b) => b - a).join('×');
+        return `${score} = ${sizesText}`;
+    }
+    
+    // Calculate the appropriate "size" measure for a component based on the scoring mechanism
+    calculateComponentSize(component, scoringMechanism) {
+        // If it's a single cell, size is always 1 across all scoring mechanisms
+        if (component.length === 1) return 1;
+        
+        switch(scoringMechanism) {
+            case 'cell-multiplication':
+            case 'cell-expansion':
+                // For these mechanisms, size is the number of cells
+                return component.length;
+                
+            case 'cell-connection':
+            case 'cell-extension':
+                // For these mechanisms, size is the number of connections/extensions
+                // which is approximated as component.length - 1 for simple shapes
+                return Math.max(1, component.length - 1);
+                
+            default:
+                // Default to using the number of cells
+                return component.length;
+        }
+    }
+    
+    // Helper function to get prime factors of a number for display or debugging
+    getFactors(num) {
+        if (num === 0) return "0";
+        if (num === 1) return "1";
+        
+        // Find all prime factors
+        const factors = [];
+        for (let i = 2; i <= Math.sqrt(num); i++) {
+            while (num % i === 0) {
+                factors.push(i);
+                num /= i;
+            }
+        }
+        
+        // If num is a prime number larger than sqrt
+        if (num > 1) {
+            factors.push(num);
+        }
+        
+        // If no factors were found
+        if (factors.length === 0) {
+            return num.toString();
+        }
+        
+        // Group repeated factors to make the display cleaner
+        const grouped = [];
+        let current = factors[0];
+        let count = 1;
+        
+        for (let i = 1; i < factors.length; i++) {
+            if (factors[i] === current) {
+                count++;
+            } else {
+                grouped.push(count > 1 ? `${current}^${count}` : `${current}`);
+                current = factors[i];
+                count = 1;
+            }
+        }
+        
+        // Add the last factor
+        grouped.push(count > 1 ? `${current}^${count}` : `${current}`);
+        
+        return grouped.join('×');
     }
 }
 
