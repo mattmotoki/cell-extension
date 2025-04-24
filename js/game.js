@@ -17,277 +17,332 @@
  * - utils.js: Game accesses utility functions for player modes and scoring
  */
 
-import {getPlayerMode, displayWinnerMessage, getScoringMechanism, getScoringDescription} from "./utils.js";
-import {ScoreChart, ScoreBreakdown} from "./scoring.js";
-import {Board} from "./board.js";
-import {AIPlayer} from "./ai.js";
-
+import { getPlayerMode, displayWinnerMessage, getScoringMechanism, getScoringDescription } from "./utils.js";
+import { ScoreBreakdown, ScoreChartRenderer } from "./scoring.js"; // Import ScoreChartRenderer
+import { GameBoardLogic, BoardRenderer } from "./board/index.js"; // Import new board classes
+import { AIPlayer } from "./ai.js";
 
 export class Game {
 
-    constructor(gridSize, cellSize, playerColors, currentPlayer, scores, progress) {
-        this.gridSize = gridSize;
-        this.cellSize = cellSize;
+    constructor(gridSize, cellSize, playerColors, initialPlayer, initialScores, initialProgress) {
+        // Core game settings
+        this.gridSize = gridSize; // Used for renderer
+        this.cellSize = cellSize; // Used for renderer
         this.playerColors = playerColors;
-        this.currentPlayer = currentPlayer;
-        this.scores = scores;
-        this.progress = progress;
-        this.scoringMechanism = getScoringMechanism(); // Get initial scoring mechanism
+
+        // Grid dimensions for logic
+        const gridWidth = Math.floor(gridSize / cellSize);
+        const gridHeight = Math.floor(gridSize / cellSize);
+
+        // Game Logic Instance
+        this.gameBoardLogic = new GameBoardLogic(gridWidth, gridHeight);
+
+        // Renderer Instances
+        this.boardRenderer = new BoardRenderer(gridSize, cellSize, playerColors, this.handleBoardClick.bind(this));
         this.scoreBreakdown = new ScoreBreakdown(playerColors);
-        this.scoreChart = new ScoreChart(playerColors, gridSize);
-        this.board = new Board(gridSize, cellSize, this.playerColors, this.handleCellClick.bind(this));
-        this.opponent = new AIPlayer(1); // Initialize with AI as player 1
-        this.history = []; // Add history array
+        this.scoreChartRenderer = new ScoreChartRenderer(playerColors, gridSize);
         
-        // Initialize the score display
-        this.updateScoreBreakdown();
+        // AI Opponent
+        this.opponent = new AIPlayer(1); // AI is player 1 (index 1)
+
+        // Game State Variables
+        this.currentPlayer = initialPlayer;
+        this.scores = [...initialScores]; // Ensure copy
+        this.progress = initialProgress;
+        this.scoringMechanism = getScoringMechanism();
         
-        // Add a tooltip to the score display with scoring mechanism description
-        this.updateScoreTooltip();
+        // Score History (managed by Game class now)
+        this.scoreHistory1 = [initialScores[0]]; 
+        this.scoreHistory2 = [initialScores[1]];
         
-        // Store initial state for undo functionality
-        this.storeInitialState();
+        // Game History for Undo
+        this.history = [];
+
+        // Initial setup
+        this.initializeGame();
     }
 
-    // Helper method to update score breakdown with correct components
+    initializeGame() {
+        console.log("Initializing Game...");
+        // Reset logic and renderers
+        this.gameBoardLogic.reset();
+        this.boardRenderer.reset();
+        this.scoreBreakdown.reset(this.currentPlayer);
+        this.scoreChartRenderer.reset(); 
+
+        // Set initial tooltip and scores
+        this.updateScoreTooltip();
+        this.updateScoreBreakdown(); // Initial score display
+        this.updateScoreChart(); // Initial chart display
+        
+        // Store initial state for undo
+        this.storeInitialState();
+        
+        console.log("Game Initialized. Player:", this.currentPlayer + 1);
+        // Trigger AI move if it starts
+        if (getPlayerMode() === "ai" && this.currentPlayer === 1) {
+             console.log("AI starts, scheduling move...");
+             setTimeout(() => this.handleOpponentMove(), 600);
+        }
+    }
+
+    // --- UI Update Helpers ---
+
     updateScoreBreakdown() {
         const mechanism = getScoringMechanism();
-        const components0 = this.board.getConnectedComponents(0);
-        const components1 = this.board.getConnectedComponents(1);
+        // Get components directly from logic
+        const components0 = this.gameBoardLogic.getConnectedComponents(0);
+        const components1 = this.gameBoardLogic.getConnectedComponents(1);
         
-        // Always pass components to scoreBreakdown
         this.scoreBreakdown.update(this.currentPlayer, this.scores, components0, components1);
     }
     
     updateScoreTooltip() {
-        // Get current scoring mechanism and its description
         const mechanism = getScoringMechanism();
         const description = getScoringDescription(mechanism);
-        
-        // Add tooltip to both score display elements
-        d3.select("#player-scores")
-            .attr("title", `Scoring: ${description}`);
-        d3.select("#score-breakdown")
-            .attr("title", `Scoring: ${description}`);
+        d3.select("#player-scores").attr("title", `Scoring: ${description}`);
+        d3.select("#score-breakdown").attr("title", `Scoring: ${description}`);
     }
 
-    handleCellClick(event) {
-        // Check if we're waiting for opponent's move
-        if (this.progress === "waiting") {return;}
-                                
-        // *** Store current state before making the move ***
-        this.storeState();
+    updateScoreChart() {
+        // Pass current score history to the renderer
+        this.scoreChartRenderer.update(this.currentPlayer, this.scores, this.scoreHistory1, this.scoreHistory2);
+    }
+    
+    updateBoardVisualization() {
+        // Render the board based on the current logic state
+        const boardState = this.gameBoardLogic.getState();
+        this.boardRenderer.render(boardState);
+    }
 
-        // Get the cell element and its coordinates
-        let cell = d3.select(event.target);
-        
-        // Get pixel coordinates for rendering
-        let pixelX = parseFloat(cell.attr("x"));
-        let pixelY = parseFloat(cell.attr("y"));
-        
-        // Get grid coordinates (can also be retrieved from data attributes)
-        let gridX = parseInt(cell.attr("data-grid-x"));
-        let gridY = parseInt(cell.attr("data-grid-y"));
+    // --- Game Flow Handlers ---
 
-        // update board using pixel coordinates (board will convert to grid internally)
-        let n_extensions = this.board.update(pixelX, pixelY, this.currentPlayer);
-
-        if (n_extensions >= 0) {
-            // Update score based on the selected scoring mechanism
-            this.updateScore(n_extensions);
-
-            // Change players
-            this.currentPlayer = (this.currentPlayer + 1) % 2;               
-            this.updateScoreBreakdown();
-
-            // Get AI opponent's move
-            if (getPlayerMode() === "ai") {
-                this.progress = "waiting";
-                // *** Store state again before AI move (in case player move was undone) ***
-                // Note: AI move logic might need adjustment if undo is frequent
-                // this.storeState(); // Consider if needed here or inside handleOpponentMove
-                setTimeout(this.handleOpponentMove.bind(this), 500);
-            }
+    // Renamed from handleCellClick, receives grid coordinates
+    handleBoardClick(gridX, gridY) {
+        console.log(`Board clicked at grid coordinates: (${gridX}, ${gridY})`);
+        if (this.progress !== "playing") {
+            console.log("Ignoring click: Game not in playing state.");
+            return; // Ignore clicks if game is over or AI is thinking
         }
 
-        // If there are no more available cells, the game is over
-        if (this.board.getAvailableCells().length <= 1) {
-            this.progress = "over";
+        // Store state *before* attempting the move
+        this.storeState();
+        
+        // Attempt to place the cell using game logic
+        const placed = this.gameBoardLogic.placeCell(gridX, gridY, this.currentPlayer);
+
+        if (placed) {
+            console.log("Cell placed successfully by logic.");
+            // If placement is valid according to logic:
+            // 1. Update score
+            this.updateScore(); 
             
-            if (getPlayerMode() == "ai") {
-                var waitTime = 1350;
+            // 2. Update score history
+            this.scoreHistory1.push(this.scores[0]);
+            this.scoreHistory2.push(this.scores[1]);
+
+            // 3. Switch player
+            this.currentPlayer = (this.currentPlayer + 1) % 2;
+
+            // 4. Update UI (score breakdown, tooltip, score chart, board visuals)
+            this.updateScoreBreakdown();
+            this.updateScoreTooltip();
+            this.updateScoreChart();
+            this.updateBoardVisualization(); // Update board visuals *after* successful placement
+            
+            // 5. Check for game over
+            if (this.isGameOver()) {
+                this.endGame();
+            } else if (getPlayerMode() === "ai" && this.currentPlayer === 1) {
+                 // 6. Trigger AI move if applicable
+                this.progress = "waiting"; // Set progress to waiting
+                console.log("Player move complete. Scheduling AI move...");
+                setTimeout(() => this.handleOpponentMove(), 500);
             } else {
-                var waitTime = 1000;
+                 console.log(`Player ${this.currentPlayer + 1}'s turn.`);
             }
-            setTimeout(displayWinnerMessage, waitTime, this.scores=this.scores);
+        } else {
+            console.log("Invalid move attempt.");
+            // If move was invalid, remove the state we optimistically stored
+            this.history.pop(); 
+            // Maybe provide feedback to the user here (e.g., visual cue)
         }
     }
     
-    updateScore(n_extensions) {
-        // Get current scoring mechanism
-        const mechanism = getScoringMechanism();
-        
-        // Use the appropriate scoring mechanism
-        switch(mechanism) {
-            case 'cell-connection':
-                // Calculate the total connection count
-                const player0Connections = this.board.getConnectionScore(0);
-                const player1Connections = this.board.getConnectionScore(1);
-                
-                // Update scores with the total connection count
-                this.scores[0] = player0Connections;
-                this.scores[1] = player1Connections;
-                
-                // Update score breakdown with components
-                const components0Conn = this.board.getConnectedComponents(0);
-                const components1Conn = this.board.getConnectedComponents(1);
-                this.scoreBreakdown.update(this.currentPlayer, this.scores, components0Conn, components1Conn);
-                break;
-            case 'cell-multiplication':
-                // Get connected components for both players
-                const components0 = this.board.getConnectedComponents(0);
-                const components1 = this.board.getConnectedComponents(1);
-                
-                // Calculate multiplication-based score (product of connected component sizes)
-                this.scores[0] = this.board.getMultiplicationScore(0);
-                this.scores[1] = this.board.getMultiplicationScore(1);
-                
-                // Update score breakdown with components
-                this.scoreBreakdown.update(this.currentPlayer, this.scores, components0, components1);
-                break;
-            case 'cell-extension':
-                // For Cell-Extension, calculate the product of extensions using board method
-                this.scores[0] = this.board.getExtensionScore(0);
-                this.scores[1] = this.board.getExtensionScore(1);
-                
-                // Update score breakdown with components
-                const components0Ext = this.board.getConnectedComponents(0);
-                const components1Ext = this.board.getConnectedComponents(1);
-                this.scoreBreakdown.update(this.currentPlayer, this.scores, components0Ext, components1Ext);
-                break;
-            // Future implementations would go here
-            default:
-                // Default to cell-connection
-                this.scores[this.currentPlayer] += n_extensions;
-                const components0Def = this.board.getConnectedComponents(0);
-                const components1Def = this.board.getConnectedComponents(1);
-                this.scoreBreakdown.update(this.currentPlayer, this.scores, components0Def, components1Def);
-        }
-        
-        // Update the score chart
-        this.scoreChart.update(this.currentPlayer, this.scores);
-    }
-
     handleOpponentMove() {
-        // Get the current scoring mechanism instead of using potentially outdated value
-        const currentScoringMechanism = getScoringMechanism();
-        this.scoringMechanism = currentScoringMechanism;
+        if (this.progress !== "waiting") {
+             console.warn("handleOpponentMove called when not waiting.");
+             return;
+        }
+        console.log("AI starting move calculation...");
+        this.scoringMechanism = getScoringMechanism(); // Ensure mechanism is current
             
-        // *** Store current state before AI makes the move ***
-        // Store state *before* AI calculates its move in case undo happens between player turn and AI turn
+        // Store state *before* AI calculates and makes its move
         this.storeState(); 
 
-        // Get opponent's move
-        let cell = this.opponent.getMove(this.board, currentScoringMechanism);
-        if (cell === null) {
-            console.warn("AI couldn't find a valid move");
-            this.progress = "playing";
+        // Get AI's chosen move (expecting {gridX, gridY})
+        let move = this.opponent.getMove(this.gameBoardLogic, this.scoringMechanism); // Pass logic board
+        
+        if (move === null) {
+            console.warn("AI couldn't find a valid move.");
+             // If AI cannot move, check if game should end or if it's a bug
+             if (this.isGameOver()) {
+                this.endGame();
+             } else {
+                 // Potentially an issue, allow player to move again? Or retry AI?
+                 console.error("AI failed to move, but game not over. Allowing player turn.");
+                 this.progress = "playing";
+             }
             return;
         }
         
-        // The cell object now contains both pixel and grid coordinates
-        let pixelX = cell.x;
-        let pixelY = cell.y;
-        
-        // Use grid coordinates directly if available, otherwise compute them
-        let gridX = cell.gridX !== undefined ? cell.gridX : null;
-        let gridY = cell.gridY !== undefined ? cell.gridY : null;
+        console.log(`AI intends to move to: (${move.gridX}, ${move.gridY})`);
+        // Attempt to place the cell using game logic
+        const placed = this.gameBoardLogic.placeCell(move.gridX, move.gridY, this.currentPlayer); // AI is currentPlayer (1)
 
-        // Try to update the board with AI's move (using pixel coordinates)
-        let n_extensions = this.board.update(pixelX, pixelY, this.currentPlayer);
-
-        // Check if the move was valid and actually placed
-        if (n_extensions >= 0) {
-            // Update score based on the selected scoring mechanism
-            this.updateScore(n_extensions);
+        if (placed) {
+             console.log("AI move placed successfully by logic.");
+            // If placement is valid:
+            // 1. Update score
+            this.updateScore();
             
-            // Change players
-            this.currentPlayer = (this.currentPlayer + 1) % 2;               
-            this.updateScoreBreakdown();
+            // 2. Update score history
+            this.scoreHistory1.push(this.scores[0]);
+            this.scoreHistory2.push(this.scores[1]);
+
+            // 3. Switch player back to human (player 0)
+            this.currentPlayer = (this.currentPlayer + 1) % 2;
+            
+             // 4. Set progress back to playing
             this.progress = "playing";
-        } else {
-            // Move was invalid, try again with a different move
-            console.warn("AI attempted invalid move at", pixelX, pixelY, "grid:", gridX, gridY);
             
-            // Find a random valid move instead
-            const availableCells = this.board.getAvailableCells();
-            if (availableCells.length > 0) {
-                const randomCell = availableCells[Math.floor(Math.random() * availableCells.length)];
-                setTimeout(() => {
-                    this.board.update(randomCell.x, randomCell.y, this.currentPlayer);
-                    this.updateScore(1); // Assume at least 1 extension for the random move
-                    this.currentPlayer = (this.currentPlayer + 1) % 2;
-                    this.updateScoreBreakdown();
-                    this.progress = "playing";
-                }, 300);
+            // 5. Update UI
+            this.updateScoreBreakdown();
+            this.updateScoreTooltip();
+            this.updateScoreChart();
+            this.updateBoardVisualization();
+
+            // 6. Check for game over
+            if (this.isGameOver()) {
+                this.endGame();
             } else {
-                // No moves available, end the game
-                this.progress = "over";
-                setTimeout(displayWinnerMessage, 1000, this.scores);
+                console.log(`AI move complete. Player ${this.currentPlayer + 1}'s turn.`);
             }
+        } else {
+            console.error("AI attempted invalid move! Logic prevented placement.", move);
+             // If AI move was invalid according to logic, remove the stored state
+             this.history.pop();
+             this.progress = "playing"; // Allow player to try again or debug
+             // Consider a fallback (e.g., random valid move) or error handling
+             this.triggerRandomAIMove(); // Example fallback
+        }
+    }
+    
+    // Example fallback if AI fails
+    triggerRandomAIMove() {
+        console.warn("Attempting random fallback move for AI...");
+        const available = this.gameBoardLogic.getAvailableCells();
+        if (available.length > 0) {
+             const randomMove = available[Math.floor(Math.random() * available.length)];
+             setTimeout(() => {
+                 console.log(`AI fallback: trying random move at (${randomMove.gridX}, ${randomMove.gridY})`);
+                 // Re-attempt the move sequence with the random choice
+                 this.storeState(); // Store before this attempt
+                 const placed = this.gameBoardLogic.placeCell(randomMove.gridX, randomMove.gridY, this.currentPlayer);
+                 if (placed) {
+                     this.updateScore();
+                     this.scoreHistory1.push(this.scores[0]);
+                     this.scoreHistory2.push(this.scores[1]);
+                     this.currentPlayer = (this.currentPlayer + 1) % 2;
+                     this.progress = "playing";
+                     this.updateScoreBreakdown();
+                     this.updateScoreTooltip();
+                     this.updateScoreChart();
+                     this.updateBoardVisualization();
+                     if (this.isGameOver()) this.endGame();
+                     else console.log(`AI fallback move complete. Player ${this.currentPlayer + 1}'s turn.`);
+                 } else {
+                     console.error("Fallback random AI move also failed!");
+                      this.history.pop(); // Remove the state stored for the fallback
+                      this.progress = "playing"; // Give up for now, let player try
+                 }
+             }, 300);
+        } else {
+            console.log("No available cells for fallback AI move.");
+             this.progress = "playing"; // No moves left, should be game over soon
         }
     }
 
-    // Store initial state separately to ensure we have a valid start point
+    // --- Scoring and Game State ---
+    
+    updateScore() {
+        const mechanism = getScoringMechanism();
+        // Calculate scores using the logic class
+        this.scores[0] = this.gameBoardLogic.calculateScore(0, mechanism);
+        this.scores[1] = this.gameBoardLogic.calculateScore(1, mechanism);
+        console.log(`Scores updated (${mechanism}): P1=${this.scores[0]}, P2=${this.scores[1]}`);
+    }
+    
+    isGameOver() {
+        // Game is over if there are 1 or fewer available cells
+        const availableCellsCount = this.gameBoardLogic.getAvailableCells().length;
+        const gameOver = availableCellsCount <= 1;
+        if (gameOver) {
+            console.log("Game Over condition met.");
+        }
+        return gameOver;
+    }
+
+    endGame() {
+        console.log("Ending game...");
+        this.progress = "over";
+        this.updateBoardVisualization(); // Final board render
+        this.updateScoreBreakdown(); // Final score display
+        this.updateScoreChart(); // Final chart update
+        
+        // Determine wait time based on player mode
+        const waitTime = (getPlayerMode() === "ai") ? 1350 : 1000;
+        setTimeout(() => displayWinnerMessage(this.scores), waitTime);
+    }
+
+    // --- State Management (Undo/Reset) ---
+    
     storeInitialState() {
         const state = {
-            boardState: this.board.getState(),
-            scores: [...this.scores], // Deep copy scores
+            boardLogicState: this.gameBoardLogic.getState(),
+            scores: [...this.scores],
             currentPlayer: this.currentPlayer,
             progress: this.progress,
-            scoreHistory1: [...this.scoreChart.scoreHistory1], 
-            scoreHistory2: [...this.scoreChart.scoreHistory2],
+            scoreHistory1: [...this.scoreHistory1],
+            scoreHistory2: [...this.scoreHistory2],
             lastAction: "Initial game state",
             timestamp: new Date().toISOString()
         };
-        
         console.log("Storing initial game state");
-        this.history = [state]; // Reset history and add initial state
-        
-        // Enable/disable undo button based on history
-        // We disable it initially since there are no moves to undo yet
+        this.history = [state]; 
         d3.select("#undo").property("disabled", true);
         d3.select("#undo-mobile").property("disabled", true);
     }
 
-    // Method to store the current game state
     storeState() {
-        // Only store state if game is playing or waiting
-        if (this.progress === "over") {
-            return; // Don't store state after game is over
-        }
+        if (this.progress === "over") return;
         
         const state = {
-            boardState: this.board.getState(),
-            scores: [...this.scores], // Deep copy scores
+            boardLogicState: this.gameBoardLogic.getState(), // Get state from logic board
+            scores: [...this.scores],
             currentPlayer: this.currentPlayer,
             progress: this.progress,
-            scoreHistory1: [...this.scoreChart.scoreHistory1], // Store score chart history
-            scoreHistory2: [...this.scoreChart.scoreHistory2],
-            // Add metadata to help with debugging
-            lastAction: `Before Player ${this.currentPlayer + 1}'s move`,
+            scoreHistory1: [...this.scoreHistory1],
+            scoreHistory2: [...this.scoreHistory2],
+            lastAction: `Before Player ${this.currentPlayer + 1}'s move`, 
             timestamp: new Date().toISOString()
         };
-        
         console.log(`Storing state: ${state.lastAction}, history length will be ${this.history.length + 1}`);
         this.history.push(state);
-        
-        // Enable undo button when moves are made
         d3.select("#undo").property("disabled", false);
         d3.select("#undo-mobile").property("disabled", false);
     }
 
-    // Debug method to log the current state history (add after storeState method)
     debugHistory() {
         console.log("Current history stack:");
         this.history.forEach((state, index) => {
@@ -295,112 +350,80 @@ export class Game {
         });
     }
 
-    // Method to undo the last move
     undo() {
         console.log("Undo method called. History length:", this.history.length);
-        
-        // Debug the current history stack
         this.debugHistory();
         
-        // Check if game is in progress and there's a state to go back to
         if (this.history.length <= 1) {
             console.log("No moves to undo. At initial state.");
-            return; // Only initial state or no states at all
+            return; 
         }
 
-        // Check if we're in AI player mode
         const isAIMode = getPlayerMode() === "ai";
+        this.history.pop(); // Pop current state
         
-        // Remove current state (the one we're undoing)
-        this.history.pop();
-        
-        // In AI mode, if the current state would give us an AI's turn (player index 1),
-        // we should pop one more state to get back to the human player's turn
-        if (isAIMode && this.history.length > 1) {
-            const nextState = this.history[this.history.length - 1];
-            if (nextState.currentPlayer === 1) {
-                console.log("AI mode: Skipping AI state and undoing to previous human player turn");
-                this.history.pop(); // Remove one more state to skip the AI's turn
-            }
+        // In AI mode, pop again if the resulting state is AI's turn
+        if (isAIMode && this.history.length > 1 && this.history[this.history.length - 1].currentPlayer === 1) {
+            console.log("AI mode: Skipping AI state and undoing to previous human player turn");
+            this.history.pop();
         }
         
-        // Get previous state (the one we're restoring to)
         const prevState = this.history[this.history.length - 1];
+        console.log("Restoring to previous state:", { player: prevState.currentPlayer + 1, scores: prevState.scores });
 
-        console.log("Restoring to previous state:", {
-            player: prevState.currentPlayer + 1,
-            scores: prevState.scores,
-            progress: prevState.progress
-        });
-
-        // Restore game state variables
-        this.scores = [...prevState.scores]; // Use deep copy
+        // Restore core state variables
+        this.scores = [...prevState.scores];
         this.currentPlayer = prevState.currentPlayer;
-        this.progress = prevState.progress;
+        this.progress = prevState.progress; // Restore progress state
+        
+        // Restore score history from the state
+        this.scoreHistory1 = [...prevState.scoreHistory1];
+        this.scoreHistory2 = [...prevState.scoreHistory2];
 
-        // Restore board state and redraw
-        this.board.setState(prevState.boardState);
+        // Restore logic board state
+        this.gameBoardLogic.setState(prevState.boardLogicState);
 
-        // Restore score chart state and redraw
-        this.scoreChart.setState(prevState.scoreHistory1, prevState.scoreHistory2);
-
-        // Update UI elements
-        this.updateScoreBreakdown(); // Update score display
-        this.updateScoreTooltip();   // Update tooltip
+        // Update all UI components based on restored state
+        this.updateBoardVisualization();
+        this.updateScoreBreakdown();
+        this.updateScoreTooltip();
+        this.updateScoreChart();
 
         console.log("Undo complete. Player", this.currentPlayer + 1, "'s turn.");
         
-        // Disable undo button if we're at the initial state now
         const shouldDisableUndo = this.history.length <= 1;
         d3.select("#undo").property("disabled", shouldDisableUndo);
         d3.select("#undo-mobile").property("disabled", shouldDisableUndo);
     }
 
     reset() {
-        // Store original player to preserve it during scoring mechanism changes
+        console.log("Resetting game...");
+        // Preserve player turn *only* if it's a scoring mechanism change, otherwise toggle
+        const previousMechanism = this.scoringMechanism;
+        this.scoringMechanism = getScoringMechanism();
+        const isScoringChange = previousMechanism !== this.scoringMechanism;
         const originalPlayer = this.currentPlayer;
         
-        // reset variables
+        // Reset core state variables
         this.scores = [0, 0];
         this.progress = "playing";
+        this.scoreHistory1 = [0];
+        this.scoreHistory2 = [0];
         
-        // Get previous scoring mechanism
-        const previousMechanism = this.scoringMechanism;
-        
-        // Update the scoring mechanism from UI
-        this.scoringMechanism = getScoringMechanism();
-        this.updateScoreTooltip();
-
-        // Only change first player if this is a new game, not a scoring mechanism change
-        const isNewGame = this.board.getAvailableCells().length == (this.gridSize/this.cellSize)**2;
-        const isScoringChange = previousMechanism !== this.scoringMechanism;
-        
-        if (isNewGame && !isScoringChange) {
-            this.currentPlayer = (this.currentPlayer + 1) % 2;
-        } else if (isScoringChange) {
-            // If scoring mechanism changed, keep the same player
-            this.currentPlayer = originalPlayer;
+        // Determine starting player for the new game
+        if (!isScoringChange) {
+            this.currentPlayer = (originalPlayer + 1) % 2; // Toggle player if not just a scoring change
+        } else {
+            this.currentPlayer = originalPlayer; // Keep player if only scoring changed
         }
         
-        // reset board
-        this.board.reset(this.playerColors);
-
-        // Reset history properly using the dedicated method
-        this.storeInitialState();
-
-        // reset score display and chart
-        this.scoreBreakdown.reset(this.currentPlayer);
-        this.scoreChart.reset();
-        
-        // Reset the AI player's move counter
+        // Reset AI state (like move count)
         this.opponent.moveCount = 0;
-        
-        // Update score breakdown after reset
-        this.updateScoreBreakdown();
 
-        if ((getPlayerMode() === "ai") && (this.currentPlayer === 1)) {
-            setTimeout(this.handleOpponentMove.bind(this), 600);
-        }
+        // Re-initialize (resets logic, renderers, stores initial state)
+        this.initializeGame();
+        
+        console.log("Game reset complete.");
     }       
 } 
 

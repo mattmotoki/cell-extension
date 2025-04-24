@@ -258,12 +258,10 @@ export class ScoreBreakdown {
 }
 
 
-export class ScoreChart {
+// Renamed from ScoreChart to ScoreChartRenderer
+export class ScoreChartRenderer {
 
     constructor(playerColors, gridSize) {
-
-        this.scoreHistory1 = [0];
-        this.scoreHistory2 = [0];
         this.playerColors = playerColors;
 
         let svgWidth = 100;
@@ -338,46 +336,42 @@ export class ScoreChart {
         this.reset();
     }
 
-
-    update(currentPlayer, scores) {
-
-        // Add the scores to the history arrays
-        this.scoreHistory1.push(scores[0]);
-        this.scoreHistory2.push(scores[1]);
+    // Update now takes score history as arguments
+    update(currentPlayer, scores, scoreHistory1, scoreHistory2) {
+        // Ensure histories are valid arrays
+        const history1 = Array.isArray(scoreHistory1) ? scoreHistory1 : [0];
+        const history2 = Array.isArray(scoreHistory2) ? scoreHistory2 : [0];
 
         // Update the domain of the x scale
-        let moveCount = Math.max(this.scoreHistory1.length, this.scoreHistory2.length) - 1;
-        this.xScale.domain([0, moveCount]);
+        let moveCount = Math.max(history1.length, history2.length) - 1;
+        this.xScale.domain([0, moveCount <= 0 ? 1 : moveCount]); // Ensure domain is never zero or negative
 
         // Update the domain of the y scale
-        let maxScore = d3.max(this.scoreHistory1.concat(this.scoreHistory2)) || 1;
-        
-        // Set proper range for the y-axis domain to ensure max value is at the top
-        // Always use a fixed minimum value to maintain visual consistency
+        let maxScore = d3.max(history1.concat(history2)) || 1;
         this.yScale.domain([this.safeLogValue(0.1), this.safeLogValue(maxScore)]);
         
         // Determine which player has the highest score for coloring the max score label
-        const player1HasMax = Math.max(...this.scoreHistory1) >= Math.max(...this.scoreHistory2);
+        const player1HasMax = (d3.max(history1) ?? 0) >= (d3.max(history2) ?? 0);
         const maxScoreColor = player1HasMax ? this.playerColors[0] : this.playerColors[1];
         
-        // Update line paths
+        // Update line paths using the passed history
         this.svg.selectAll(".line1")
             .attr("stroke", this.playerColors[0])
-            .datum(this.scoreHistory1)
+            .datum(history1)
             .attr("d", this.line1);
 
         this.svg.selectAll(".line2")
             .attr("stroke", this.playerColors[1])
-            .datum(this.scoreHistory2)
+            .datum(history2)
             .attr("d", this.line2);
 
-        // Update markers
+        // Update markers using the passed history
         if (currentPlayer === 0) {
-            this._updateMarkers(0, this.scoreHistory1, this.playerColors[0], currentPlayer === 0);
-            this._updateMarkers(1, this.scoreHistory2, this.playerColors[1], currentPlayer === 1);
+            this._updateMarkers(0, history1, this.playerColors[0], currentPlayer === 0);
+            this._updateMarkers(1, history2, this.playerColors[1], currentPlayer === 1);
         } else {
-            this._updateMarkers(1, this.scoreHistory2, this.playerColors[1], currentPlayer === 1);
-            this._updateMarkers(0, this.scoreHistory1, this.playerColors[0], currentPlayer === 0);
+            this._updateMarkers(1, history2, this.playerColors[1], currentPlayer === 1);
+            this._updateMarkers(0, history1, this.playerColors[0], currentPlayer === 0);
         }
         
         // Bring the labels overlay to the front after updating markers
@@ -415,49 +409,40 @@ export class ScoreChart {
             .style("fill", maxScoreColor)  // Use color of player with highest score
             .text(maxScore);
             
-        // Create a custom minimalist x-axis (showing only the most recent player's move count)
-        // Clear the existing x-axis
+        // Create a custom minimalist x-axis 
         this.xAxis.selectAll("*").remove();
-        
-        // Add the axis line
         this.xAxis.append("line")
-            .attr("x1", 0)
-            .attr("y1", 0)
-            .attr("x2", this.xScale.range()[1])
-            .attr("y2", 0)
-            .style("stroke", "#aaaaaa")
-            .style("stroke-width", "0.2");
+            .attr("x1", 0).attr("y1", 0)
+            .attr("x2", this.xScale.range()[1]).attr("y2", 0)
+            .style("stroke", "#aaaaaa").style("stroke-width", "0.2");
             
-        // Clear existing labels in the overlay
         this.xAxisLabels.selectAll("*").remove();
         
         // Show the round number instead of move count
-        const roundNumber = Math.floor((moveCount+1) / 2);
-            
-        // Add the round number label in the overlay (above everything else)
-        this.xAxisLabels.append("rect")
-            .attr("x", this.xScale(moveCount)-2)
-            .attr("y", -2)
-            .attr("width", 4)
-            .attr("height", 4)
-            .attr("rx", 2)
-            .attr("ry", 2)
-            .style("fill", "#121212");
-            
-        this.xAxisLabels.append("text")
-            .attr("x", this.xScale(moveCount))
-            .attr("y", 1)
-            .attr("dy", "-0.2em")
-            .attr("text-anchor", "middle")
-            .style("font-size", "2.5")
-            .style("fill", "#aaaaaa")
-            .text(roundNumber);
+        const roundNumber = Math.floor((moveCount + 1) / 2);
+        if (moveCount >= 0) { // Only show if there are moves
+            const xPos = this.xScale(moveCount);
+            this.xAxisLabels.append("rect")
+                .attr("x", xPos - 2).attr("y", -2)
+                .attr("width", 4).attr("height", 4)
+                .attr("rx", 2).attr("ry", 2)
+                .style("fill", "#121212");
+                
+            this.xAxisLabels.append("text")
+                .attr("x", xPos).attr("y", 1).attr("dy", "-0.2em")
+                .attr("text-anchor", "middle")
+                .style("font-size", "2.5").style("fill", "#aaaaaa")
+                .text(roundNumber > 0 ? roundNumber : 1); // Show at least 1
+        }
     }
     
 
     _updateMarkers(player, history, color, isCurrentPlayer) {
+        // Ensure history is an array
+        const validHistory = Array.isArray(history) ? history : [0];
+        
         let dots = this.svg.selectAll(`.dot${player}`)
-            .data(history, (d, i) => i);
+            .data(validHistory, (d, i) => i);
 
         dots.enter()
             .append("circle")
@@ -476,9 +461,9 @@ export class ScoreChart {
         this.labelsOverlay.raise();
     }
 
+    // Reset does not manage history anymore, just visuals
     reset() {
-        this.scoreHistory1 = [0];
-        this.scoreHistory2 = [0];
+        // Removed history reset
         
         // Set up initial state with just axes and labels
         let moveCount = 0;
@@ -565,35 +550,6 @@ export class ScoreChart {
             
         // Bring the labels overlay to the front
         this.labelsOverlay.raise();
-    }
-
-    // Method to set the score chart state directly
-    setState(history1, history2) {
-        // Ensure we have valid arrays with at least one element each
-        if (!Array.isArray(history1) || history1.length === 0) {
-            history1 = [0];
-        }
-        if (!Array.isArray(history2) || history2.length === 0) {
-            history2 = [0];
-        }
-        
-        this.scoreHistory1 = [...history1]; // Use deep copies
-        this.scoreHistory2 = [...history2];
-        
-        // Call update with the last known scores and player to redraw the chart correctly
-        // Need to determine the last player based on history length
-        const totalMoves = Math.max(history1.length, history2.length) - 1;
-        // If totalMoves is odd, player 1 made the last move (currentPlayer becomes 0)
-        // If totalMoves is even, player 0 made the last move (currentPlayer becomes 1)
-        const lastPlayerBeforeUndo = (totalMoves % 2 === 0) ? 0 : 1;
-        
-        const lastScores = [
-            history1[history1.length - 1] || 0,
-            history2[history2.length - 1] || 0
-        ];
-        
-        // Call update to redraw the chart with the restored state
-        this.update(lastPlayerBeforeUndo, lastScores);
     }
 
 } 

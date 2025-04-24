@@ -103,186 +103,162 @@
     </div>
     
     <script type="module">
-        import {Game} from "./js/game.js";
-        import {updateNavbarTitle} from "./js/utils.js";
+        import { Game } from "./js/game.js"; // Game class now orchestrates everything
+        import { updateNavbarTitle } from "./js/utils.js";
                 
-        // Use a standard size for the game board, then scale with percentages
-        let gridDimension = 100;
-        let cellDimension = gridDimension / 6;
-        let playerColors = ["#00FF00", "#1E90FF"];
-        let currentPlayer = 0;
-        let scores = [0, 0];
-        let progress = "playing";
+        // --- Game Configuration ---
+        const gridDimension = 100; // Logical size for viewBox
+        const cellsPerRow = 6;
+        const cellDimension = gridDimension / cellsPerRow; // Cell size in logical units
+        const playerColors = ["#00FF00", "#1E90FF"];
         
-        // Initial board size setting - actual pixel size will be determined by CSS
+        // --- Initial Game State ---
+        let initialPlayer = 0; // Player 0 starts
+        let initialScores = [0, 0];
+        let initialProgress = "playing";
+        
+        // --- SVG Setup ---
         d3.select("#board")
             .attr("viewBox", `0 0 ${gridDimension} ${gridDimension}`)
             .attr("preserveAspectRatio", "xMidYMid meet");
 
-        // Sync controls between desktop and mobile
-        function syncControls() {
-            // Player mode dropdown change handler
-            let playerModeDropdown = document.getElementById("player-mode");
-            let playerModeMobile = document.getElementById("player-mode-mobile");
-            
-            // Sync desktop to mobile
-            playerModeDropdown.addEventListener("change", function() {
-                playerModeMobile.value = this.value;
-                game.reset();
-            });
-            
-            // Sync mobile to desktop
-            playerModeMobile.addEventListener("change", function() {
-                playerModeDropdown.value = this.value;
-                game.reset();
-            });
-            
-            // Setup scoring mechanism tooltip and change handler
-            const scoringSelect = document.getElementById("scoring-mechanism");
-            const scoringSelectMobile = document.getElementById("scoring-mechanism-mobile");
-            
-            // Sync desktop to mobile
-            scoringSelect.addEventListener("change", function() {
-                // Reset the game when scoring mechanism changes
-                if (!this.options[this.selectedIndex].disabled) {
-                    scoringSelectMobile.value = this.value;
-                    updateNavbarTitle();
-                    game.reset();
-                } else {
-                    // If user selects a disabled option, reset to the previous value
-                    alert("This scoring mechanism is not yet implemented.");
-                    this.value = "cell-connection";
-                    scoringSelectMobile.value = "cell-connection";
-                    updateNavbarTitle();
-                }
-            });
-            
-            // Sync mobile to desktop
-            scoringSelectMobile.addEventListener("change", function() {
-                // Reset the game when scoring mechanism changes
-                if (!this.options[this.selectedIndex].disabled) {
-                    scoringSelect.value = this.value;
-                    updateNavbarTitle();
-                    game.reset();
-                } else {
-                    // If user selects a disabled option, reset to the previous value
-                    alert("This scoring mechanism is not yet implemented.");
-                    this.value = "cell-connection";
-                    scoringSelect.value = "cell-connection";
-                    updateNavbarTitle();
-                }
-            });
-            
-            // Display tooltip with additional information when hovering over options
-            const options = scoringSelect.querySelectorAll("option");
-            options.forEach(option => {
-                const title = option.getAttribute("title");
-                if (title) {
-                    option.setAttribute("title", title);
-                }
-            });
-            
-            // Simplify mobile menu toggle
-            const hamburgerBtn = document.getElementById('hamburger-menu');
-            const mobileMenu = document.getElementById('mobile-menu');
-            
-            // Toggle mobile menu when hamburger is clicked
-            hamburgerBtn.addEventListener('click', function() {
-                toggleMobileMenu();
-            });
-            
-            // Function to toggle mobile menu state
-            function toggleMobileMenu(forceClose = false) {
-                if (forceClose) {
-                    mobileMenu.classList.remove('active');
-                    hamburgerBtn.classList.remove('active');
-                } else {
-                    mobileMenu.classList.toggle('active');
-                    hamburgerBtn.classList.toggle('active');
-                }
-            }
-            
-            // Close menu with close button
-            const closeBtn = document.getElementById('mobile-menu-close-btn');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', function() {
-                    toggleMobileMenu(true);
-                });
-            }
-            
-            // Close menu when clicking anywhere on the page (except dropdown menus)
-            document.addEventListener('click', function(e) {
-                // Only proceed if menu is open
-                if (!mobileMenu.classList.contains('active')) return;
-                
-                // Keep menu open if clicked element is a dropdown or inside a dropdown
-                if (e.target.closest('select') || e.target.tagName === 'SELECT' || 
-                    e.target.closest('.mobile-menu-item')) {
-                    return;
-                }
-                
-                // Close menu if click is not on hamburger button
-                if (!hamburgerBtn.contains(e.target)) {
-                    toggleMobileMenu(true);
-                }
-            });
-            
-            // Stop propgation on hamburger clicks to prevent document click from triggering
-            hamburgerBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-            });
-            
-            // Only handle window resize to close menu if needed
-            window.addEventListener('resize', function() {
-                if (window.innerWidth > 768) {
-                    toggleMobileMenu(true);
-                }
-            });
-            
-            // Handle scroll effect for navbar
-            function handleScroll() {
-                const navbar = document.querySelector('.navbar');
-                if (window.scrollY > 10) {
-                    navbar.classList.add('scrolled');
-                } else {
-                    navbar.classList.remove('scrolled');
-                }
-            }
-            
-            // Add scroll event listener
-            window.addEventListener('scroll', handleScroll);
-            
-            // Check on initial load
-            handleScroll();
-        }
-    
-        // create game
-        let game = new Game(gridDimension, cellDimension, playerColors, currentPlayer, scores, progress);
+        // --- Create Game Instance ---
+        // Pass initial state values to the constructor
+        let game = new Game(gridDimension, cellDimension, playerColors, initialPlayer, initialScores, initialProgress);
 
-        // game controls
+        // --- UI Control Setup ---
+        
+        // Reset Button
         d3.select("#reset").on("click", game.reset.bind(game));
+        
+        // Undo Buttons
         d3.select("#undo").on("click", () => {
-            game.undo();
-            // Also disable button if history becomes empty after undo
-            d3.select("#undo").property("disabled", game.history.length === 0);
-            d3.select("#undo-mobile").property("disabled", game.history.length === 0);
+            game.undo(); 
         });
         d3.select("#undo-mobile").on("click", () => {
             game.undo();
-            d3.select("#undo").property("disabled", game.history.length === 0);
-            d3.select("#undo-mobile").property("disabled", game.history.length === 0);
-             // Close mobile menu after clicking undo
-             const mobileMenu = document.getElementById('mobile-menu');
-             const hamburgerBtn = document.getElementById('hamburger-menu');
-             mobileMenu.classList.remove('active');
-             hamburgerBtn.classList.remove('active');
+            // Close mobile menu after clicking undo
+            const mobileMenu = document.getElementById('mobile-menu');
+            const hamburgerBtn = document.getElementById('hamburger-menu');
+            if (mobileMenu && hamburgerBtn) { // Check if elements exist
+                mobileMenu.classList.remove('active');
+                hamburgerBtn.classList.remove('active');
+            }
         });
         
-        // Initialize synced controls
+        // Sync controls between desktop and mobile (Dropdowns, Menu Toggle)
+        function syncControls() {
+            const playerModeDropdown = document.getElementById("player-mode");
+            const playerModeMobile = document.getElementById("player-mode-mobile");
+            const scoringSelect = document.getElementById("scoring-mechanism");
+            const scoringSelectMobile = document.getElementById("scoring-mechanism-mobile");
+            const hamburgerBtn = document.getElementById('hamburger-menu');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const closeBtn = document.getElementById('mobile-menu-close-btn');
+            const navbar = document.querySelector('.navbar');
+
+            // --- Event Listeners --- 
+
+            // Player Mode Sync
+            if (playerModeDropdown && playerModeMobile) {
+                playerModeDropdown.addEventListener("change", function() {
+                    playerModeMobile.value = this.value;
+                    game.reset(); // Reset game on mode change
+                });
+                playerModeMobile.addEventListener("change", function() {
+                    playerModeDropdown.value = this.value;
+                    game.reset(); // Reset game on mode change
+                });
+            }
+
+            // Scoring Mechanism Sync & Tooltip
+            if (scoringSelect && scoringSelectMobile) {
+                const handleScoringChange = function() {
+                    if (!this.options[this.selectedIndex].disabled) {
+                        // Sync the other dropdown
+                        const otherSelect = (this.id === "scoring-mechanism") ? scoringSelectMobile : scoringSelect;
+                        otherSelect.value = this.value;
+                        updateNavbarTitle();
+                        game.reset(); // Reset game on scoring change
+                    } else {
+                        alert("This scoring mechanism is not yet implemented.");
+                        // Revert to the previous valid selection (or a default)
+                        // This requires knowing the previous value, might need to store it
+                        const currentMechanism = game.scoringMechanism || 'cell-multiplication'; // Get current from game
+                        this.value = currentMechanism;
+                        const otherSelect = (this.id === "scoring-mechanism") ? scoringSelectMobile : scoringSelect;
+                        otherSelect.value = currentMechanism; 
+                        updateNavbarTitle();
+                    }
+                };
+                scoringSelect.addEventListener("change", handleScoringChange);
+                scoringSelectMobile.addEventListener("change", handleScoringChange);
+                
+                // Add tooltips to options
+                scoringSelect.querySelectorAll("option").forEach(option => {
+                    const title = option.getAttribute("title");
+                    if (title) option.setAttribute("title", title);
+                });
+                 scoringSelectMobile.querySelectorAll("option").forEach(option => {
+                    const title = option.getAttribute("title");
+                    if (title) option.setAttribute("title", title);
+                });
+            }
+            
+            // Mobile Menu Toggle
+            if (hamburgerBtn && mobileMenu) {
+                hamburgerBtn.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent document click handler from closing immediately
+                    mobileMenu.classList.toggle('active');
+                    hamburgerBtn.classList.toggle('active');
+                });
+            }
+
+            // Mobile Menu Close Button
+            if (closeBtn && mobileMenu && hamburgerBtn) {
+                closeBtn.addEventListener('click', function() {
+                    mobileMenu.classList.remove('active');
+                    hamburgerBtn.classList.remove('active');
+                });
+            }
+            
+            // Close Mobile Menu on Outside Click
+            document.addEventListener('click', function(e) {
+                if (mobileMenu && mobileMenu.classList.contains('active')) {
+                     // Don't close if clicking inside the menu itself or the hamburger
+                    if (!mobileMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+                        mobileMenu.classList.remove('active');
+                        hamburgerBtn.classList.remove('active');
+                    }
+                }
+            });
+
+            // Close Mobile Menu on Resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768 && mobileMenu && hamburgerBtn) {
+                    mobileMenu.classList.remove('active');
+                    hamburgerBtn.classList.remove('active');
+                }
+            });
+
+            // Navbar Scroll Effect
+            const handleScroll = () => {
+                if (navbar) {
+                    navbar.classList.toggle('scrolled', window.scrollY > 10);
+                }
+            }
+            window.addEventListener('scroll', handleScroll);
+            handleScroll(); // Initial check
+        }
+        
+        // Initialize UI Controls and Syncing
         syncControls();
         
         // Set the initial navbar title based on the default scoring mechanism
         updateNavbarTitle();
+        
+        console.log("index.html script setup complete.");
+
     </script>    
 </body>
 </html>
