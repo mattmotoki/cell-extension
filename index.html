@@ -19,250 +19,167 @@
         </script>        
     </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="navbar-logo">
-            <img src="favicons/favicon-32x32.png" alt="Cell Extension Logo">
-            <h1 class="navbar-title">Cell Production</h1>
+    <!-- Game container with 9/16 aspect ratio for portrait mode -->
+    <div class="game-container">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <div class="navbar-logo">
+                <img src="favicons/favicon-32x32.png" alt="Cell Extension Logo">
+                <h1 class="navbar-title">Cell Production</h1>
+            </div>
+            
+            <!-- Game settings menu button -->
+            <div class="game-settings-menu" id="game-settings-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
+        
+        <!-- Game settings panel -->
+        <div class="game-settings-panel" id="game-settings-panel">
+            <ul class="game-settings-list">
+                <li class="game-settings-item">
+                    <span class="game-settings-item-label">Player Mode</span>
+                    <select id="player-mode">
+                        <option value="ai">AI Player</option>
+                        <option value="user">Two Player</option>
+                    </select>
+                </li>
+                <li class="game-settings-item">
+                    <span class="game-settings-item-label">First Player</span>
+                    <select id="first-player">
+                        <option value="human" selected>Human (Player 1)</option>
+                        <option value="ai">AI (Player 2)</option>
+                    </select>
+                </li>
+                <li class="game-settings-item">
+                    <span class="game-settings-item-label">Scoring Mechanism</span>
+                    <select id="scoring-mechanism" title="Select a scoring mechanism">
+                        <option value="cell-multiplication" selected title="Product of the size of the cells">Cell-Multiplication</option>                        
+                        <option value="cell-connection" title="Product of the number of directed edges (connections)">Cell-Connection</option>
+                        <option value="cell-extension" title="Product of the number of undirected edges (extensions)">Cell-Extension</option>
+                    </select>
+                </li>
+                <li class="game-settings-item">
+                    <span class="game-settings-item-label">AI Difficulty</span>
+                    <select id="ai-difficulty" title="Select AI Difficulty">
+                        <option value="easy" selected>Easy</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </li>
+                <li class="game-settings-item">
+                    <span class="game-settings-item-label">Board Size</span>
+                    <select id="board-size" title="Select a board size">
+                        <option value="4">4x4</option>
+                        <option value="6" selected>6x6</option>
+                        <option value="10">10x10</option>
+                        <option value="16">16x16</option>
+                    </select>
+                </li>
+            </ul>
+            <!-- Close button -->
+            <div class="game-settings-close">
+                <button id="game-settings-close-btn">Close Menu</button>
+            </div>
         </div>
-        <div class="hamburger-menu" id="hamburger-menu">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-    </nav>
-    
-    <!-- Mobile Menu with Static List Structure -->
-    <div class="mobile-menu" id="mobile-menu">
-        <ul class="mobile-menu-list">
-            <li class="mobile-menu-item">
-                <span class="mobile-menu-item-label">Player Mode</span>
-                <select id="player-mode-mobile">
-                    <option value="ai">AI Player</option>
-                    <option value="user">Two Player</option>
-                </select>
-            </li>
-            <li class="mobile-menu-item">
-                <span class="mobile-menu-item-label">Scoring Mechanism</span>
-                <select id="scoring-mechanism-mobile" title="Select a scoring mechanism">
-                    <option value="cell-multiplication" selected title="Product of the size of the cells">Cell-Multiplication</option>                        
-                    <option value="cell-connection" title="Product of the number of directed edges (connections)">Cell-Connection</option>
-                    <option value="cell-extension" title="Product of the number of undirected edges (extensions)">Cell-Extension</option>
-                </select>
-            </li>
-        </ul>
-        <!-- Close button -->
-        <div class="mobile-menu-close">
-            <button id="mobile-menu-close-btn">Close Menu</button>
-        </div>
-    </div>
-    
-    <!-- Remove overlay -->
-    <!-- <div class="mobile-menu-overlay"></div> -->
-    
-    <div id="game">
-        <!-- Game content wrapper for vertical centering -->
-        <div class="game-content-wrapper">
+        
+        <div id="game">
             <!-- Board UI group for better spacing control -->
-            <div class="board-ui-group">
-                <div id="player-scores"></div>
-                <div id="score-breakdown"></div>
-                <svg id="board"></svg>
+            <div class="board-group">
+                <div id="scores-container">
+                    <div id="player-scores"></div>
+                    <div id="score-breakdown"></div>
+                </div>
+                <!-- Board container with SVG -->
+                <div id="board-container">
+                    <svg id="board"></svg>
+                </div>
             </div>
                         
             <!-- Score chart -->
-            <svg id="score-chart"></svg>
+            <div id="score-chart-container">
+                <svg id="score-chart"></svg>
+            </div>
             
+            <!-- Game control buttons -->
             <div id="game-controls">
-                <div class="control-group">
-                    <!-- Player Mode Dropdown for both desktop and mobile -->
-                    <div class="player-dropdown">
-                        <select id="player-mode">
-                            <option value="ai">AI Player</option>
-                            <option value="user">Two Player</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Scoring Mechanism Dropdown -->
-                    <div class="scoring-dropdown">
-                        <select id="scoring-mechanism" title="Select a scoring mechanism">
-                            <option value="cell-multiplication" selected title="Product of the size of the cells">Cell-Multiplication</option>                        
-                            <option value="cell-connection" title="Product of the number of directed edges (connections)">Cell-Connection</option>
-                            <option value="cell-extension" title="Product of the number of undirected edges (extensions)">Cell-Extension</option>                    
-                        </select>
-                    </div>
-                </div>
-                
-                <button id="reset">Reset Game</button>
+                <button id="undo" disabled>
+                    <span class="button-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" stroke="currentColor" stroke-width="0.5">
+                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+                        </svg>
+                    </span>
+                    Undo
+                </button>
+                <button id="reset">
+                    <span class="button-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" stroke="currentColor" stroke-width="0.5">
+                            <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                        </svg>
+                    </span> 
+                    Reset
+                </button>                
             </div>
         </div>
     </div>
     
-    <script type="module">
-        import {Game} from "./js/game.js";
-        import {updateNavbarTitle} from "./js/utils.js";
-                
-        // Use a standard size for the game board, then scale with percentages
-        let gridDimension = 100;
-        let cellDimension = gridDimension / 6;
-        let playerColors = ["#00FF00", "#1E90FF"];
-        let currentPlayer = 0;
-        let scores = [0, 0];
-        let progress = "playing";
-        
-        // Initial board size setting - actual pixel size will be determined by CSS
-        d3.select("#board")
-            .attr("viewBox", `0 0 ${gridDimension} ${gridDimension}`)
-            .attr("preserveAspectRatio", "xMidYMid meet");
-
-        // Sync controls between desktop and mobile
-        function syncControls() {
-            // Player mode dropdown change handler
-            let playerModeDropdown = document.getElementById("player-mode");
-            let playerModeMobile = document.getElementById("player-mode-mobile");
-            
-            // Sync desktop to mobile
-            playerModeDropdown.addEventListener("change", function() {
-                playerModeMobile.value = this.value;
-                game.reset();
-            });
-            
-            // Sync mobile to desktop
-            playerModeMobile.addEventListener("change", function() {
-                playerModeDropdown.value = this.value;
-                game.reset();
-            });
-            
-            // Setup scoring mechanism tooltip and change handler
-            const scoringSelect = document.getElementById("scoring-mechanism");
-            const scoringSelectMobile = document.getElementById("scoring-mechanism-mobile");
-            
-            // Sync desktop to mobile
-            scoringSelect.addEventListener("change", function() {
-                // Reset the game when scoring mechanism changes
-                if (!this.options[this.selectedIndex].disabled) {
-                    scoringSelectMobile.value = this.value;
-                    updateNavbarTitle();
-                    game.reset();
-                } else {
-                    // If user selects a disabled option, reset to the previous value
-                    alert("This scoring mechanism is not yet implemented.");
-                    this.value = "cell-connection";
-                    scoringSelectMobile.value = "cell-connection";
-                    updateNavbarTitle();
-                }
-            });
-            
-            // Sync mobile to desktop
-            scoringSelectMobile.addEventListener("change", function() {
-                // Reset the game when scoring mechanism changes
-                if (!this.options[this.selectedIndex].disabled) {
-                    scoringSelect.value = this.value;
-                    updateNavbarTitle();
-                    game.reset();
-                } else {
-                    // If user selects a disabled option, reset to the previous value
-                    alert("This scoring mechanism is not yet implemented.");
-                    this.value = "cell-connection";
-                    scoringSelect.value = "cell-connection";
-                    updateNavbarTitle();
-                }
-            });
-            
-            // Display tooltip with additional information when hovering over options
-            const options = scoringSelect.querySelectorAll("option");
-            options.forEach(option => {
-                const title = option.getAttribute("title");
-                if (title) {
-                    option.setAttribute("title", title);
-                }
-            });
-            
-            // Simplify mobile menu toggle
-            const hamburgerBtn = document.getElementById('hamburger-menu');
-            const mobileMenu = document.getElementById('mobile-menu');
-            
-            // Toggle mobile menu when hamburger is clicked
-            hamburgerBtn.addEventListener('click', function() {
-                toggleMobileMenu();
-            });
-            
-            // Function to toggle mobile menu state
-            function toggleMobileMenu(forceClose = false) {
-                if (forceClose) {
-                    mobileMenu.classList.remove('active');
-                    hamburgerBtn.classList.remove('active');
-                } else {
-                    mobileMenu.classList.toggle('active');
-                    hamburgerBtn.classList.toggle('active');
-                }
-            }
-            
-            // Close menu with close button
-            const closeBtn = document.getElementById('mobile-menu-close-btn');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', function() {
-                    toggleMobileMenu(true);
-                });
-            }
-            
-            // Close menu when clicking anywhere on the page (except dropdown menus)
-            document.addEventListener('click', function(e) {
-                // Only proceed if menu is open
-                if (!mobileMenu.classList.contains('active')) return;
-                
-                // Keep menu open if clicked element is a dropdown or inside a dropdown
-                if (e.target.closest('select') || e.target.tagName === 'SELECT' || 
-                    e.target.closest('.mobile-menu-item')) {
-                    return;
-                }
-                
-                // Close menu if click is not on hamburger button
-                if (!hamburgerBtn.contains(e.target)) {
-                    toggleMobileMenu(true);
-                }
-            });
-            
-            // Stop propgation on hamburger clicks to prevent document click from triggering
-            hamburgerBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-            });
-            
-            // Only handle window resize to close menu if needed
-            window.addEventListener('resize', function() {
-                if (window.innerWidth > 768) {
-                    toggleMobileMenu(true);
-                }
-            });
-            
-            // Handle scroll effect for navbar
-            function handleScroll() {
-                const navbar = document.querySelector('.navbar');
-                if (window.scrollY > 10) {
-                    navbar.classList.add('scrolled');
-                } else {
-                    navbar.classList.remove('scrolled');
-                }
-            }
-            
-            // Add scroll event listener
-            window.addEventListener('scroll', handleScroll);
-            
-            // Check on initial load
-            handleScroll();
-        }
+    <!-- Load the main application script -->
+    <script type="module" src="src/main.js"></script>
     
-        // create game
-        let game = new Game(gridDimension, cellDimension, playerColors, currentPlayer, scores, progress);
-
-        // game controls
-        d3.select("#reset").on("click", game.reset.bind(game));
-        
-        // Initialize synced controls
-        syncControls();
-        
-        // Set the initial navbar title based on the default scoring mechanism
-        updateNavbarTitle();
-    </script>    
+    <!-- Game settings menu toggle script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const gameSettingsMenu = document.getElementById('game-settings-menu');
+            const gameSettingsPanel = document.getElementById('game-settings-panel');
+            const closeMenuBtn = document.getElementById('game-settings-close-btn');
+            
+            // Track if settings have changed
+            let settingsChanged = false;
+            
+            // Listen for changes in all settings dropdowns
+            const settingsDropdowns = [
+                'player-mode',
+                'first-player',
+                'scoring-mechanism',
+                'ai-difficulty',
+                'board-size'
+            ];
+            
+            settingsDropdowns.forEach(id => {
+                const dropdown = document.getElementById(id);
+                if (dropdown) {
+                    dropdown.addEventListener('change', function() {
+                        // For first-player and ai-difficulty, we need to reset the game explicitly
+                        // Other dropdowns already have their own event handlers that reset the game
+                        if (id === 'first-player' || id === 'ai-difficulty') {
+                            settingsChanged = true;
+                        }
+                    });
+                }
+            });
+            
+            // Toggle menu when settings menu is clicked
+            gameSettingsMenu.addEventListener('click', function() {
+                gameSettingsMenu.classList.toggle('active');
+                gameSettingsPanel.classList.toggle('active');
+                settingsChanged = false; // Reset change tracker when opening menu
+            });
+            
+            // Close menu when close button is clicked
+            closeMenuBtn.addEventListener('click', function() {
+                gameSettingsMenu.classList.remove('active');
+                gameSettingsPanel.classList.remove('active');
+                
+                // If settings have been changed, trigger a reset
+                if (settingsChanged) {
+                    document.getElementById('reset').click();
+                    settingsChanged = false;
+                }
+            });
+        });
+    </script>
 </body>
 </html>
