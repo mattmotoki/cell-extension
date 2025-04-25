@@ -296,7 +296,7 @@ export class Game {
     isGameOver() {
         // Game is over if there are 1 or fewer available cells
         const availableCellsCount = this.gameBoardLogic.getAvailableCells().length;
-        const gameOver = availableCellsCount <= 1;
+        const gameOver = availableCellsCount < 1;
         if (gameOver) {
             console.log("Game Over condition met.");
         }

@@ -27,8 +27,7 @@ const playerColors = ["#00FF00", "#1E90FF"];
 const gridWidth = cellsPerRow; // Logical grid width for GameBoardLogic
 const gridHeight = cellsPerRow; // Logical grid height for GameBoardLogic
 const aiMoveDelay = 0; // ms delay before AI calculates move
-const gameOverMessageDelayAI = 1350; // ms delay for game over message in AI mode
-const gameOverMessageDelayUser = 1000; // ms delay for game over message in User mode
+const gameOverMessageDelay = 500; // ms delay for game over message
 
 // --- Global State (managed by main.js) ---
 let game = null;
@@ -145,11 +144,10 @@ function startGameLoop() {
             // Ensure message is displayed only once
             if (!game.gameOverMessageShown) { 
                 console.log("Main loop: Game over detected.");
-                const waitTime = playerMode === 'ai' ? gameOverMessageDelayAI : gameOverMessageDelayUser;
                 setTimeout(() => {
                     const finalState = game.getCurrentState(); // Get latest scores
                     displayWinnerMessage(finalState.scores, playerMode);
-                 }, waitTime); 
+                 }, gameOverMessageDelay); 
                  game.gameOverMessageShown = true; // Set flag
             }
             // Optionally stop the game loop here if desired
