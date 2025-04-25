@@ -29,7 +29,8 @@ import {
     updateNavbarTitle, 
     updateUndoButtons,
     syncDropdowns,
-    closeMobileMenu
+    closeMobileMenu,
+    getBoardSizeFromUI
 } from './rendering/uiUtils.js';
 import logger from './utils/logger.js';
 
@@ -38,11 +39,11 @@ const log = logger.createLogger('Main');
 
 // --- Configuration ---
 const gridDimension = 100; // Logical size for viewBox used by renderers
-const cellsPerRow = 6;
-const cellDimension = gridDimension / cellsPerRow; // Cell size in logical units
+let cellsPerRow = 6; // Default value, will be updated from UI
+let cellDimension = gridDimension / cellsPerRow; // Cell size in logical units
 const playerColors = ["#00FF00", "#1E90FF"];
-const gridWidth = cellsPerRow; // Logical grid width for GameBoardLogic
-const gridHeight = cellsPerRow; // Logical grid height for GameBoardLogic
+let gridWidth = cellsPerRow; // Logical grid width for GameBoardLogic
+let gridHeight = cellsPerRow; // Logical grid height for GameBoardLogic
 const aiMoveDelay = 0; // ms delay before AI calculates move
 const gameOverMessageDelay = 500; // ms delay for game over message
 
@@ -63,6 +64,12 @@ function initializeApp() {
     // Read initial UI settings
     playerMode = getPlayerModeFromUI();
     scoringMechanism = getScoringMechanismFromUI();
+    
+    // Set board size based on UI selection
+    cellsPerRow = getBoardSizeFromUI();
+    cellDimension = gridDimension / cellsPerRow;
+    gridWidth = cellsPerRow;
+    gridHeight = cellsPerRow;
 
     // --- SVG Setup ---
     d3.select("#board")
@@ -227,10 +234,18 @@ function handleResetClick() {
     playerMode = getPlayerModeFromUI();
     scoringMechanism = getScoringMechanismFromUI();
     
-    game.reset(scoringMechanism, playerMode);
+    // Update board size
+    cellsPerRow = getBoardSizeFromUI();
+    cellDimension = gridDimension / cellsPerRow;
+    gridWidth = cellsPerRow;
+    gridHeight = cellsPerRow;
+    
+    // Create a new game with the updated board size
+    game = new Game(gridWidth, gridHeight, playerColors, 0, [0, 0], 'playing', scoringMechanism);
     game.gameOverMessageShown = false; // Reset message flag
     
-    // Reset renderers explicitly (or ensure they reset based on new state)
+    // Reset renderers explicitly with new cell size
+    boardRenderer = new BoardRenderer(gridDimension, cellDimension, playerColors, handleBoardClick);
     scoreBreakdown.reset(game.getCurrentState().currentPlayer, scoringMechanism);
     scoreChartRenderer.reset();
     
@@ -276,6 +291,14 @@ function handleScoringChange(event) {
     handleResetClick(); // Reset the game when scoring changes
 }
 
+function handleBoardSizeChange(event) {
+    const newSize = parseInt(event.target.value, 10);
+    const elementId = event.target.id;
+    log.info(`UI: Board Size changed to ${newSize}x${newSize} via ${elementId}`);
+    syncDropdowns(elementId, newSize); // Sync the other dropdown
+    handleResetClick(); // Reset the game with the new board size
+}
+
 // --- Setup Event Listeners ---
 function setupEventListeners() {
     // Reset Button
@@ -319,6 +342,10 @@ function setupEventListeners() {
     const scoringSelectMobile = document.getElementById("scoring-mechanism-mobile");
     if (scoringSelect) scoringSelect.addEventListener("change", handleScoringChange);
     if (scoringSelectMobile) scoringSelectMobile.addEventListener("change", handleScoringChange);
+    
+    // Board Size Dropdown
+    const boardSizeSelect = document.getElementById("board-size-mobile");
+    if (boardSizeSelect) boardSizeSelect.addEventListener("change", handleBoardSizeChange);
     
     // Add tooltips to scoring options (can remain here)
     [scoringSelect, scoringSelectMobile].forEach(select => {

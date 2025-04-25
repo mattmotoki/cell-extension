@@ -54,6 +54,13 @@ export function getScoringMechanismFromUI() {
     return scoringSelect ? scoringSelect.value : 'cell-multiplication'; 
 }
 
+// Get the board size from the UI
+export function getBoardSizeFromUI() {
+    const boardSizeSelect = document.getElementById("board-size-mobile");
+    // Default to 6 to match HTML default
+    return boardSizeSelect ? parseInt(boardSizeSelect.value, 10) : 6;
+}
+
 // Get description for a scoring mechanism
 export function getScoringDescription(mechanism) {
     const descriptions = {
@@ -97,6 +104,8 @@ export function syncDropdowns(elementId, value) {
     const playerModeMobile = document.getElementById("player-mode-mobile");
     const scoringSelect = document.getElementById("scoring-mechanism");
     const scoringSelectMobile = document.getElementById("scoring-mechanism-mobile");
+    const boardSizeSelect = document.getElementById("board-size");
+    const boardSizeMobile = document.getElementById("board-size-mobile");
 
     if (elementId === 'player-mode' || elementId === 'player-mode-mobile') {
         if (playerModeDropdown) playerModeDropdown.value = value;
@@ -104,6 +113,9 @@ export function syncDropdowns(elementId, value) {
     } else if (elementId === 'scoring-mechanism' || elementId === 'scoring-mechanism-mobile') {
         if (scoringSelect) scoringSelect.value = value;
         if (scoringSelectMobile) scoringSelectMobile.value = value;
+    } else if (elementId === 'board-size' || elementId === 'board-size-mobile') {
+        if (boardSizeSelect) boardSizeSelect.value = value;
+        if (boardSizeMobile) boardSizeMobile.value = value;
     }
 }
 
