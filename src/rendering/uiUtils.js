@@ -66,6 +66,12 @@ export function getAIDifficultyFromUI() {
     return difficultySelect ? difficultySelect.value : 'easy'; // Default to 'easy' if not found
 }
 
+// Get first player setting from UI
+export function getFirstPlayerFromUI() {
+    const firstPlayerSelect = document.getElementById('first-player');
+    return firstPlayerSelect ? firstPlayerSelect.value : 'human'; // Default to 'human' if not found
+}
+
 // Get description for a scoring mechanism
 export function getScoringDescription(mechanism) {
     const descriptions = {

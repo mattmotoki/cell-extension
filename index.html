@@ -47,6 +47,13 @@
                     </select>
                 </li>
                 <li class="game-settings-item">
+                    <span class="game-settings-item-label">First Player</span>
+                    <select id="first-player">
+                        <option value="human" selected>Human (Player 1)</option>
+                        <option value="ai">AI (Player 2)</option>
+                    </select>
+                </li>
+                <li class="game-settings-item">
                     <span class="game-settings-item-label">Scoring Mechanism</span>
                     <select id="scoring-mechanism" title="Select a scoring mechanism">
                         <option value="cell-multiplication" selected title="Product of the size of the cells">Cell-Multiplication</option>                        
@@ -97,15 +104,6 @@
             
             <!-- Game control buttons -->
             <div id="game-controls">
-                <button id="reset">
-                    <span class="button-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" stroke="currentColor" stroke-width="0.5">
-                            <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-                        </svg>
-                    </span> 
-                    Reset
-                </button>
                 <button id="undo" disabled>
                     <span class="button-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" stroke="currentColor" stroke-width="0.5">
@@ -115,6 +113,15 @@
                     </span>
                     Undo
                 </button>
+                <button id="reset">
+                    <span class="button-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" stroke="currentColor" stroke-width="0.5">
+                            <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                        </svg>
+                    </span> 
+                    Reset
+                </button>                
             </div>
         </div>
     </div>
@@ -129,16 +136,48 @@
             const gameSettingsPanel = document.getElementById('game-settings-panel');
             const closeMenuBtn = document.getElementById('game-settings-close-btn');
             
+            // Track if settings have changed
+            let settingsChanged = false;
+            
+            // Listen for changes in all settings dropdowns
+            const settingsDropdowns = [
+                'player-mode',
+                'first-player',
+                'scoring-mechanism',
+                'ai-difficulty',
+                'board-size'
+            ];
+            
+            settingsDropdowns.forEach(id => {
+                const dropdown = document.getElementById(id);
+                if (dropdown) {
+                    dropdown.addEventListener('change', function() {
+                        // For first-player and ai-difficulty, we need to reset the game explicitly
+                        // Other dropdowns already have their own event handlers that reset the game
+                        if (id === 'first-player' || id === 'ai-difficulty') {
+                            settingsChanged = true;
+                        }
+                    });
+                }
+            });
+            
             // Toggle menu when settings menu is clicked
             gameSettingsMenu.addEventListener('click', function() {
                 gameSettingsMenu.classList.toggle('active');
                 gameSettingsPanel.classList.toggle('active');
+                settingsChanged = false; // Reset change tracker when opening menu
             });
             
             // Close menu when close button is clicked
             closeMenuBtn.addEventListener('click', function() {
                 gameSettingsMenu.classList.remove('active');
                 gameSettingsPanel.classList.remove('active');
+                
+                // If settings have been changed, trigger a reset
+                if (settingsChanged) {
+                    document.getElementById('reset').click();
+                    settingsChanged = false;
+                }
             });
         });
     </script>

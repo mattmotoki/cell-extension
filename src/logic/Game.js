@@ -95,7 +95,7 @@ export class Game {
 
         // Reset internal state
         this.scores = [0, 0];
-        this.currentPlayer = 0; // Player 0 starts by default, reset might change this
+        // REMOVED: this.currentPlayer = 0; // Player 0 starts by default, reset might change this
         this.progress = "playing";
         this.scoreHistory1 = [0];
         this.scoreHistory2 = [0];
@@ -457,12 +457,10 @@ export class Game {
     }
 
 
-    reset(newScoringMechanism, newPlayerMode) { // Accept new settings
+    reset(newScoringMechanism, newPlayerMode, initialPlayer = 0) { // Accept initial player parameter
         log.info("Resetting game logic...");
         
         const previousMechanism = this.scoringMechanism;
-        const isScoringChange = previousMechanism !== newScoringMechanism;
-        const originalPlayer = this.currentPlayer; // Keep track of who was playing
 
         // Reset core state variables
         this.scores = [0, 0];
@@ -471,18 +469,9 @@ export class Game {
         this.scoreHistory2 = [0];
         this.scoringMechanism = newScoringMechanism; // Use the new mechanism
 
-        // Determine starting player for the new game
-        // Standard: Loser (or Player 2 on tie/scoring change) starts next game
-        // Current logic: Toggle player if not scoring change, else keep player
-        if (!isScoringChange) {
-            // Toggle player if the scoring mechanism didn't change
-             this.currentPlayer = (originalPlayer + 1) % 2; 
-        } else {
-            // Keep the same player if only the scoring mechanism changed
-             this.currentPlayer = originalPlayer; 
-        }
-        // Alternative: Always start player 0? Or alternate regardless? Needs design decision.
-        // Let's stick to the original toggle logic for now.
+        // Use the explicitly provided initialPlayer
+        this.currentPlayer = initialPlayer;
+        log.debug(`Setting initial player to ${initialPlayer} (explicitly provided)`);
 
         // Reset AI state (like move count)
         this.opponent.moveCount = 0;

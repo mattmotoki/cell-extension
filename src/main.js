@@ -29,7 +29,8 @@ import {
     updateUndoButtons,
     closeMobileMenu,
     getBoardSizeFromUI,
-    getAIDifficultyFromUI
+    getAIDifficultyFromUI,
+    getFirstPlayerFromUI
 } from './rendering/uiUtils.js';
 import logger from './utils/logger.js';
 
@@ -104,8 +105,11 @@ function initializeApp() {
     }
 
     // --- Logic Initialization ---
-    // Pass grid dimensions, colors, initial player (0), scores ([0,0]), progress ('playing'), and mechanism
-    game = new Game(gridWidth, gridHeight, playerColors, 0, [0, 0], 'playing', scoringMechanism);
+    // Determine initial player based on UI setting
+    const initialPlayer = getFirstPlayerFromUI() === 'human' ? 0 : 1;
+    
+    // Pass grid dimensions, colors, initial player (from UI), scores ([0,0]), progress ('playing'), and mechanism
+    game = new Game(gridWidth, gridHeight, playerColors, initialPlayer, [0, 0], 'playing', scoringMechanism);
     
     // Set the AI difficulty
     if (game.opponent) {
@@ -129,6 +133,9 @@ function initializeApp() {
     // --- Start Game Loop ---
     startGameLoop();
 
+    // Update first player dropdown visibility based on initial player mode
+    updateFirstPlayerVisibility(playerMode);
+
     log.info("Application Initialized.");
 }
 
@@ -136,6 +143,21 @@ function initializeApp() {
 function startGameLoop() {
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
+    }
+
+    // Check if AI should move first
+    if (playerMode === 'ai' && game.getCurrentState().currentPlayer === 1 && 
+        game.getCurrentState().progress === 'playing') {
+        log.info("AI is set as first player, triggering initial AI move...");
+        isAIRunning = true;
+        game.progress = 'waiting';
+        
+        setTimeout(() => {
+            log.debug("Starting initial AI Move Calculation");
+            const aiMove = game.requestAIMove();
+            isAIRunning = false;
+            log.debug("Initial AI move complete.");
+        }, aiMoveDelay);
     }
 
     function gameTick() {
@@ -248,8 +270,11 @@ function handleResetClick() {
     gridWidth = cellsPerRow;
     gridHeight = cellsPerRow;
     
-    // Create a new game with the updated board size
-    game = new Game(gridWidth, gridHeight, playerColors, 0, [0, 0], 'playing', scoringMechanism);
+    // Determine initial player based on UI setting
+    const initialPlayer = getFirstPlayerFromUI() === 'human' ? 0 : 1;
+    
+    // Create a new game with the updated board size and initial player
+    game = new Game(gridWidth, gridHeight, playerColors, initialPlayer, [0, 0], 'playing', scoringMechanism);
     game.gameOverMessageShown = false; // Reset message flag
     
     // Set the AI difficulty
@@ -284,7 +309,29 @@ function handlePlayerModeChange(event) {
     const newMode = event.target.value;
     log.info(`UI: Player Mode changed to ${newMode}`);
     playerMode = newMode;
+    
+    // Update first player dropdown visibility
+    updateFirstPlayerVisibility(newMode);
+    
     handleResetClick(); // Reset the game when mode changes
+}
+
+// Function to show/hide first player dropdown based on player mode
+function updateFirstPlayerVisibility(mode) {
+    const firstPlayerItem = document.querySelector('.game-settings-item:nth-child(2)');
+    const aiDifficultyItem = document.querySelector('.game-settings-item:nth-child(4)');
+    
+    if (firstPlayerItem) {
+        if (mode === 'user') {
+            // Hide first player selection in two-player mode
+            firstPlayerItem.style.display = 'none';
+            if (aiDifficultyItem) aiDifficultyItem.style.display = 'none';
+        } else {
+            // Show first player selection in AI mode
+            firstPlayerItem.style.display = 'flex';
+            if (aiDifficultyItem) aiDifficultyItem.style.display = 'flex';
+        }
+    }
 }
 
 function handleScoringChange(event) {
@@ -313,6 +360,11 @@ function handleAIDifficultyChange(event) {
     if (game && game.opponent) {
         game.opponent.setDifficulty(aiDifficulty);
     }
+}
+
+function handleFirstPlayerChange(event) {
+    log.info(`UI: First Player changed to ${event.target.value}`);
+    // We don't reset the game here, only when Reset button is clicked or other settings change
 }
 
 // --- Setup Event Listeners ---
@@ -358,6 +410,10 @@ function setupEventListeners() {
     // AI Difficulty Dropdown
     const aiDifficultySelect = document.getElementById("ai-difficulty");
     if (aiDifficultySelect) aiDifficultySelect.addEventListener("change", handleAIDifficultyChange);
+    
+    // First Player Dropdown
+    const firstPlayerSelect = document.getElementById("first-player");
+    if (firstPlayerSelect) firstPlayerSelect.addEventListener("change", handleFirstPlayerChange);
     
     // Add tooltips to scoring options (can remain here)
     if (scoringSelect) {
