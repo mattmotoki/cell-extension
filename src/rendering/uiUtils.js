@@ -1,27 +1,35 @@
 /**
- * uiUtils.js - UI Utility Functions for Cell Collection
+ * uiUtils.js - UI Utility Functions for Cell Collection Game
  * 
  * This file provides shared utility functions specifically for UI manipulation 
- * and interaction within the application.
+ * and interaction within the application's front-end.
  * 
  * Key functionality:
  * - Game mode management (retrieving player mode from UI)
- * - Scoring mechanism management (retrieval and descriptions from UI)
- * - UI updates (title formatting and updates)
+ * - Scoring mechanism management (retrieval and descriptions)
+ * - UI updates (title formatting, button state management)
  * - Game state feedback (winner messaging)
+ * - Mobile menu handling
  * 
- * Relationships with other files:
- * - main.js: Uses these utilities to interact with the DOM and manage UI state.
+ * Relationships:
+ * - Imported by main.js for DOM interaction and UI state management
+ * - Provides UI utility functions for all rendering components
+ * - Maintains synchronization between mobile and desktop UI elements
+ * - Accesses DOM elements to read user settings
+ * 
+ * Revision Log:
+ * - Updated header comment structure
+ * 
+ * Note: This revision log should be updated whenever this file is modified.
  */
 
 // Display a message based on the scores
-export function displayWinnerMessage(scores, playerMode) { // Added playerMode arg
+export function displayWinnerMessage(scores, playerMode) {
     // We could optionally replace alert with a custom modal in the future
     // for better styling, but for now we'll leave alert in place
     if (scores[0] > scores[1]) {
         alert("Congratulations! Player 1 wins! 🎉");
     } else if (scores[0] < scores[1]) {
-        // if (getPlayerMode() == "ai") { // Use passed playerMode
         if (playerMode === "ai") {
             alert("The AI player won this round. Try again 🤖");
         } else {
@@ -50,7 +58,6 @@ export function getScoringMechanismFromUI() {
 export function getScoringDescription(mechanism) {
     const descriptions = {
         'cell-connection': 'Product of the number of directed edges (connections)',
-        // Duplicate key was present, ensure it's correct or removed
         'cell-multiplication': 'Product of the size (number of cells) of the connected components',
         'cell-extension': 'Product of the number of undirected edges (extensions)',
     };
@@ -68,15 +75,13 @@ export function formatScoringMechanismTitle(mechanism) {
 }
 
 // Update navbar title with current scoring mechanism
-export function updateNavbarTitle(mechanism) { // Accept mechanism as arg
-    // const mechanism = getScoringMechanismFromUI(); // Don't read directly, use passed value
+export function updateNavbarTitle(mechanism) {
     const formattedTitle = formatScoringMechanismTitle(mechanism);
     const navbarTitle = document.querySelector('.navbar-title');
     
     if (navbarTitle) {
         navbarTitle.textContent = formattedTitle;
     }
-    
 }
 
 // --- Functions for managing UI element state --- 

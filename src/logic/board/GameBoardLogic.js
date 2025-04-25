@@ -3,6 +3,19 @@
  * 
  * Manages the game state (occupied cells), placement rules, 
  * connection calculations, and scoring logic independent of rendering.
+ * This class handles the low-level board operations like cell placement,
+ * connection detection, and component analysis.
+ * 
+ * Relationships:
+ * - Imports scoring functions from "./scoring/index.js"
+ * - Used by Game.js to handle the logical aspects of the game board
+ * - Provides board state data for AIPlayer to make decisions
+ * - Indirectly connects with BoardRenderer through Game.js
+ * 
+ * Revision Log:
+ * - Updated header comment structure
+ * 
+ * Note: This revision log should be updated whenever this file is modified.
  */
 
 import { 

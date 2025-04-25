@@ -211,50 +211,6 @@ export class ScoreBreakdown {
         ];
     }
     
-    // Helper function to get prime factors of a number for display or debugging
-    getFactors(num) {
-        if (num === 0) return "0";
-        if (num === 1) return "1";
-        
-        // Find all prime factors
-        const factors = [];
-        for (let i = 2; i <= Math.sqrt(num); i++) {
-            while (num % i === 0) {
-                factors.push(i);
-                num /= i;
-            }
-        }
-        
-        // If num is a prime number larger than sqrt
-        if (num > 1) {
-            factors.push(num);
-        }
-        
-        // If no factors were found
-        if (factors.length === 0) {
-            return num.toString();
-        }
-        
-        // Group repeated factors to make the display cleaner
-        const grouped = [];
-        let current = factors[0];
-        let count = 1;
-        
-        for (let i = 1; i < factors.length; i++) {
-            if (factors[i] === current) {
-                count++;
-            } else {
-                grouped.push(count > 1 ? `${current}^${count}` : `${current}`);
-                current = factors[i];
-                count = 1;
-            }
-        }
-        
-        // Add the last factor
-        grouped.push(count > 1 ? `${current}^${count}` : `${current}`);
-        
-        return grouped.join('×');
-    }
 }
 
 

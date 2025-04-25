@@ -1,25 +1,30 @@
 /**
- * ai.js - AI Player Implementation for Cell Collection
+ * AIPlayer.js - AI Player Implementation for Cell Collection Game
  * 
- * This file implements the AI opponent and player base classes for the game.
+ * This file implements the player base class and AI opponent for the game.
  * 
  * Key components:
  * - Player: Base class with core player functionality
- * - AIPlayer: AI opponent that evaluates and selects moves
+ * - AIPlayer: AI opponent that evaluates and selects moves using minimax algorithm
  * - HumanPlayer: Simple representation of a human player
  * 
  * The AI uses different strategies based on:
  * - Current scoring mechanism (adapts evaluation for each scoring type)
- * - Game progress (uses random moves early, strategic moves later)
+ * - Game progress (tracks move count for strategy adjustment)
  * - Board state (evaluates potential moves by simulating their outcome)
  * 
- * Relationships with other files:
- * - game.js: Instantiates AIPlayer to handle opponent moves
- * - board.js: AI queries board methods to evaluate positions
+ * Relationships:
+ * - Imports evaluateBoard from './evaluateBoard.js'
+ * - Used by Game.js to handle AI opponent moves
+ * - Works with GameBoardLogic to evaluate positions and simulate moves
+ * 
+ * Revision Log:
+ * - Updated header comment structure
+ * 
+ * Note: This revision log should be updated whenever this file is modified.
  */
 
 import { evaluateBoard } from './evaluateBoard.js';
-// import { getScoringMechanism } from '../utils.js'; // Removed, get mechanism passed to getMove
 
 export class Player {
     constructor(playerID) {
@@ -40,8 +45,6 @@ export class Player {
 
     addMove(move) {
         this.move_history.push(move);
-
-        // udpate connected components
     }
 
     reset() {

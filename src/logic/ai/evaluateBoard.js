@@ -1,8 +1,19 @@
 /**
- * eval.js - AI Board Evaluation Functions
+ * evaluateBoard.js - AI Board Evaluation Functions
  * 
  * This file contains utility functions for evaluating board states
- * to help the AI player determine the best move.
+ * to help the AI player determine the best move. It provides heuristic
+ * evaluation algorithms tailored to different scoring mechanisms.
+ * 
+ * Relationships:
+ * - Imported by AIPlayer.js and used during minimax calculations
+ * - Works with GameBoardLogic to analyze board states
+ * - Adapts scoring based on the current game configuration
+ * 
+ * Revision Log:
+ * - Updated header comment structure
+ * 
+ * Note: This revision log should be updated whenever this file is modified.
  */
 
 /**

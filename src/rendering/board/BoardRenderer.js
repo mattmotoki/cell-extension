@@ -2,7 +2,19 @@
  * BoardRenderer.js - D3-based Renderer for the Game Board
  * 
  * Visualizes the game state provided by GameBoardLogic using D3.js.
- * Handles user clicks and forwards them as grid coordinates.
+ * Handles user clicks and forwards them as grid coordinates to the main game logic.
+ * Responsible for drawing cells, connections, and visual annotations based on scoring mechanism.
+ * 
+ * Relationships:
+ * - Instantiated by main.js as the visual representation of the game board
+ * - Receives game state data from Game.js
+ * - Forwards user interactions to Game.js through click handlers
+ * - Works with D3.js for SVG manipulation and rendering
+ * 
+ * Revision Log:
+ * - Updated header comment structure
+ * 
+ * Note: This revision log should be updated whenever this file is modified.
  */
 
 // import { getScoringMechanism } from "../utils.js"; // Remove direct dependency on utils
@@ -83,7 +95,7 @@ export class BoardRenderer {
     // --- Rendering Logic ---
 
     // Main render method - takes the current board logic state
-    render(boardLogicState, /* connectionCounts = null */) { // connectionCounts removed, calculate locally if needed
+    render(boardLogicState) {
         console.log("BoardRenderer rendering...");
         if (!boardLogicState || !boardLogicState.occupiedCells) {
             console.error("Invalid state provided to BoardRenderer.render");
@@ -95,10 +107,7 @@ export class BoardRenderer {
         this.linesGroup.selectAll("*").remove();
 
         const occupied = boardLogicState.occupiedCells;
-        // const currentScoring = getScoringMechanism(); // Remove direct call
-        // Determine scoring mechanism from state if needed, or have it passed
-        // For now, assume logic passes necessary info or renderer infers
-        const showConnectionCount = boardLogicState.scoringMechanism === 'cell-connection'; // Example: Infer from state if passed
+        const showConnectionCount = boardLogicState.scoringMechanism === 'cell-connection';
 
         // 1. Render all occupied cells
         for (let playerIndex = 0; playerIndex < 2; playerIndex++) {
@@ -146,8 +155,6 @@ export class BoardRenderer {
 
                             if (showConnectionCount) {
                                 // Calculate connection counts locally within the renderer
-                                // This requires the renderer to have access to board dimensions or logic helpers
-                                // For simplicity, let's recalculate here based on the provided state.
                                 const count1 = this.countOccupiedNeighbors(gridX, gridY, playerIndex, occupied, boardLogicState.gridWidth, boardLogicState.gridHeight);
                                 const count2 = this.countOccupiedNeighbors(neighbor.gridX, neighbor.gridY, playerIndex, occupied, boardLogicState.gridWidth, boardLogicState.gridHeight);
                                 
@@ -168,14 +175,14 @@ export class BoardRenderer {
     }
     
     // Helper to get adjacent occupied cells based on provided state
-    getAdjacentOccupiedCells(gridX, gridY, playerIndex, occupiedCellsState, gridWidth, gridHeight) { // Add dimensions
+    getAdjacentOccupiedCells(gridX, gridY, playerIndex, occupiedCellsState, gridWidth, gridHeight) {
         const neighbors = [];
         const potentialNeighbors = [
             [gridX + 1, gridY], [gridX - 1, gridY],
             [gridX, gridY + 1], [gridX, gridY - 1]
         ];
         for (const [adjX, adjY] of potentialNeighbors) {
-             if (adjX >= 0 && adjX < gridWidth && adjY >= 0 && adjY < gridHeight) { // Use passed dimensions
+             if (adjX >= 0 && adjX < gridWidth && adjY >= 0 && adjY < gridHeight) {
                 const adjKey = `${adjX}-${adjY}`;
                 if (occupiedCellsState[playerIndex]?.[adjKey]) {
                     neighbors.push({ gridX: adjX, gridY: adjY });
@@ -186,7 +193,7 @@ export class BoardRenderer {
     }
     
     // Helper to count occupied neighbors based on provided state
-    countOccupiedNeighbors(gridX, gridY, playerIndex, occupiedCellsState, gridWidth, gridHeight) { // Add dimensions
+    countOccupiedNeighbors(gridX, gridY, playerIndex, occupiedCellsState, gridWidth, gridHeight) {
         return this.getAdjacentOccupiedCells(gridX, gridY, playerIndex, occupiedCellsState, gridWidth, gridHeight).length;
     }
 

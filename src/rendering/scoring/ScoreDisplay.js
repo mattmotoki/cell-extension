@@ -1,29 +1,34 @@
 /**
- * scoring.js - Score Visualization for Cell Collection
+ * ScoreDisplay.js - Score Visualization Components for Cell Collection Game
  * 
- * This file implements the visual components for displaying game scores.
+ * This file implements the visual components for displaying game scores and statistics.
  * 
  * Key components:
  * - ScoreBreakdown: Shows player scores and detailed score breakdowns
- * - ScoreChart: Visualizes score progression throughout the game
+ * - ScoreChartRenderer: Visualizes score progression throughout the game
  * 
  * ScoreBreakdown displays:
  * - Current scores for both players
  * - Breakdown of multiplication factors for cell-multiplication scoring
  * - Visual indicators for the current player's turn
  * 
- * ScoreChart visualizes:
+ * ScoreChartRenderer visualizes:
  * - Score trends over time with colored lines for each player
  * - Round number labels on the x-axis
  * - Maximum score label on the y-axis
  * - Colored indicators to show which player is leading
  * 
- * Relationships with other files:
- * - game.js: Updates these components when scores change
- * - utils.js: Gets the current scoring mechanism
+ * Relationships:
+ * - Instantiated by main.js for score visualization
+ * - Receives score data from Game.js through main.js
+ * - Uses D3.js for rendering score visualizations
+ * - Works with various scoring mechanisms defined in the game
+ * 
+ * Revision Log:
+ * - Updated header comment structure
+ * 
+ * Note: This revision log should be updated whenever this file is modified.
  */
-
-// import { getScoringMechanism } from "../utils.js"; // Remove direct dependency
 
 export class ScoreBreakdown {
     constructor(playerColors) {
@@ -34,8 +39,7 @@ export class ScoreBreakdown {
     }
     
     update(currentPlayer, scores, components1, components2, scoringMechanism) {
-        // const scoring = getScoringMechanism(); // Removed direct call
-        const scoring = scoringMechanism; // Use passed value
+        const scoring = scoringMechanism;
         
         // Generate breakdown text for each player using the appropriate sizing method
         let breakdownText1 = this.calculateBreakdownText(scores[0], components1, scoring);
@@ -134,13 +138,11 @@ export class ScoreBreakdown {
         
         switch(scoringMechanism) {
             case 'cell-multiplication':
-            case 'cell-multiplication':
-                // For these mechanisms, size is the number of cells
+                // For this mechanism, size is the number of cells
                 return component.length;
                 
             case 'cell-connection':
                 // For cell-connection, calculate all connections within the component
-                // This matches the logic in Board.getConnectionScore()
                 let connectionCount = 0;
                 
                 // For each cell in the component, count connections to other cells
@@ -202,7 +204,7 @@ export class ScoreBreakdown {
         }
     }
     
-    // Get adjacent positions for a grid cell
+    // Helper: Get adjacent positions for a cell
     getAdjacentPositions(gridX, gridY) {
         return [
             [gridX + 1, gridY], // right
@@ -212,57 +214,11 @@ export class ScoreBreakdown {
         ];
     }
     
-    // Helper function to get prime factors of a number for display or debugging
-    getFactors(num) {
-        if (num === 0) return "0";
-        if (num === 1) return "1";
-        
-        // Find all prime factors
-        const factors = [];
-        for (let i = 2; i <= Math.sqrt(num); i++) {
-            while (num % i === 0) {
-                factors.push(i);
-                num /= i;
-            }
-        }
-        
-        // If num is a prime number larger than sqrt
-        if (num > 1) {
-            factors.push(num);
-        }
-        
-        // If no factors were found
-        if (factors.length === 0) {
-            return num.toString();
-        }
-        
-        // Group repeated factors to make the display cleaner
-        const grouped = [];
-        let current = factors[0];
-        let count = 1;
-        
-        for (let i = 1; i < factors.length; i++) {
-            if (factors[i] === current) {
-                count++;
-            } else {
-                grouped.push(count > 1 ? `${current}^${count}` : `${current}`);
-                current = factors[i];
-                count = 1;
-            }
-        }
-        
-        // Add the last factor
-        grouped.push(count > 1 ? `${current}^${count}` : `${current}`);
-        
-        return grouped.join('×');
-    }
 }
 
-
-// Renamed from ScoreChart to ScoreChartRenderer
 export class ScoreChartRenderer {
 
-    constructor(playerColors, /* gridSize */) { // Removed gridSize if only used for scaling?
+    constructor(playerColors) {
         this.playerColors = playerColors;
 
         // Use relative units for flexibility
@@ -451,40 +407,40 @@ export class ScoreChartRenderer {
             this.xAxisLabels.append("text")
                 .attr("x", xPos+15)
                 .attr("y", 5)  
+                .attr("dy", "1em")
                 .attr("text-anchor", "middle")
-                .style("font-size", "14")
-                .style("font-weight", "bold")
-                .style("fill", "#ffffff")
-                .text(roundNumber > 0 ? roundNumber : 1);
-            }
+                .attr("font-size", "14")  
+                .attr("font-weight", "bold")
+                .attr("fill", "#ffffff")
+                .text(roundNumber);  // Show round number instead of move count
+        }
     }
     
-
+    // Update markers to visualize score values on the graph
     _updateMarkers(player, history, color, isCurrentPlayer) {
-        // Ensure history is an array
-        const validHistory = Array.isArray(history) ? history : [0];
-        
-        let dots = this.svg.selectAll(`.dot${player}`)
-            .data(validHistory, (d, i) => i);
-
-        dots.enter()
-            .append("circle")
-            .attr("class", `dot${player}`)
-            .attr("r", 3)  
-            .attr("fill", isCurrentPlayer ? color : "none")
-            .attr("stroke", color)
-            .attr("stroke-width", 1.2)  
-            .merge(dots)
-            .attr("cx", (d, i) => this.xScale(i))
-            .attr("cy", d => this.yScale(this.safeLogValue(d)));
-
+        // Create a selection and join data
+        const dots = this.svg.selectAll(`.dot${player}`)
+            .data(history);
+            
+        // Remove markers that no longer have data
         dots.exit().remove();
+            
+        // Update existing markers
+        dots.attr("cx", (d, i) => this.xScale(i))
+            .attr("cy", d => this.yScale(this.safeLogValue(d)))
+            .attr("fill", color)
+            .attr("r", isCurrentPlayer ? 2.2 : 1.8);  // Larger for current player
+            
+        // Add new markers for new data points
+        dots.enter().append("circle")
+            .attr("class", `dot${player}`)
+            .attr("cx", (d, i) => this.xScale(i))
+            .attr("cy", d => this.yScale(this.safeLogValue(d)))
+            .attr("r", isCurrentPlayer ? 2.2 : 1.8)  // Larger for current player
+            .attr("fill", color);
     }
 
-    // Reset does not manage history anymore, just visuals
     reset() {
-        // Removed history reset
-        
         // Set up initial state with just axes and labels
         let moveCount = 0;
         this.xScale.domain([0, 1]);
@@ -572,5 +528,4 @@ export class ScoreChartRenderer {
         // Bring the labels overlay to the front
         this.labelsOverlay.raise();
     }
-
 } 

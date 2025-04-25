@@ -2,7 +2,19 @@
  * main.js - Main Application Entry Point for Cell Collection Game
  * 
  * Initializes the game logic, rendering components, UI controls, 
- * and orchestrates the main game loop.
+ * and orchestrates the main game loop. This file serves as the central
+ * controller connecting all parts of the application.
+ * 
+ * Relationships:
+ * - Imports and initializes Game from ./logic/Game.js
+ * - Imports and initializes BoardRenderer from ./rendering/board/BoardRenderer.js
+ * - Imports score visualization components from ./rendering/scoring/ScoreDisplay.js
+ * - Imports UI utility functions from ./rendering/uiUtils.js
+ * 
+ * Revision Log:
+ * - Updated header comment structure
+ * 
+ * Note: This revision log should be updated whenever this file is modified.
  */
 
 import { Game } from './logic/Game.js';
@@ -86,7 +98,7 @@ function initializeApp() {
     // Pass size, colors, and the click handler function
     boardRenderer = new BoardRenderer(gridDimension, cellDimension, playerColors, handleBoardClick);
     scoreBreakdown = new ScoreBreakdown(playerColors);
-    scoreChartRenderer = new ScoreChartRenderer(playerColors /*, gridDimension */); // Pass config if needed
+    scoreChartRenderer = new ScoreChartRenderer(playerColors);
 
     // --- UI Control Setup ---
     setupEventListeners();
@@ -120,7 +132,6 @@ function startGameLoop() {
             isAIRunning = true; 
             game.progress = 'waiting'; // Set logic state to waiting
             // Update UI immediately to show AI is thinking (optional)
-            // e.g., show spinner, disable board clicks 
             updateUI(); 
             
             setTimeout(() => {
@@ -150,9 +161,6 @@ function startGameLoop() {
                  }, gameOverMessageDelay); 
                  game.gameOverMessageShown = true; // Set flag
             }
-            // Optionally stop the game loop here if desired
-            // cancelAnimationFrame(animationFrameId);
-            // return;
         }
 
         // 4. Schedule next tick
@@ -192,13 +200,9 @@ function updateUI() {
     // Update Undo Button State
     updateUndoButtons(currentState.historyLength || game.history.length); // Pass history length
     
-    // Update Navbar Title (optional, could be done only on mechanism change)
-    // updateNavbarTitle(currentState.scoringMechanism);
-    
     // Potentially update cursor or show AI thinking indicator
     const isWaiting = currentState.progress === 'waiting' || isAIRunning;
     d3.select("body").classed("waiting", isWaiting); // Add/remove a class for styling
-
 }
 
 // --- Event Handlers ---
@@ -207,11 +211,7 @@ function handleBoardClick(gridX, gridY) {
     if (playerMode === 'ai' && game.getCurrentState().currentPlayer !== 0) return; // Ignore clicks if AI's turn
     
     console.log(`UI: Board clicked at (${gridX}, ${gridY})`);
-    const moveSuccessful = game.handlePlayerMove(gridX, gridY);
-    
-    // if (moveSuccessful) {
-    //     // State change will be picked up by game loop
-    // }
+    game.handlePlayerMove(gridX, gridY);
 }
 
 function handleResetClick() {
@@ -237,16 +237,11 @@ function handleUndoClick() {
     console.log("UI: Undo button clicked.");
     if (game.getCurrentState().progress === 'over') return; // Can't undo after game over
 
-    let undoSuccessful = false;
     if (playerMode === 'ai') {
-        undoSuccessful = game.undoAIMove(); // Use the double-undo for AI mode
+        game.undoAIMove(); // Use the double-undo for AI mode
     } else {
-        undoSuccessful = game.undo();
+        game.undo();
     }
-    
-    // if (undoSuccessful) {
-    //     // State change will be picked up by game loop
-    // }
 }
 
 function handlePlayerModeChange(event) {
