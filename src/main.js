@@ -28,7 +28,8 @@ import {
     updateNavbarTitle, 
     updateUndoButtons,
     closeMobileMenu,
-    getBoardSizeFromUI
+    getBoardSizeFromUI,
+    getAIDifficultyFromUI
 } from './rendering/uiUtils.js';
 import logger from './utils/logger.js';
 
@@ -52,6 +53,7 @@ let scoreBreakdown = null;
 let scoreChartRenderer = null;
 let playerMode = 'ai'; // Default player mode
 let scoringMechanism = 'cell-multiplication'; // Default scoring mechanism
+let aiDifficulty = 'easy'; // Default to easy difficulty
 let isAIRunning = false; // Flag to prevent concurrent AI calculations
 let animationFrameId = null; // ID for the animation frame loop
 
@@ -62,6 +64,7 @@ function initializeApp() {
     // Read initial UI settings
     playerMode = getPlayerModeFromUI();
     scoringMechanism = getScoringMechanismFromUI();
+    aiDifficulty = getAIDifficultyFromUI();
     
     // Set board size based on UI selection
     cellsPerRow = getBoardSizeFromUI();
@@ -103,6 +106,12 @@ function initializeApp() {
     // --- Logic Initialization ---
     // Pass grid dimensions, colors, initial player (0), scores ([0,0]), progress ('playing'), and mechanism
     game = new Game(gridWidth, gridHeight, playerColors, 0, [0, 0], 'playing', scoringMechanism);
+    
+    // Set the AI difficulty
+    if (game.opponent) {
+        game.opponent.setDifficulty(aiDifficulty);
+        log.info(`AI difficulty set to: ${aiDifficulty}`);
+    }
 
     // --- Renderer Initialization ---
     // Pass size, colors, and the click handler function
@@ -231,6 +240,7 @@ function handleResetClick() {
     // Read current settings from UI to pass to logic reset
     playerMode = getPlayerModeFromUI();
     scoringMechanism = getScoringMechanismFromUI();
+    aiDifficulty = getAIDifficultyFromUI();
     
     // Update board size
     cellsPerRow = getBoardSizeFromUI();
@@ -241,6 +251,12 @@ function handleResetClick() {
     // Create a new game with the updated board size
     game = new Game(gridWidth, gridHeight, playerColors, 0, [0, 0], 'playing', scoringMechanism);
     game.gameOverMessageShown = false; // Reset message flag
+    
+    // Set the AI difficulty
+    if (game.opponent) {
+        game.opponent.setDifficulty(aiDifficulty);
+        log.info(`AI difficulty set to: ${aiDifficulty}`);
+    }
     
     // Reset renderers explicitly with new cell size
     boardRenderer = new BoardRenderer(gridDimension, cellDimension, playerColors, handleBoardClick);
@@ -291,6 +307,14 @@ function handleBoardSizeChange(event) {
     handleResetClick(); // Reset the game with the new board size
 }
 
+function handleAIDifficultyChange(event) {
+    aiDifficulty = event.target.value;
+    log.info(`UI: AI difficulty changed to ${aiDifficulty}`);
+    if (game && game.opponent) {
+        game.opponent.setDifficulty(aiDifficulty);
+    }
+}
+
 // --- Setup Event Listeners ---
 function setupEventListeners() {
     // Reset Button
@@ -330,6 +354,10 @@ function setupEventListeners() {
     // Board Size Dropdown
     const boardSizeSelect = document.getElementById("board-size");
     if (boardSizeSelect) boardSizeSelect.addEventListener("change", handleBoardSizeChange);
+    
+    // AI Difficulty Dropdown
+    const aiDifficultySelect = document.getElementById("ai-difficulty");
+    if (aiDifficultySelect) aiDifficultySelect.addEventListener("change", handleAIDifficultyChange);
     
     // Add tooltips to scoring options (can remain here)
     if (scoringSelect) {

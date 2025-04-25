@@ -138,6 +138,18 @@ export class GameBoardLogic {
         ].filter(([x, y]) => this.isValidCoordinate(x, y)); // Filter out invalid coordinates
     }
     
+    // Gets all adjacent cells that are occupied (by any player)
+    getAdjacentOccupiedCells(gridX, gridY) {
+        const adjacentPositions = this.getAdjacentPositions(gridX, gridY);
+        const neighbors = [];
+        for (let [adjX, adjY] of adjacentPositions) {
+            if (this.isCellOccupied(adjX, adjY)) {
+                neighbors.push({ gridX: adjX, gridY: adjY });
+            }
+        }
+        return neighbors;
+    }
+    
     // Gets adjacent cells occupied *by the specified player*
     getAdjacentPlayerCells(gridX, gridY, playerIndex) {
         const adjacentPositions = this.getAdjacentPositions(gridX, gridY);

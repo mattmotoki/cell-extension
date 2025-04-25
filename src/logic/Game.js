@@ -40,7 +40,7 @@ export class Game {
         this.gameBoardLogic = new GameBoardLogic(gridWidth, gridHeight);
 
         // AI Opponent
-        this.opponent = new AIPlayer(1); // AI is player 1 (index 1)
+        this.opponent = new AIPlayer(1, 'easy'); // AI is player 1 (index 1), default to easy difficulty
 
         // Game State Variables
         this.currentPlayer = initialPlayer;

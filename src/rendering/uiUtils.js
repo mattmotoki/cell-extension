@@ -60,6 +60,12 @@ export function getBoardSizeFromUI() {
     return boardSizeSelect ? parseInt(boardSizeSelect.value, 10) : 6;
 }
 
+// Get AI difficulty setting from UI
+export function getAIDifficultyFromUI() {
+    const difficultySelect = document.getElementById('ai-difficulty');
+    return difficultySelect ? difficultySelect.value : 'easy'; // Default to 'easy' if not found
+}
+
 // Get description for a scoring mechanism
 export function getScoringDescription(mechanism) {
     const descriptions = {
