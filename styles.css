@@ -12,15 +12,25 @@
     /* Dark Mode Colors */
     --bg-color: #121212;
     --text-color: #f0f0f0;
-    --board-bg: #1e1e1e;
+    --board-bg: #1e1e1e; /* Keep for potential use, but board SVG itself won't use this */
     --input-bg: #2a2a2a;
     --border-color: #444444;
     --navbar-bg: rgba(30, 30, 30, 0.9);
     
-    /* Navbar height for calculations */
-    --navbar-height: 60px;
-    /* Add space for margins and padding */
-    --content-spacing: 25px; 
+    /* Layout Variables - Using relative units */
+    --navbar-height: 10vh; /* 10% of viewport height */
+    --score-chart-height: 15vh; /* Reduced from 20% to 15% of viewport height */
+    --game-controls-height: 8vh; /* Reduced from 10% to 8% of viewport height */
+    --max-content-width: 90vh; /* Relative to viewport height */
+    --content-padding: 2vh; /* Relative padding */
+    --elements-gap: 1.5vh; /* Reduced from 2vh to 1.5vh - smaller gaps between elements */
+    --board-group-height: 60vh; /* Allocate 60% of viewport height to board group */
+    
+    /* Font sizes in relative units */
+    --font-size-large: 1.1rem;
+    --font-size-medium: 1rem;
+    --font-size-small: 0.9rem;
+    --font-size-xs: 0.75rem;
 }
 
 html, body {
@@ -46,15 +56,12 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    max-width: 620px;
     width: 100%;
+    max-width: var(--max-content-width);
     box-sizing: border-box;
     margin: 0 auto; 
-    text-align: center;
-    padding-top: 15px; /* Reduced from 20px */
-    padding-bottom: 15px; /* Reduced from 20px */
-    height: calc(100vh - var(--navbar-height));
+    padding: var(--content-padding);
+    height: calc(100vh - var(--navbar-height)); /* Full height minus navbar */
     overflow-y: auto;
 }
 
@@ -64,110 +71,144 @@ body {
     align-items: center;
     width: 100%;
     box-sizing: border-box;
-    margin-top: 0;
-    flex: 0 1 auto;
-    gap: 3px; /* Reduced from 5px */
+    gap: var(--elements-gap);
+    height: calc(100vh - var(--navbar-height) - var(--content-padding) * 2); /* Full height minus navbar and padding */
+    justify-content: space-between; /* Distribute space between elements */
 }
 
+/* Game controls take 10% of viewport height */
 #game-controls {
     display: flex;
     justify-content: space-between;
-    gap: 20px; /* Space between buttons */
-    margin: 10px 0;
+    gap: 2vw;
     width: 100%;
-    max-width: 600px;
-    flex-direction: row; /* Ensure buttons are side by side by default */
+    height: var(--game-controls-height);
+    min-height: 3rem; /* Minimum height for very small screens */
+    flex: 0 0 auto;
+    flex-direction: row;
 }
 
 #game-controls button {
-    flex: 1 1 auto; /* Allow buttons to grow and shrink */
-    min-width: 120px; /* Minimum width for buttons */
-    padding: 8px 16px;
-    font-size: 15px;
+    flex: 1 1 auto; 
+    min-width: 0; /* Allow buttons to be smaller on narrow screens */
+    padding: 0.5em 1em;
+    font-size: var(--font-size-medium);
 }
 
+/* New board group that contains the board and scores */
+.board-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: var(--max-content-width);
+    height: var(--board-group-height); /* Explicitly set height */
+    gap: 0.5vh; /* Reduce gap to allow more space for board */
+    flex: 0 0 auto; /* Fixed size, don't grow or shrink */
+}
+
+/* Score display and breakdown - part of board group */
 #score-display {
     display: flex;
-    font-size: 1.4rem;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    flex: 0 0 auto;
+    gap: 0.5vh;
+}
+
+#player-scores {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: var(--font-size-medium);
+    padding: 0 2vw;
+    box-sizing: border-box;
     font-weight: 500;
-    margin: 10px;
-    padding: 10px 15px;
-    border-radius: 8px;
+}
+
+#score-breakdown {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: var(--font-size-small);
+    padding: 0 2vw;
+    box-sizing: border-box;
+    min-height: 1.5em;
+}
+
+/* Board container - square aspect ratio */
+#board-container {
+    width: 100%;
+    height: calc(var(--board-group-height) - 4vh); /* Height minus space for scores */
+    max-width: var(--board-group-height); /* Same as height for square ratio */
+    aspect-ratio: 1 / 1; /* Enforce square aspect ratio */
+    margin: 0 auto;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Board SVG fills its container */
+#board {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background-color: transparent;
+    border-radius: 0;
+}
+
+/* Score chart takes 20% of viewport height */
+#score-chart-container {
+    width: 100%;
+    height: var(--score-chart-height);
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin: 1vh 0;
+}
+
+#score-chart {
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 svg {
-    display: block; /* Makes margin auto work */
-    margin: 5px auto; /* Center horizontally */
-    border: none;
-    border-radius: 0; /* Remove rounding from all SVGs */
+    display: block; 
     max-width: 100%;
     height: auto;
 }
 
-#widget, #board, #score-chart {
-    margin-left: auto;
-    margin-right: auto;
-}
-
-#board {
-    width: 100%;
-    max-width: 600px;
-    height: auto;
-    aspect-ratio: 1/1;
-    object-fit: contain;
-    margin: 5px auto;
-    padding: 0;
-    box-sizing: border-box;
-    background-color: transparent;
-    border-radius: 10px;
-    flex-shrink: 0;
-    max-height: min(calc((100vh - var(--navbar-height) - 180px) * 0.5), 48vh);
-}
-
-.grid-cell {
-    fill: #1e1e1e; /* Changed from transparent to dark gray */
-    stroke: #555555;
-    stroke-width: 0.1;
-    cursor: pointer;
-    transition: fill 0.2s ease;
-}
-
-.grid-cell:hover {
-    fill: rgba(74, 111, 255, 0.3); /* Made hover state more visible */
-}
-
-.line {
-    fill: none;
-    stroke-width: 0.2;
-    transition: stroke-width 0.2s ease;
-}
-
-/* Button icon styling */
+/* Keep existing button styling but update sizing */
 .button-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 10px; /* Increased from 6px to add more space between icon and text */
+    margin-right: 0.7em;
 }
 
 .button-icon svg {
-    width: 16px;
-    height: 16px;
+    width: 1em;
+    height: 1em;
     display: block;
     margin: 0;
-    stroke-width: 0.5; /* Add stroke-width to make icons appear bolder */
-    font-weight: bold; /* Make icons bold */
+    stroke-width: 0.5;
 }
 
 /* Regular button styling */
 button {
     background-color: var(--primary-color);
-    color: var(--primary-text-color);
+    color: var(--text-color);
     border: none;
     border-radius: 6px;
-    padding: 10px 20px;
+    padding: 0.6em 1.2em;
     cursor: pointer;
-    font-size: 15px;
+    font-size: var(--font-size-medium);
     font-weight: 600;
     transition: background-color 0.3s, transform 0.2s;
     display: flex;
@@ -186,16 +227,77 @@ button:active {
     box-shadow: none;
 }
 
-/* Dropdown styling for both desktop and mobile */
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    :root {
+        --navbar-height: 8vh; /* Slightly smaller navbar on mobile */
+        --score-chart-height: 12vh; /* Smaller chart height */
+        --game-controls-height: 7vh; /* Smaller controls */
+        --board-group-height: 65vh; /* More height for board on mobile */
+        --content-padding: 1vh;
+        --elements-gap: 1vh;
+    }
+    
+    .board-group {
+        width: 95%;
+        height: var(--board-group-height);
+    }
+    
+    #board-container {
+        width: 100%;
+        height: calc(var(--board-group-height) - 3.5vh); /* Height minus space for scores */
+    }
+    
+    #game-controls {
+        gap: 1.5vw;
+    }
+    
+    #player-scores {
+        font-size: var(--font-size-small);
+    }
+    
+    #score-breakdown {
+        font-size: var(--font-size-xs);
+    }
+}
+
+/* Very short screens */
+@media (max-height: 500px) {
+    :root {
+        --navbar-height: 12vw; /* Use viewport width for height on very short screens */
+        --score-chart-height: 20vw;
+        --game-controls-height: 12vw;
+        --board-group-height: 50vh; /* Adjusted for very short screens */
+        --elements-gap: 0.5vh;
+    }
+    
+    /* Stack items differently on short screens */
+    .game-content-wrapper {
+        gap: 0.5vh;
+    }
+    
+    #board-container {
+        height: calc(var(--board-group-height) - 2.5vh); /* Less space for scores */
+    }
+}
+
+/* Landscape mode - wider screens */
+@media (min-aspect-ratio: 4/3) {
+    :root {
+        --max-content-width: 80vh; /* Relative to height for landscape */
+    }
+}
+
+/* Dropdown styling for both desktop and mobile - keep some existing styles but update sizing */
 .player-dropdown, .scoring-dropdown {
     position: relative;
     display: inline-block;
     background-color: var(--input-bg);
     color: var(--text-color);
     border-radius: 6px;
-    padding: 8px 12px;
+    padding: 0.5em 0.8em;
     cursor: pointer;
-    min-width: 120px;
+    min-width: 8em;
     flex: 1;
 }
 
@@ -204,19 +306,19 @@ button:active {
     background: transparent;
     width: 100%;
     font-family: var(--font-main);
-    font-size: 14px;
+    font-size: var(--font-size-small);
     cursor: pointer;
     outline: none;
-    padding: 2px 4px;
+    padding: 0.15em 0.3em;
     color: var(--text-color);
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
     background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
     background-repeat: no-repeat;
-    background-position: right 2px center;
-    background-size: 20px;
-    padding-right: 25px;
+    background-position: right 0.2em center;
+    background-size: 1.5em;
+    padding-right: 1.8em;
 }
 
 /* Dropdown arrow styling for Firefox */
@@ -249,86 +351,6 @@ button:active {
     .scoring-dropdown select {
         background-color: var(--input-bg);
     }
-}
-
-#score-chart-container {
-    width: 100%;
-    margin: 10px auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    max-width: 800px;
-    height: 150px;
-    position: relative;
-}
-
-#score-chart {
-    width: 100%;
-    height: 100%;
-}
-
-#player-scores {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 600px;
-    font-size: 16px;
-    margin: 5px auto 3px; /* Reduced from 10px auto 5px */
-    padding: 0 10px;
-    box-sizing: border-box;
-    font-weight: 500;
-}
-
-#score-breakdown {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 600px;
-    font-size: 14px;
-    margin: 3px auto 5px; /* Reduced from 5px auto 10px */
-    padding: 0 10px;
-    box-sizing: border-box;
-    min-height: 20px;
-}
-
-/* Navbar Styling */
-.navbar {
-    display: flex;
-    justify-content: space-between; /* Changed from center to space-between for better layout */
-    align-items: center;
-    width: 100%;
-    position: relative;
-    padding: 10px 20px;
-    z-index: 100;
-    background-color: var(--bg-color);
-    box-sizing: border-box;
-    transition: border-color 0.3s ease;
-    border-bottom: 1px solid var(--border-color);
-    height: var(--navbar-height);
-}
-
-.navbar.scrolled {
-    border-bottom: 1px solid var(--border-color);
-}
-
-.navbar-logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.navbar-logo img {
-    width: 32px;
-    height: 32px;
-}
-
-.navbar-title {
-    color: var(--primary-color);
-    font-weight: 600;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    letter-spacing: 0.5px;
-    font-size: 1.8rem;
-    margin: 0;
 }
 
 /* Mobile Menu Styles */
@@ -475,8 +497,9 @@ button:active {
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     :root {
-        --navbar-height: 50px; /* Smaller navbar height on mobile */
-        --content-spacing: 15px; /* Smaller content spacing on mobile */
+        --navbar-height: 50px;
+        --score-chart-height: 100px; /* Adjust chart height for mobile */
+        --content-padding: 10px;
     }
     
     body {
@@ -529,79 +552,57 @@ button:active {
     }
     
     #game {
-        padding-top: 5px; /* Reduced from 10px */
-        padding-bottom: 15px; /* Reduced from 20px */
-        height: calc(100vh - var(--navbar-height) - 15px); /* Adjust for body padding */
-        overflow-y: auto;
+        padding: var(--content-padding);
     }
     
     .game-content-wrapper {
-        --vertical-offset: 0; /* Reset the vertical offset */
-        margin-top: 0; /* Start from the top of the container */
-        padding-top: 2vh; /* Reduced padding at the top (from 5vh to 2vh) */
-        gap: 1vh; /* Reduced from 2vh */
-        height: auto; /* Let content determine height */
+        gap: 8px; /* Adjust gap for mobile */
+        justify-content: flex-start; /* Align top on mobile */
     }
     
     #widget {
         display: none;
     }
     
-    .board-ui-group {
-        width: 100%;
-        margin: 0 auto;
+    #board-container {
+        width: 95%; /* Slightly smaller width on mobile */
+        margin: 5px auto;
     }
     
-    #board {
-        width: 95%;
-        max-height: min(calc((100vh - var(--navbar-height) - 180px) * 0.55), 52vh);
-        height: auto;
-        margin: 0 auto;
-        aspect-ratio: 1/1;
-    }
-    
-    /* Use viewport-relative units for element spacing */
+    /* Adjust score text sizes */
     #player-scores {
         font-size: 1rem;
-        margin: 0 0 1vh;
-        padding: 0 2vw;
-        width: 100%;
+        padding: 0 5px;
     }
     
     #score-breakdown {
         font-size: 0.85rem;
-        margin: 0 0 1vh;
-        padding: 0 2vw;
-        width: 100%;
+        padding: 0 5px;
+        min-height: 16px;
     }
     
-    /* Increase score chart size */
-    #score-chart {
-        width: 100%;
-        min-height: 60px;
-        margin: 3px auto; /* Reduced from 10px to 3px */
-        aspect-ratio: 3/1;
+    #score-chart-container {
+        margin: 3px 0;
     }
     
-    /* Game controls on mobile - make buttons appear on the same line */
     #game-controls {
         flex-direction: row;
         justify-content: center;
         align-items: center;
-        gap: 10px; /* Reduced gap for mobile */
+        gap: 10px;
         margin: 10px auto;
-        width: 95%; /* Prevent horizontal scrolling */
+        width: 95%;
         max-width: 450px;
     }
     
     #game-controls button {
-        flex: 1; /* Allow buttons to grow equally */
-        min-width: 0; /* Remove minimum width constraint */
-        max-width: 48%; /* Slightly increased from 45% to use more space */
-        padding: 8px 5px; /* Slightly reduced padding */
-        font-size: 14px; /* Slightly smaller font size */
-        white-space: nowrap; /* Prevent text wrapping */
-        justify-content: center; /* Center content */
+        flex: 1;
+        min-width: 0;
+        max-width: 48%;
+        padding: 8px 5px;
+        font-size: 14px;
+        white-space: nowrap;
+        justify-content: center;
     }
     
     /* Remove the overlay as it's not needed */
@@ -609,19 +610,7 @@ button:active {
         display: none;
     }
     
-    /* Improve board-ui-group positioning */
-    .board-ui-group {
-        margin-top: 10px; /* Reduced from 20px */
-        margin-bottom: 0;
-        flex-shrink: 0;
-    }
-    
-    /* Prevent horizontal scrolling */
-    html, body {
-        overflow-x: hidden;
-    }
-    
-    /* Hide the settings dropdown in mobile view, as these settings are in the mobile menu */
+    /* Hide desktop-only elements if necessary */
     .settings-dropdown {
         display: none;
     }
@@ -637,56 +626,37 @@ button:active {
     }
 }
 
-/* Adjust for very short mobile screens */
-@media (max-width: 768px) and (max-height: 600px) {
-    body {
-        padding-top: 20px; /* More padding for very short screens */
+/* Example: Short screen adjustments */
+@media (max-height: 650px) {
+    :root {
+        --score-chart-height: 80px; /* Further reduce chart height */
     }
-    
-    #game {
-        height: calc(100vh - var(--navbar-height) - 20px); /* Adjust for increased body padding */
-        padding-top: 2px; /* Minimum padding */
-        padding-bottom: 10px;
-    }
-    
+
     .game-content-wrapper {
-        padding-top: 1vh; /* Minimal top padding */
+        gap: 5px; /* Reduce gap */
+    }
+
+    #board-container {
+        margin: 5px auto;
     }
     
-    .board-ui-group {
-        margin-top: 5px;
+    #player-scores {
+        font-size: 0.9rem;
+    }
+    
+    #score-breakdown {
+        font-size: 0.75rem;
+        min-height: 14px;
     }
     
     #game-controls {
-        margin: 1vh auto 2vh; /* Reduced bottom margin */
+        margin: 5px 0;
+        gap: 8px;
     }
-    
-    #board {
-        width: 100%;
-        max-height: min(calc((100vh - var(--navbar-height) - 150px) * 0.52), 48vh);
-    }
-}
 
-/* Special handling for very short screens - only enable scrolling when truly needed */
-@media (max-height: 560px) {
-    #game {
-        overflow-y: auto;
-        justify-content: flex-start;
-        padding-top: 10px; /* Regular padding without navbar compensation */
-    }
-    
-    .game-content-wrapper {
-        padding-top: 5px; /* Reduced padding */
-        gap: 5px; /* Minimal gap */
-    }
-    
-    #board {
-        max-height: min(calc((100vh - var(--navbar-height) - 120px) * 0.48), 42vh);
-        width: 100%;
-    }
-    
-    #score-chart {
-        min-height: 50px;
+    #game-controls button {
+        padding: 6px 10px;
+        font-size: 13px;
     }
 }
 
@@ -694,204 +664,6 @@ button:active {
 [title] {
     position: relative;
     cursor: help;
-}
-
-/* Game content media query for larger screens */
-@media (min-height: 800px) {
-    .game-content-wrapper {
-        justify-content: space-around;
-        max-height: calc(100vh - var(--navbar-height) - var(--content-spacing));
-        --vertical-offset: 0; /* Reset offset for tall screens */
-        gap: 2px; /* Even smaller gap for large screens */
-    }
-    
-    #board {
-        max-height: min(calc((100vh - var(--navbar-height)) * 0.62), 62vh); /* Reduced from 0.65 */
-    }
-    
-    /* Additional spacing adjustments for large screens */
-    #player-scores, #score-breakdown {
-        line-height: 1.2; /* Reduced line height */
-    }
-    
-    #score-chart {
-        margin: 2px auto 2px; /* Minimal margins */
-        min-height: 65px; /* Reduced size */
-    }
-    
-    #game-controls {
-        margin: 2px 0 5px; /* Minimal margins */
-    }
-}
-
-/* Game content media query for shorter screens */
-@media (max-height: 650px) {
-    :root {
-        --content-spacing: 15px; /* Even smaller spacing on short screens */
-    }
-    
-    #game {
-        padding-top: 10px; /* Regular padding without navbar compensation */
-    }
-    
-    .game-content-wrapper {
-        --vertical-offset: 0; /* No negative offset on short screens */
-        gap: 10px; /* Reduce gap for smaller screens */
-    }
-    
-    #player-scores {
-        font-size: 0.95rem;
-        padding: 3px 10px;
-        margin: 3px auto;
-    }
-    
-    #score-breakdown {
-        font-size: 0.8rem;
-        padding: 0px 10px 3px;
-        margin: 0 auto 3px;
-    }
-    
-    #score-chart {
-        margin: 3px auto 3px; /* Reduced from 5px auto 3px */
-        max-height: min(calc((100vh - var(--navbar-height)) * 0.15), 15vh);
-    }
-    
-    #game-controls {
-        margin: 3px 0;
-        gap: 10px;
-    }
-    
-    .player-dropdown, .scoring-dropdown {
-        padding: 6px 10px;
-        min-width: 100px;
-    }
-    
-    button {
-        padding: 6px 12px;
-        font-size: 13px;
-    }
-    
-    .board-ui-group {
-        margin-top: 12px;
-        margin-bottom: 0;
-    }
-    
-    #score-breakdown {
-        margin: 2px auto 5px;
-        min-height: 16px;
-        font-size: 12px;
-    }
-    
-    #score-chart {
-        margin: 3px auto 3px; /* Consistent 3px margins */
-        aspect-ratio: 5/1;
-    }
-    
-    #game-controls {
-        margin: 3px auto 8px;
-    }
-}
-
-/* Adjust for very large screens */
-@media (min-height: 900px) {
-    .game-content-wrapper {
-        --vertical-offset: 0; /* No negative offset on very tall screens */
-    }
-    
-    #score-chart {
-        aspect-ratio: 4/1;
-    }
-}
-
-/* Simplify the board-ui-group to focus on content presentation */
-.board-ui-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    max-width: 600px;
-    margin: 0; /* Remove margins and use gap for spacing */
-    gap: 5px; /* Add small gap between child elements */
-}
-
-/* Update player-scores styles */
-#player-scores {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 600px;
-    font-size: 16px;
-    margin: 5px auto 3px; /* Reduced from 10px auto 5px */
-    padding: 0 10px;
-    box-sizing: border-box;
-    font-weight: 500;
-}
-
-/* Update score-breakdown styles */
-#score-breakdown {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 600px;
-    font-size: 14px;
-    margin: 3px auto 5px; /* Reduced from 5px auto 10px */
-    padding: 0 10px;
-    box-sizing: border-box;
-    min-height: 20px;
-}
-
-/* Update score-chart styles */
-#score-chart {
-    border-radius: 8px;
-    margin: 3px auto 3px; /* Reduced from 5px auto 5px */
-    width: 100%;
-    max-width: 600px;
-    height: auto;
-    box-sizing: border-box;
-    aspect-ratio: 4.5/1; /* Slightly thinner height */
-}
-
-/* Update responsive styles for mobile */
-@media (max-width: 768px) {
-    .board-ui-group {
-        margin-bottom: 5px;
-    }
-    
-    #score-breakdown {
-        margin: 3px auto 8px;
-        font-size: 12px;
-    }
-    
-    #score-chart {
-        margin: 3px auto 3px; /* Updated from 8px auto 10px */
-    }
-}
-
-/* Update responsive styles for smaller height screens */
-@media (max-height: 650px) {
-    .board-ui-group {
-        margin-top: 12px;
-        margin-bottom: 0;
-    }
-    
-    .game-content-wrapper {
-        gap: 4px;
-    }
-    
-    #score-breakdown {
-        margin: 2px auto 5px;
-        min-height: 16px;
-        font-size: 12px;
-    }
-    
-    #score-chart {
-        margin: 3px auto 3px; /* Consistent 3px margins */
-        aspect-ratio: 5/1;
-    }
-    
-    #game-controls {
-        margin: 3px auto 8px;
-    }
 }
 
 /* Game Settings Menu in Navbar */
@@ -1035,6 +807,238 @@ button:active {
         width: 14px;
         height: 14px;
         stroke-width: 0.5; /* Maintain bold appearance at smaller size */
+    }
+}
+
+/* Navbar styling with relative units */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    position: relative;
+    padding: 0 3vw;
+    z-index: 100;
+    background-color: var(--bg-color);
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+    border-bottom: 1px solid var(--border-color);
+    height: var(--navbar-height);
+}
+
+.navbar.scrolled {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.navbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.navbar-logo img {
+    width: 2rem;
+    height: 2rem;
+}
+
+.navbar-title {
+    color: var(--primary-color);
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.03em;
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+/* Update mobile media query with better relative values */
+@media (max-width: 768px) {
+    body {
+        padding-top: 1vh; /* Convert to relative unit */
+    }
+    
+    .navbar {
+        padding: 0 2vw;
+    }
+    
+    .navbar-logo img {
+        width: 1.75rem;
+        height: 1.75rem;
+    }
+    
+    .navbar-title {
+        font-size: 1.2rem;
+    }
+    
+    .hamburger-menu {
+        display: flex;
+        order: 3;
+        width: 1.5rem; /* Relative sizing for hamburger */
+        height: 1.1rem;
+    }
+    
+    .hamburger-menu span {
+        height: 0.125rem;
+    }
+    
+    .mobile-menu {
+        top: var(--navbar-height);
+        height: calc(100vh - var(--navbar-height));
+    }
+    
+    /* Mobile menu items with relative units */
+    .mobile-menu-item {
+        padding: 1.5rem 1rem;
+        gap: 1rem;
+    }
+    
+    .mobile-menu-item-label {
+        font-size: 1.1rem;
+        margin-bottom: 0.3rem;
+    }
+    
+    .mobile-menu select {
+        padding: 0.75rem;
+        font-size: 1rem;
+        border-radius: 0.4rem;
+        padding-right: 2.5rem;
+        background-position: right 0.75rem center;
+    }
+    
+    .mobile-menu-close {
+        padding: 1.5rem 1rem;
+    }
+    
+    .mobile-menu-close button {
+        padding: 0.75rem;
+        border-radius: 0.4rem;
+    }
+    
+    /* Game component styling for mobile */
+    .game-content-wrapper {
+        justify-content: flex-start;
+    }
+    
+    #widget {
+        display: none;
+    }
+}
+
+/* Fix hover styling for dropdowns */
+.player-dropdown select:hover, 
+.scoring-dropdown select:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Settings menu with relative units */
+.settings-dropdown {
+    position: relative;
+    margin-right: 1.25rem;
+}
+
+.settings-toggle {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+}
+
+.settings-toggle .settings-icon svg {
+    width: 1.125rem;
+    height: 1.125rem;
+}
+
+@media (min-width: 769px) {
+    .settings-toggle {
+        padding: 0.5rem;
+        border-radius: 50%;
+        width: 2.25rem;
+        height: 2.25rem;
+    }
+    
+    .settings-toggle .settings-icon svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+}
+
+.settings-menu {
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-top: 0.3rem;
+    min-width: 14rem;
+    box-shadow: 0 0.25rem 0.625rem rgba(0, 0, 0, 0.3);
+}
+
+.settings-group {
+    margin-bottom: 0.75rem;
+}
+
+.settings-group label {
+    margin-bottom: 0.375rem;
+    font-size: 0.875rem;
+}
+
+/* Landscape orientation - two-column layout potential */
+@media (min-aspect-ratio: 3/2) {
+    :root {
+        --max-content-width: 85vh; /* Relative to height for landscape */
+        --board-group-height: 70vh; /* More height in landscape orientation */
+    }
+    
+    /* Could eventually implement two-column layout here */
+    /* For now, just ensure consistent sizing */
+    .board-group {
+        max-width: var(--board-group-height); /* Keep square-ish aspect ratio */
+    }
+    
+    #board-container {
+        max-width: var(--board-group-height);
+        height: calc(var(--board-group-height) - 3vh); /* Height minus space for scores */
+    }
+}
+
+/* Large screens get proportionally sized elements */
+@media (min-width: 1200px) and (min-height: 800px) {
+    :root {
+        --font-size-medium: 1.1rem;
+        --font-size-large: 1.2rem;
+    }
+    
+    .board-group {
+        max-width: var(--board-group-height);
+    }
+    
+    #board-container {
+        border-radius: 4px;
+    }
+    
+    #score-chart-container {
+        max-width: calc(var(--max-content-width) * 0.9);
+    }
+}
+
+/* Remove some old mobile-specific rules that are no longer needed */
+@media (max-width: 768px) {
+    /* Keep existing root variable adjustments */
+    
+    body {
+        padding-top: 1vh;
+    }
+    
+    /* Remove old board-ui-group adjustments as they're replaced by board-group */
+    
+    /* Use viewport-relative units for spacing */
+    #player-scores {
+        padding: 0 3vw;
+    }
+    
+    #score-breakdown {
+        padding: 0 3vw;
+    }
+    
+    /* Adjust game controls for better mobile display */
+    #game-controls {
+        width: 95%;
+        max-width: calc(var(--board-group-height) * 0.9);
     }
 }
 

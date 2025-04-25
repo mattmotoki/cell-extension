@@ -99,11 +99,14 @@
     <div id="game">
         <!-- Game content wrapper for vertical centering -->
         <div class="game-content-wrapper">
-            <!-- Board UI group for better spacing control -->
-            <div class="board-ui-group">
+            <!-- Board UI group for better spacing control - changed to board-group class -->
+            <div class="board-group">
                 <div id="player-scores"></div>
                 <div id="score-breakdown"></div>
-                <svg id="board"></svg>
+                <!-- Add board-container div around the board SVG -->
+                <div id="board-container">
+                    <svg id="board"></svg>
+                </div>
             </div>
                         
             <!-- Score chart -->
