@@ -2,10 +2,26 @@
  * BoardRenderer.js - D3-based Renderer for the Game Board
  * 
  * Visualizes the game state provided by GameBoardLogic using D3.js.
- * Handles user clicks and forwards them as grid coordinates.
+ * Handles user clicks and forwards them as grid coordinates to the main game logic.
+ * Responsible for drawing cells, connections, and visual annotations based on scoring mechanism.
+ * 
+ * Relationships:
+ * - Instantiated by main.js as the visual representation of the game board
+ * - Receives game state data from Game.js
+ * - Forwards user interactions to Game.js through click handlers
+ * - Works with D3.js for SVG manipulation and rendering
+ * 
+ * Revision Log:
+ * - Added logger implementation for verbosity control
+ * 
+ * Note: This revision log should be updated whenever this file is modified.
  */
 
 // import { getScoringMechanism } from "../utils.js"; // Remove direct dependency on utils
+import logger from '../../utils/logger.js';
+
+// Create a module-specific logger
+const log = logger.createLogger('BoardRenderer');
 
 export class BoardRenderer {
 
@@ -22,6 +38,11 @@ export class BoardRenderer {
         
         // Reference to the main SVG element
         this.svg = d3.select("#board");
+        
+        // Set the viewBox to scale the coordinate system to the SVG element
+        // The coordinate system goes from (0,0) to (gridSize, gridSize)
+        this.svg.attr("viewBox", `0 0 ${this.gridSize} ${this.gridSize}`)
+                .attr("preserveAspectRatio", "xMidYMid meet"); // Ensure aspect ratio is maintained and centered
         
         // D3 groups for organizing elements
         this.gridGroup = this.svg.append("g").attr("id", "grid-group");
@@ -64,7 +85,7 @@ export class BoardRenderer {
              // Pass grid coordinates to the external handler (Game class)
             this.externalClickHandler(gridX, gridY);
         } else {
-            console.error("Failed to get grid coordinates from clicked cell");
+            log.error("Failed to get grid coordinates from clicked cell");
         }
     }
 
@@ -78,10 +99,10 @@ export class BoardRenderer {
     // --- Rendering Logic ---
 
     // Main render method - takes the current board logic state
-    render(boardLogicState, /* connectionCounts = null */) { // connectionCounts removed, calculate locally if needed
-        console.log("BoardRenderer rendering...");
+    render(boardLogicState) {
+        log.debug("BoardRenderer rendering...");
         if (!boardLogicState || !boardLogicState.occupiedCells) {
-            console.error("Invalid state provided to BoardRenderer.render");
+            log.error("Invalid state provided to BoardRenderer.render");
             return;
         }
 
@@ -90,10 +111,7 @@ export class BoardRenderer {
         this.linesGroup.selectAll("*").remove();
 
         const occupied = boardLogicState.occupiedCells;
-        // const currentScoring = getScoringMechanism(); // Remove direct call
-        // Determine scoring mechanism from state if needed, or have it passed
-        // For now, assume logic passes necessary info or renderer infers
-        const showConnectionCount = boardLogicState.scoringMechanism === 'cell-connection'; // Example: Infer from state if passed
+        const showConnectionCount = boardLogicState.scoringMechanism === 'cell-connection';
 
         // 1. Render all occupied cells
         for (let playerIndex = 0; playerIndex < 2; playerIndex++) {
@@ -141,8 +159,6 @@ export class BoardRenderer {
 
                             if (showConnectionCount) {
                                 // Calculate connection counts locally within the renderer
-                                // This requires the renderer to have access to board dimensions or logic helpers
-                                // For simplicity, let's recalculate here based on the provided state.
                                 const count1 = this.countOccupiedNeighbors(gridX, gridY, playerIndex, occupied, boardLogicState.gridWidth, boardLogicState.gridHeight);
                                 const count2 = this.countOccupiedNeighbors(neighbor.gridX, neighbor.gridY, playerIndex, occupied, boardLogicState.gridWidth, boardLogicState.gridHeight);
                                 
@@ -159,18 +175,18 @@ export class BoardRenderer {
                 }
             }
         }
-        console.log("BoardRenderer render complete.");
+        log.debug("BoardRenderer render complete.");
     }
     
     // Helper to get adjacent occupied cells based on provided state
-    getAdjacentOccupiedCells(gridX, gridY, playerIndex, occupiedCellsState, gridWidth, gridHeight) { // Add dimensions
+    getAdjacentOccupiedCells(gridX, gridY, playerIndex, occupiedCellsState, gridWidth, gridHeight) {
         const neighbors = [];
         const potentialNeighbors = [
             [gridX + 1, gridY], [gridX - 1, gridY],
             [gridX, gridY + 1], [gridX, gridY - 1]
         ];
         for (const [adjX, adjY] of potentialNeighbors) {
-             if (adjX >= 0 && adjX < gridWidth && adjY >= 0 && adjY < gridHeight) { // Use passed dimensions
+             if (adjX >= 0 && adjX < gridWidth && adjY >= 0 && adjY < gridHeight) {
                 const adjKey = `${adjX}-${adjY}`;
                 if (occupiedCellsState[playerIndex]?.[adjKey]) {
                     neighbors.push({ gridX: adjX, gridY: adjY });
@@ -181,7 +197,7 @@ export class BoardRenderer {
     }
     
     // Helper to count occupied neighbors based on provided state
-    countOccupiedNeighbors(gridX, gridY, playerIndex, occupiedCellsState, gridWidth, gridHeight) { // Add dimensions
+    countOccupiedNeighbors(gridX, gridY, playerIndex, occupiedCellsState, gridWidth, gridHeight) {
         return this.getAdjacentOccupiedCells(gridX, gridY, playerIndex, occupiedCellsState, gridWidth, gridHeight).length;
     }
 
@@ -206,9 +222,8 @@ export class BoardRenderer {
             .attr("y1", y1)
             .attr("x2", x2)
             .attr("y2", y2)
-            .attr("stroke", this.playerColors[playerIndex])
-            .attr("stroke-width", this.cellSize * 0.1)
-            .attr("opacity", 0.6);
+            .attr("stroke", "black")
+            .attr("stroke-width", this.cellSize * 0.01);
     }
 
     drawConnectionAnnotation(xMid, yMid, count, playerIndex) {
@@ -243,13 +258,13 @@ export class BoardRenderer {
 
     // --- Reset --- 
     reset() {
-        console.log("BoardRenderer resetting visuals...");
+        log.debug("BoardRenderer resetting visuals...");
         // Clear dynamic elements
         this.cellsGroup.selectAll("*").remove();
         this.linesGroup.selectAll("*").remove();
         // Static grid background is usually kept, but redraw if needed
         // this.drawGridBackground(); 
-        console.log("BoardRenderer reset complete.");
+        log.debug("BoardRenderer reset complete.");
     }
     
     // --- Animation Placeholders (Optional) ---
@@ -258,7 +273,7 @@ export class BoardRenderer {
     animateCellPlacement(gridX, gridY, playerIndex) {
         // Placeholder for expansion animation
         const { x: pixelX, y: pixelY } = this.gridToPixel(gridX, gridY);
-        console.log(`Animating cell placement for Player ${playerIndex + 1} at (${gridX}, ${gridY})`);
+        log.debug(`Animating cell placement for Player ${playerIndex + 1} at (${gridX}, ${gridY})`);
         this.drawCell(pixelX, pixelY, playerIndex); // Simple draw for now
     }
     
@@ -266,7 +281,7 @@ export class BoardRenderer {
         // Placeholder for line drawing animation
          const { x: pixelX1, y: pixelY1 } = this.gridToPixel(fromGridX, fromGridY);
          const { x: pixelX2, y: pixelY2 } = this.gridToPixel(toGridX, toGridY);
-         console.log(`Animating connection for Player ${playerIndex + 1} from (${fromGridX}, ${fromGridY}) to (${toGridX}, ${toGridY})`);
+         log.debug(`Animating connection for Player ${playerIndex + 1} from (${fromGridX}, ${fromGridY}) to (${toGridX}, ${toGridY})`);
          this.drawConnectionLine(pixelX1 + this.cellSize / 2, pixelY1 + this.cellSize / 2, 
                                  pixelX2 + this.cellSize / 2, pixelY2 + this.cellSize / 2, 
                                  playerIndex);

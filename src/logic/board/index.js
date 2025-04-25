@@ -1,8 +1,17 @@
 /**
- * Main entry point for the Board module
+ * index.js - Main Entry Point for the Board Logic Module
  * 
  * This file re-exports all components from the board directory,
  * allowing imports to be made from the top level board module.
+ * This pattern simplifies imports and decouples component dependencies.
+ * 
+ * Relationships:
+ * - Exports GameBoardLogic for use by Game.js and other components
+ * - Serves as the public API for the board logic module
+ * 
+ * Revision Log:
+ * 
+ * Note: This revision log should be updated whenever this file is modified.
  */
 
 export { GameBoardLogic } from './GameBoardLogic.js'; 

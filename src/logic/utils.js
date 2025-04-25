@@ -1,13 +1,20 @@
 /**
- * utils.js - Core Logic Utility Functions for Cell Collection
+ * utils.js - Core Logic Utility Functions for Cell Collection Game
  * 
  * This file provides shared utility functions used within the game logic.
+ * It contains pure utility functions that have no dependencies on other game components.
  * 
  * Key functionality:
- * - Array utilities (shuffle)
+ * - Array utilities (shuffle) for randomizing element order
  * 
- * Relationships with other files:
- * - Potentially used by Game.js or AI logic components
+ * Relationships:
+ * - Used by Game.js and AIPlayer.js for randomization operations
+ * - Independent of rendering and UI components
+ * - Provides pure functions that don't modify application state
+ * 
+ * Revision Log:
+ * 
+ * Note: This revision log should be updated whenever this file is modified.
  */
 
 // shuffle list

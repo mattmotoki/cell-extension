@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module Test</title>
+</head>
+<body>
+    <h1>Testing ES6 Module Loading</h1>
+    
+    <script type="module">
+        import { Game } from './src/logic/Game.js';
+        console.log("Module loaded successfully");
+        
+        try {
+            // Try creating a game instance with minimal parameters
+            const game = new Game(6, 6, ["green", "blue"], 0, [0, 0], "playing", "cell-multiplication");
+            console.log("Game instance created:", game);
+        } catch (error) {
+            console.error("Error creating game instance:", error);
+        }
+    </script>
+</body>
+</html> 

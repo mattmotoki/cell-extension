@@ -2,7 +2,19 @@
  * main.js - Main Application Entry Point for Cell Collection Game
  * 
  * Initializes the game logic, rendering components, UI controls, 
- * and orchestrates the main game loop.
+ * and orchestrates the main game loop. This file serves as the central
+ * controller connecting all parts of the application.
+ * 
+ * Relationships:
+ * - Imports and initializes Game from ./logic/Game.js
+ * - Imports and initializes BoardRenderer from ./rendering/board/BoardRenderer.js
+ * - Imports score visualization components from ./rendering/scoring/ScoreDisplay.js
+ * - Imports UI utility functions from ./rendering/uiUtils.js
+ * 
+ * Revision Log:
+ * - Added logger implementation for verbosity control
+ * 
+ * Note: This revision log should be updated whenever this file is modified.
  */
 
 import { Game } from './logic/Game.js';
@@ -15,20 +27,25 @@ import {
     displayWinnerMessage, 
     updateNavbarTitle, 
     updateUndoButtons,
-    syncDropdowns,
-    closeMobileMenu
+    closeMobileMenu,
+    getBoardSizeFromUI,
+    getAIDifficultyFromUI,
+    getFirstPlayerFromUI
 } from './rendering/uiUtils.js';
+import logger from './utils/logger.js';
+
+// Create a module-specific logger
+const log = logger.createLogger('Main');
 
 // --- Configuration ---
 const gridDimension = 100; // Logical size for viewBox used by renderers
-const cellsPerRow = 6;
-const cellDimension = gridDimension / cellsPerRow; // Cell size in logical units
+let cellsPerRow = 6; // Default value, will be updated from UI
+let cellDimension = gridDimension / cellsPerRow; // Cell size in logical units
 const playerColors = ["#00FF00", "#1E90FF"];
-const gridWidth = cellsPerRow; // Logical grid width for GameBoardLogic
-const gridHeight = cellsPerRow; // Logical grid height for GameBoardLogic
-const aiMoveDelay = 500; // ms delay before AI calculates move
-const gameOverMessageDelayAI = 1350; // ms delay for game over message in AI mode
-const gameOverMessageDelayUser = 1000; // ms delay for game over message in User mode
+let gridWidth = cellsPerRow; // Logical grid width for GameBoardLogic
+let gridHeight = cellsPerRow; // Logical grid height for GameBoardLogic
+const aiMoveDelay = 0; // ms delay before AI calculates move
+const gameOverMessageDelay = 500; // ms delay for game over message
 
 // --- Global State (managed by main.js) ---
 let game = null;
@@ -37,16 +54,24 @@ let scoreBreakdown = null;
 let scoreChartRenderer = null;
 let playerMode = 'ai'; // Default player mode
 let scoringMechanism = 'cell-multiplication'; // Default scoring mechanism
+let aiDifficulty = 'easy'; // Default to easy difficulty
 let isAIRunning = false; // Flag to prevent concurrent AI calculations
 let animationFrameId = null; // ID for the animation frame loop
 
 // --- Initialization ---
 function initializeApp() {
-    console.log("Initializing Application...");
+    log.info("Initializing Application...");
 
     // Read initial UI settings
     playerMode = getPlayerModeFromUI();
     scoringMechanism = getScoringMechanismFromUI();
+    aiDifficulty = getAIDifficultyFromUI();
+    
+    // Set board size based on UI selection
+    cellsPerRow = getBoardSizeFromUI();
+    cellDimension = gridDimension / cellsPerRow;
+    gridWidth = cellsPerRow;
+    gridHeight = cellsPerRow;
 
     // --- SVG Setup ---
     d3.select("#board")
@@ -55,7 +80,7 @@ function initializeApp() {
     
     // Ensure score chart is correctly initialized
     if (!d3.select("#score-chart-container").node()) {
-        console.warn("#score-chart-container not found, chart might not render correctly. Adding a fallback container.");
+        log.warn("#score-chart-container not found, chart might not render correctly. Adding a fallback container.");
         // Create a container if missing
         d3.select("#game .game-content-wrapper")
             .append("div")
@@ -80,14 +105,23 @@ function initializeApp() {
     }
 
     // --- Logic Initialization ---
-    // Pass grid dimensions, colors, initial player (0), scores ([0,0]), progress ('playing'), and mechanism
-    game = new Game(gridWidth, gridHeight, playerColors, 0, [0, 0], 'playing', scoringMechanism);
+    // Determine initial player based on UI setting
+    const initialPlayer = getFirstPlayerFromUI() === 'human' ? 0 : 1;
+    
+    // Pass grid dimensions, colors, initial player (from UI), scores ([0,0]), progress ('playing'), and mechanism
+    game = new Game(gridWidth, gridHeight, playerColors, initialPlayer, [0, 0], 'playing', scoringMechanism);
+    
+    // Set the AI difficulty
+    if (game.opponent) {
+        game.opponent.setDifficulty(aiDifficulty);
+        log.info(`AI difficulty set to: ${aiDifficulty}`);
+    }
 
     // --- Renderer Initialization ---
     // Pass size, colors, and the click handler function
     boardRenderer = new BoardRenderer(gridDimension, cellDimension, playerColors, handleBoardClick);
     scoreBreakdown = new ScoreBreakdown(playerColors);
-    scoreChartRenderer = new ScoreChartRenderer(playerColors /*, gridDimension */); // Pass config if needed
+    scoreChartRenderer = new ScoreChartRenderer(playerColors);
 
     // --- UI Control Setup ---
     setupEventListeners();
@@ -99,13 +133,31 @@ function initializeApp() {
     // --- Start Game Loop ---
     startGameLoop();
 
-    console.log("Application Initialized.");
+    // Update first player dropdown visibility based on initial player mode
+    updateFirstPlayerVisibility(playerMode);
+
+    log.info("Application Initialized.");
 }
 
 // --- Game Loop ---
 function startGameLoop() {
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
+    }
+
+    // Check if AI should move first
+    if (playerMode === 'ai' && game.getCurrentState().currentPlayer === 1 && 
+        game.getCurrentState().progress === 'playing') {
+        log.info("AI is set as first player, triggering initial AI move...");
+        isAIRunning = true;
+        game.progress = 'waiting';
+        
+        setTimeout(() => {
+            log.debug("Starting initial AI Move Calculation");
+            const aiMove = game.requestAIMove();
+            isAIRunning = false;
+            log.debug("Initial AI move complete.");
+        }, aiMoveDelay);
     }
 
     function gameTick() {
@@ -117,23 +169,24 @@ function startGameLoop() {
         // 2. Check if AI needs to move
         const currentState = game.getCurrentState();
         if (playerMode === 'ai' && currentState.currentPlayer === 1 && currentState.progress === 'playing' && !isAIRunning) {
-            console.log("Main loop: AI's turn, scheduling move...");
+            log.debug("Main loop: AI's turn, scheduling move...");
             isAIRunning = true; 
             game.progress = 'waiting'; // Set logic state to waiting
             // Update UI immediately to show AI is thinking (optional)
-            // e.g., show spinner, disable board clicks 
             updateUI(); 
             
             setTimeout(() => {
-                console.time("AI Move Calculation");
+                log.debug("Starting AI Move Calculation");
+                const startTime = performance.now();
                 const aiMove = game.requestAIMove(); // Synchronous calculation
-                console.timeEnd("AI Move Calculation");
+                const endTime = performance.now();
+                log.debug(`AI Move Calculation took ${(endTime - startTime).toFixed(2)}ms`);
                 isAIRunning = false;
                 if (aiMove) {
-                    console.log("Main loop: AI move successful.");
+                    log.debug("Main loop: AI move successful.");
                     // State changed flag will be set within game.requestAIMove()
                 } else {
-                    console.log("Main loop: AI move failed or game ended.");
+                    log.debug("Main loop: AI move failed or game ended.");
                     // State might have changed (e.g., progress set to 'over' or 'playing')
                 }
                 // The next gameTick will pick up the state change and update UI
@@ -144,17 +197,13 @@ function startGameLoop() {
         if (currentState.progress === 'over') {
             // Ensure message is displayed only once
             if (!game.gameOverMessageShown) { 
-                console.log("Main loop: Game over detected.");
-                const waitTime = playerMode === 'ai' ? gameOverMessageDelayAI : gameOverMessageDelayUser;
+                log.info("Main loop: Game over detected.");
                 setTimeout(() => {
                     const finalState = game.getCurrentState(); // Get latest scores
                     displayWinnerMessage(finalState.scores, playerMode);
-                 }, waitTime); 
+                 }, gameOverMessageDelay); 
                  game.gameOverMessageShown = true; // Set flag
             }
-            // Optionally stop the game loop here if desired
-            // cancelAnimationFrame(animationFrameId);
-            // return;
         }
 
         // 4. Schedule next tick
@@ -163,12 +212,12 @@ function startGameLoop() {
 
     // Start the loop
     animationFrameId = requestAnimationFrame(gameTick);
-    console.log("Game loop started.");
+    log.debug("Game loop started.");
 }
 
 // --- UI Update Function ---
 function updateUI() {
-    console.log("Updating UI...");
+    log.trace("Updating UI...");
     const currentState = game.getCurrentState();
 
     // Update Board
@@ -194,13 +243,9 @@ function updateUI() {
     // Update Undo Button State
     updateUndoButtons(currentState.historyLength || game.history.length); // Pass history length
     
-    // Update Navbar Title (optional, could be done only on mechanism change)
-    // updateNavbarTitle(currentState.scoringMechanism);
-    
     // Potentially update cursor or show AI thinking indicator
     const isWaiting = currentState.progress === 'waiting' || isAIRunning;
     d3.select("body").classed("waiting", isWaiting); // Add/remove a class for styling
-
 }
 
 // --- Event Handlers ---
@@ -208,24 +253,38 @@ function handleBoardClick(gridX, gridY) {
     if (!game || game.getCurrentState().progress !== 'playing') return; // Ignore clicks if not playing
     if (playerMode === 'ai' && game.getCurrentState().currentPlayer !== 0) return; // Ignore clicks if AI's turn
     
-    console.log(`UI: Board clicked at (${gridX}, ${gridY})`);
-    const moveSuccessful = game.handlePlayerMove(gridX, gridY);
-    
-    // if (moveSuccessful) {
-    //     // State change will be picked up by game loop
-    // }
+    log.debug(`UI: Board clicked at (${gridX}, ${gridY})`);
+    game.handlePlayerMove(gridX, gridY);
 }
 
 function handleResetClick() {
-    console.log("UI: Reset button clicked.");
+    log.info("UI: Reset button clicked.");
     // Read current settings from UI to pass to logic reset
     playerMode = getPlayerModeFromUI();
     scoringMechanism = getScoringMechanismFromUI();
+    aiDifficulty = getAIDifficultyFromUI();
     
-    game.reset(scoringMechanism, playerMode);
+    // Update board size
+    cellsPerRow = getBoardSizeFromUI();
+    cellDimension = gridDimension / cellsPerRow;
+    gridWidth = cellsPerRow;
+    gridHeight = cellsPerRow;
+    
+    // Determine initial player based on UI setting
+    const initialPlayer = getFirstPlayerFromUI() === 'human' ? 0 : 1;
+    
+    // Create a new game with the updated board size and initial player
+    game = new Game(gridWidth, gridHeight, playerColors, initialPlayer, [0, 0], 'playing', scoringMechanism);
     game.gameOverMessageShown = false; // Reset message flag
     
-    // Reset renderers explicitly (or ensure they reset based on new state)
+    // Set the AI difficulty
+    if (game.opponent) {
+        game.opponent.setDifficulty(aiDifficulty);
+        log.info(`AI difficulty set to: ${aiDifficulty}`);
+    }
+    
+    // Reset renderers explicitly with new cell size
+    boardRenderer = new BoardRenderer(gridDimension, cellDimension, playerColors, handleBoardClick);
     scoreBreakdown.reset(game.getCurrentState().currentPlayer, scoringMechanism);
     scoreChartRenderer.reset();
     
@@ -236,44 +295,76 @@ function handleResetClick() {
 }
 
 function handleUndoClick() {
-    console.log("UI: Undo button clicked.");
+    log.info("UI: Undo button clicked.");
     if (game.getCurrentState().progress === 'over') return; // Can't undo after game over
 
-    let undoSuccessful = false;
     if (playerMode === 'ai') {
-        undoSuccessful = game.undoAIMove(); // Use the double-undo for AI mode
+        game.undoAIMove(); // Use the double-undo for AI mode
     } else {
-        undoSuccessful = game.undo();
+        game.undo();
     }
-    
-    // if (undoSuccessful) {
-    //     // State change will be picked up by game loop
-    // }
 }
 
 function handlePlayerModeChange(event) {
     const newMode = event.target.value;
-    const elementId = event.target.id;
-    console.log(`UI: Player Mode changed to ${newMode} via ${elementId}`);
-    syncDropdowns(elementId, newMode); // Sync the other dropdown
+    log.info(`UI: Player Mode changed to ${newMode}`);
     playerMode = newMode;
+    
+    // Update first player dropdown visibility
+    updateFirstPlayerVisibility(newMode);
+    
     handleResetClick(); // Reset the game when mode changes
+}
+
+// Function to show/hide first player dropdown based on player mode
+function updateFirstPlayerVisibility(mode) {
+    const firstPlayerItem = document.querySelector('.game-settings-item:nth-child(2)');
+    const aiDifficultyItem = document.querySelector('.game-settings-item:nth-child(4)');
+    
+    if (firstPlayerItem) {
+        if (mode === 'user') {
+            // Hide first player selection in two-player mode
+            firstPlayerItem.style.display = 'none';
+            if (aiDifficultyItem) aiDifficultyItem.style.display = 'none';
+        } else {
+            // Show first player selection in AI mode
+            firstPlayerItem.style.display = 'flex';
+            if (aiDifficultyItem) aiDifficultyItem.style.display = 'flex';
+        }
+    }
 }
 
 function handleScoringChange(event) {
     const newMechanism = event.target.value;
-    const elementId = event.target.id;
     // Basic check for disabled options (if any)
     if (event.target.options[event.target.selectedIndex].disabled) {
         alert("This scoring mechanism is not yet implemented.");
         event.target.value = scoringMechanism; // Revert UI
         return;
     }
-    console.log(`UI: Scoring Mechanism changed to ${newMechanism} via ${elementId}`);
-    syncDropdowns(elementId, newMechanism); // Sync the other dropdown
+    log.info(`UI: Scoring Mechanism changed to ${newMechanism}`);
     scoringMechanism = newMechanism;
     updateNavbarTitle(newMechanism);
     handleResetClick(); // Reset the game when scoring changes
+}
+
+function handleBoardSizeChange(event) {
+    const newSize = parseInt(event.target.value, 10);
+    log.info(`UI: Board Size changed to ${newSize}x${newSize}`);
+    handleResetClick(); // Reset the game with the new board size
+}
+
+function handleAIDifficultyChange(event) {
+    aiDifficulty = event.target.value;
+    log.info(`UI: AI difficulty changed to ${aiDifficulty}`);
+    if (game && game.opponent) {
+        game.opponent.setDifficulty(aiDifficulty);
+    }
+}
+
+function handleFirstPlayerChange(event) {
+    log.info(`UI: First Player changed to ${event.target.value}`);
+    // We don't reset the game here, only when Reset button is clicked or other settings change
 }
 
 // --- Setup Event Listeners ---
@@ -281,12 +372,8 @@ function setupEventListeners() {
     // Reset Button
     d3.select("#reset").on("click", handleResetClick);
 
-    // Undo Buttons
+    // Undo Button
     d3.select("#undo").on("click", handleUndoClick);
-    d3.select("#undo-mobile").on("click", () => {
-        handleUndoClick();
-        closeMobileMenu(); 
-    });
 
     // Settings Toggle (new UI element)
     const settingsToggle = document.getElementById("settings-toggle");
@@ -308,61 +395,33 @@ function setupEventListeners() {
         });
     }
 
-    // Player Mode Dropdowns
+    // Player Mode Dropdown
     const playerModeDropdown = document.getElementById("player-mode");
-    const playerModeMobile = document.getElementById("player-mode-mobile");
     if (playerModeDropdown) playerModeDropdown.addEventListener("change", handlePlayerModeChange);
-    if (playerModeMobile) playerModeMobile.addEventListener("change", handlePlayerModeChange);
     
-    // Scoring Mechanism Dropdowns
+    // Scoring Mechanism Dropdown
     const scoringSelect = document.getElementById("scoring-mechanism");
-    const scoringSelectMobile = document.getElementById("scoring-mechanism-mobile");
     if (scoringSelect) scoringSelect.addEventListener("change", handleScoringChange);
-    if (scoringSelectMobile) scoringSelectMobile.addEventListener("change", handleScoringChange);
+    
+    // Board Size Dropdown
+    const boardSizeSelect = document.getElementById("board-size");
+    if (boardSizeSelect) boardSizeSelect.addEventListener("change", handleBoardSizeChange);
+    
+    // AI Difficulty Dropdown
+    const aiDifficultySelect = document.getElementById("ai-difficulty");
+    if (aiDifficultySelect) aiDifficultySelect.addEventListener("change", handleAIDifficultyChange);
+    
+    // First Player Dropdown
+    const firstPlayerSelect = document.getElementById("first-player");
+    if (firstPlayerSelect) firstPlayerSelect.addEventListener("change", handleFirstPlayerChange);
     
     // Add tooltips to scoring options (can remain here)
-    [scoringSelect, scoringSelectMobile].forEach(select => {
-        if (!select) return;
-        select.querySelectorAll("option").forEach(option => {
+    if (scoringSelect) {
+        scoringSelect.querySelectorAll("option").forEach(option => {
             const title = option.getAttribute("title");
             if (title) option.setAttribute("title", title);
         });
-    });
-    
-    // Mobile Menu Toggle
-    const hamburgerBtn = document.getElementById('hamburger-menu');
-    const mobileMenu = document.getElementById('mobile-menu');
-    if (hamburgerBtn && mobileMenu) {
-        hamburgerBtn.addEventListener('click', function(e) {
-            e.stopPropagation(); // Prevent document click handler
-            mobileMenu.classList.toggle('active');
-            hamburgerBtn.classList.toggle('active');
-        });
     }
-
-    // Mobile Menu Close Button
-    const closeBtn = document.getElementById('mobile-menu-close-btn');
-    if (closeBtn && mobileMenu && hamburgerBtn) {
-        closeBtn.addEventListener('click', closeMobileMenu);
-    }
-    
-    // Close Mobile Menu on Outside Click
-    document.addEventListener('click', function(e) {
-        if (mobileMenu && mobileMenu.classList.contains('active')) {
-            if (!mobileMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
-                closeMobileMenu();
-            }
-        }
-    });
-
-    // Close Mobile Menu on Resize
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) {
-            closeMobileMenu();
-            // Also close settings menu if open
-            if (settingsMenu) settingsMenu.style.display = "none";
-        }
-    });
 
     // Navbar Scroll Effect
     const navbar = document.querySelector('.navbar');
@@ -373,6 +432,49 @@ function setupEventListeners() {
     }
     window.addEventListener('scroll', handleScroll);
     handleScroll(); // Initial check
+
+    // Add a log level selector to the settings menu
+    addLogLevelControls();
+}
+
+// Add log level controls to the settings menu
+function addLogLevelControls() {
+    const settingsMenu = document.querySelector(".settings-menu");
+    if (!settingsMenu) return;
+
+    // Create a new settings group for log level
+    const logLevelGroup = document.createElement('div');
+    logLevelGroup.className = 'settings-group';
+    logLevelGroup.innerHTML = `
+        <div class="settings-header">Log Level</div>
+        <div class="settings-content">
+            <select id="log-level">
+                <option value="NONE">None</option>
+                <option value="ERROR">Error</option>
+                <option value="WARN">Warning</option>
+                <option value="INFO" selected>Info</option>
+                <option value="DEBUG">Debug</option>
+                <option value="TRACE">Trace</option>
+            </select>
+        </div>
+    `;
+
+    // Append to settings menu
+    settingsMenu.appendChild(logLevelGroup);
+
+    // Add event listener
+    const logLevelSelect = document.getElementById('log-level');
+    if (logLevelSelect) {
+        // Set initial value based on current log level
+        const currentLevel = logger.getLogLevelName(logger.getLogLevel());
+        logLevelSelect.value = currentLevel;
+
+        logLevelSelect.addEventListener('change', function() {
+            const level = this.value;
+            logger.setLogLevel(logger.LogLevel[level]);
+            log.info(`Log level changed to ${level}`);
+        });
+    }
 }
 
 // --- Run Application ---

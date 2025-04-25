@@ -1,25 +1,34 @@
 /**
- * ai.js - AI Player Implementation for Cell Collection
+ * AIPlayer.js - AI Player Implementation for Cell Collection Game
  * 
- * This file implements the AI opponent and player base classes for the game.
+ * This file implements the player base class and AI opponent for the game.
  * 
  * Key components:
  * - Player: Base class with core player functionality
- * - AIPlayer: AI opponent that evaluates and selects moves
+ * - AIPlayer: AI opponent that evaluates and selects moves using minimax algorithm
  * - HumanPlayer: Simple representation of a human player
  * 
  * The AI uses different strategies based on:
  * - Current scoring mechanism (adapts evaluation for each scoring type)
- * - Game progress (uses random moves early, strategic moves later)
+ * - Game progress (tracks move count for strategy adjustment)
  * - Board state (evaluates potential moves by simulating their outcome)
  * 
- * Relationships with other files:
- * - game.js: Instantiates AIPlayer to handle opponent moves
- * - board.js: AI queries board methods to evaluate positions
+ * Relationships:
+ * - Imports evaluateBoard from './evaluateBoard.js'
+ * - Used by Game.js to handle AI opponent moves
+ * - Works with GameBoardLogic to evaluate positions and simulate moves
+ * 
+ * Revision Log:
+ * - Added logger implementation for verbosity control
+ * 
+ * Note: This revision log should be updated whenever this file is modified.
  */
 
 import { evaluateBoard } from './evaluateBoard.js';
-// import { getScoringMechanism } from '../utils.js'; // Removed, get mechanism passed to getMove
+import logger from '../../utils/logger.js';
+
+// Create a module-specific logger
+const log = logger.createLogger('AIPlayer');
 
 export class Player {
     constructor(playerID) {
@@ -40,8 +49,6 @@ export class Player {
 
     addMove(move) {
         this.move_history.push(move);
-
-        // udpate connected components
     }
 
     reset() {
@@ -52,28 +59,140 @@ export class Player {
 }
 
 export class AIPlayer extends Player {
-    constructor(playerID) {
+    constructor(playerID, difficulty = 'hard') { // Default to hard
         super(playerID); // Correctly pass playerID to parent class
-        // Track move count for strategy adjustment
         this.moveCount = 0;
+        this.difficulty = difficulty; 
+        log.info(`AI Player ${this.playerID + 1} initialized with difficulty: ${this.difficulty}`);
+    }
+
+    setDifficulty(difficulty) {
+        this.difficulty = difficulty;
+        log.info(`AI Player ${this.playerID + 1} difficulty set to: ${this.difficulty}`);
     }
 
     getMove(gameBoardLogic, scoringMechanism) {
-        console.log(`AI (Player ${this.playerID + 1}) calculating move #${this.moveCount + 1}...`);
+        log.info(`AI (Player ${this.playerID + 1}, Difficulty: ${this.difficulty}) calculating move #${this.moveCount + 1}...`);
         this.moveCount++;
         
-        // Use minimax or a simpler strategy based on available cells
         const availableCells = gameBoardLogic.getAvailableCells();
+        const totalCells = gameBoardLogic.getTotalCellCount();
+        const gameProgress = this.moveCount / totalCells;
 
         if (availableCells.length === 0) {
-            console.log("AI: No available cells found.");
+            log.warn("AI: No available cells found.");
             return null; // No possible moves
         }
 
-        // --- Minimax Implementation (Simplified) ---
+        if (this.difficulty === 'easy'){
+            if (gameProgress < 0.25) {
+                // Easy AI: Early game - Territorial strategy (most open spaces)
+                return this.getTerritorialMove(gameBoardLogic, availableCells);
+            } else {
+                // Easy AI: Mid/Late game - Greedy strategy (best immediate score)
+                return this.getGreedyMove(gameBoardLogic, availableCells, scoringMechanism);
+            }
+        } else {
+            // Hard AI: Use Minimax
+            return this.getMinimaxMove(gameBoardLogic, availableCells, scoringMechanism);
+        }
+    }
+
+    // --- Easy AI Strategies ---
+
+    getTerritorialMove(gameBoardLogic, availableCells) {
+        log.debug("AI (Easy): Using territorial strategy (valuing open spaces).");
+        let bestMove = null;
+        let maxValue = -Infinity;
+        const opponentID = (this.playerID + 1) % 2;
+
+        for (const cell of availableCells) {
+            // Get orthogonal adjacent positions (right, left, down, up)
+            const adjacentPositions = gameBoardLogic.getAdjacentPositions(cell.gridX, cell.gridY);
+            
+            // Add diagonal positions
+            const diagonalPositions = [
+                [cell.gridX - 1, cell.gridY - 1], // top-left
+                [cell.gridX + 1, cell.gridY - 1], // top-right
+                [cell.gridX - 1, cell.gridY + 1], // bottom-left
+                [cell.gridX + 1, cell.gridY + 1]  // bottom-right
+            ].filter(([x, y]) => gameBoardLogic.isValidCoordinate(x, y)); // Filter out invalid coordinates
+            
+            // Combine orthogonal and diagonal positions
+            const allAdjacentPositions = [...adjacentPositions, ...diagonalPositions];
+            
+            // Evaluate each adjacent position
+            let value = Math.random();
+            for (const [adjX, adjY] of allAdjacentPositions) {
+                if (gameBoardLogic.isCellOccupiedByPlayer(adjX, adjY, opponentID)) {
+                    value -= 1; // Opponent-neighbor
+                } else if (gameBoardLogic.isCellOccupiedByPlayer(adjX, adjY, this.playerID)) {
+                    value -= 2; // Self-neighbor
+                } else {
+                    value += 3; // Open neighbor
+                }
+            }
+
+            if (value > maxValue) {
+                maxValue = value;
+                bestMove = cell;
+            } 
+        }
+        
+        if (bestMove) {
+            log.info(`AI (Easy) Territorial Move: (${bestMove.gridX}, ${bestMove.gridY}) with space value of ${maxValue.toFixed(2)}.`);
+            return { gridX: bestMove.gridX, gridY: bestMove.gridY };
+        } else {
+            log.error("AI (Easy) Territorial strategy failed. Falling back to random.");
+            const randomCell = availableCells[Math.floor(Math.random() * availableCells.length)];
+            return { gridX: randomCell.gridX, gridY: randomCell.gridY };
+        }
+    }
+
+    getGreedyMove(gameBoardLogic, availableCells, scoringMechanism) {
+        log.debug("AI (Easy): Using greedy strategy (best immediate score).");
+        let bestMove = null;
+        let bestScoreIncrease = -Infinity;
+
+        const currentScore = gameBoardLogic.calculateScore(this.playerID, scoringMechanism);
+
+        for (const cell of availableCells) {
+            const tempLogic = new gameBoardLogic.constructor(gameBoardLogic.gridWidth, gameBoardLogic.gridHeight);
+            tempLogic.setState(gameBoardLogic.getState());
+            if (tempLogic.placeCell(cell.gridX, cell.gridY, this.playerID)) {
+                const newScore = tempLogic.calculateScore(this.playerID, scoringMechanism);
+                const scoreIncrease = newScore - currentScore;
+                 log.debug(` AI (Easy) testing greedy move (${cell.gridX}, ${cell.gridY}): Score Increase = ${scoreIncrease}`);
+
+                if (scoreIncrease > bestScoreIncrease) {
+                    bestScoreIncrease = scoreIncrease;
+                    bestMove = cell;
+                } else if (scoreIncrease === bestScoreIncrease && Math.random() < 0.5) {
+                    // Randomly break ties
+                    bestMove = cell;
+                }
+            } else {
+                log.warn(` AI (Easy) greedy simulation failed for move (${cell.gridX}, ${cell.gridY})`);
+            }
+        }
+
+        if (bestMove) {
+            log.info(`AI (Easy) Greedy Move: (${bestMove.gridX}, ${bestMove.gridY}), Score Increase: ${bestScoreIncrease}`);
+            return { gridX: bestMove.gridX, gridY: bestMove.gridY };
+        } else {
+            log.error("AI (Easy) Greedy strategy failed. Falling back to random.");
+            const randomCell = availableCells[Math.floor(Math.random() * availableCells.length)];
+            return { gridX: randomCell.gridX, gridY: randomCell.gridY };
+        }
+    }
+
+    // --- Hard AI Strategy ---
+
+    getMinimaxMove(gameBoardLogic, availableCells, scoringMechanism) {
+        log.debug("AI (Hard): Using Minimax strategy.");
         let bestScore = -Infinity;
         let bestMove = null;
-        const depth = 2; // Adjust depth for difficulty (e.g., 2 for easy, 4 for medium)
+        const depth = 2; // Minimax depth for Hard AI
 
         for (let cell of availableCells) {
             // Create a hypothetical next state
@@ -84,7 +203,7 @@ export class AIPlayer extends Player {
             if (tempLogic.placeCell(cell.gridX, cell.gridY, this.playerID)) {
                 // Evaluate the board state after this move using minimax
                 let score = this.minimax(tempLogic, depth, false, -Infinity, Infinity, scoringMechanism);
-                 console.log(` AI testing move (${cell.gridX}, ${cell.gridY}): Score = ${score}`);
+                 log.debug(` AI (Hard) testing minimax move (${cell.gridX}, ${cell.gridY}): Score = ${score}`);
                 
                 // Update best move if this one is better
                 if (score > bestScore) {
@@ -92,17 +211,15 @@ export class AIPlayer extends Player {
                     bestMove = cell; // Store the cell object {gridX, gridY}
                 }
             } else {
-                 console.warn(` AI simulation failed for move (${cell.gridX}, ${cell.gridY}) - Should not happen if availableCells is correct`);
+                 log.warn(` AI (Hard) minimax simulation failed for move (${cell.gridX}, ${cell.gridY})`);
             }
         }
 
         if (bestMove) {
-            console.log(`AI Best Move Chosen: (${bestMove.gridX}, ${bestMove.gridY}), Score: ${bestScore}`);
-            // Return the chosen cell coordinates
+            log.info(`AI (Hard) Minimax Move: (${bestMove.gridX}, ${bestMove.gridY}), Score: ${bestScore}`);
             return { gridX: bestMove.gridX, gridY: bestMove.gridY }; 
         } else {
-            console.error("AI: Minimax failed to find a best move. Falling back to random.");
-            // Fallback to random move if minimax fails (shouldn't happen ideally)
+            log.error("AI (Hard): Minimax failed to find a best move. Falling back to random.");
              const randomCell = availableCells[Math.floor(Math.random() * availableCells.length)];
             return { gridX: randomCell.gridX, gridY: randomCell.gridY };
         }

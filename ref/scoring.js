@@ -1,33 +1,29 @@
 /**
- * ScoreDisplay.js - Score Visualization Components for Cell Collection Game
+ * scoring.js - Score Visualization for Cell Collection
  * 
- * This file implements the visual components for displaying game scores and statistics.
+ * This file implements the visual components for displaying game scores.
  * 
  * Key components:
  * - ScoreBreakdown: Shows player scores and detailed score breakdowns
- * - ScoreChartRenderer: Visualizes score progression throughout the game
+ * - ScoreChart: Visualizes score progression throughout the game
  * 
  * ScoreBreakdown displays:
  * - Current scores for both players
  * - Breakdown of multiplication factors for cell-multiplication scoring
  * - Visual indicators for the current player's turn
  * 
- * ScoreChartRenderer visualizes:
+ * ScoreChart visualizes:
  * - Score trends over time with colored lines for each player
  * - Round number labels on the x-axis
  * - Maximum score label on the y-axis
  * - Colored indicators to show which player is leading
  * 
- * Relationships:
- * - Instantiated by main.js for score visualization
- * - Receives score data from Game.js through main.js
- * - Uses D3.js for rendering score visualizations
- * - Works with various scoring mechanisms defined in the game
- * 
- * Revision Log:
- * 
- * Note: This revision log should be updated whenever this file is modified.
+ * Relationships with other files:
+ * - game.js: Updates these components when scores change
+ * - utils.js: Gets the current scoring mechanism
  */
+
+import { getScoringMechanism } from "./utils.js";
 
 export class ScoreBreakdown {
     constructor(playerColors) {
@@ -37,8 +33,8 @@ export class ScoreBreakdown {
         this.reset();
     }
     
-    update(currentPlayer, scores, components1, components2, scoringMechanism) {
-        const scoring = scoringMechanism;
+    update(currentPlayer, scores, components1, components2) {
+        const scoring = getScoringMechanism();
         
         // Generate breakdown text for each player using the appropriate sizing method
         let breakdownText1 = this.calculateBreakdownText(scores[0], components1, scoring);
@@ -82,7 +78,7 @@ export class ScoreBreakdown {
         `);
     }
     
-    reset(currentPlayer = 0, scoringMechanism) {
+    reset(currentPlayer = 0) {
         // Initialize with placeholders to maintain consistent height
         const player1Color = this.playerColors[0];
         const player2Color = this.playerColors[1];
@@ -99,8 +95,8 @@ export class ScoreBreakdown {
         `);
         
         // Display initial score breakdown with zeros
-        const breakdownText1 = this.calculateBreakdownText(0, [], scoringMechanism);
-        const breakdownText2 = this.calculateBreakdownText(0, [], scoringMechanism);
+        const breakdownText1 = this.calculateBreakdownText(0, [], getScoringMechanism());
+        const breakdownText2 = this.calculateBreakdownText(0, [], getScoringMechanism());
         
         this.breakdown.html(`
             <div style="display: flex; justify-content: space-between; width: 100%;">
@@ -137,11 +133,13 @@ export class ScoreBreakdown {
         
         switch(scoringMechanism) {
             case 'cell-multiplication':
-                // For this mechanism, size is the number of cells
+            case 'cell-multiplication':
+                // For these mechanisms, size is the number of cells
                 return component.length;
                 
             case 'cell-connection':
                 // For cell-connection, calculate all connections within the component
+                // This matches the logic in Board.getConnectionScore()
                 let connectionCount = 0;
                 
                 // For each cell in the component, count connections to other cells
@@ -203,7 +201,7 @@ export class ScoreBreakdown {
         }
     }
     
-    // Helper: Get adjacent positions for a cell
+    // Get adjacent positions for a grid cell
     getAdjacentPositions(gridX, gridY) {
         return [
             [gridX + 1, gridY], // right
@@ -215,24 +213,18 @@ export class ScoreBreakdown {
     
 }
 
-export class ScoreChartRenderer {
 
-    constructor(playerColors) {
+export class ScoreChart {
+
+    constructor(playerColors, gridSize) {
+
+        this.scoreHistory1 = [0];
+        this.scoreHistory2 = [0];
         this.playerColors = playerColors;
 
-        // Use relative units for flexibility
-        const container = d3.select("#score-chart-container");
-        const containerRect = container.node() ? container.node().getBoundingClientRect() : { width: 100, height: 25 };
-        const svgWidth = containerRect.width;
-        const svgHeight = containerRect.height; // Use the full container height instead of width-based calculation
-        
-        // Adjust margins to be proportional to the actual container size
-        let margin = {
-            top: svgHeight * 0.15,
-            right: svgWidth * 0.05,
-            bottom: svgHeight * 0.1, 
-            left: svgWidth * 0.05
-        };
+        let svgWidth = 100;
+        let svgHeight = 25;
+        let margin = {top: 4, right: 4, bottom: 5, left: 7};
         let chartWidth = svgWidth - margin.left - margin.right;
         let chartHeight = svgHeight - margin.top - margin.bottom;
 
@@ -258,29 +250,25 @@ export class ScoreChartRenderer {
         // Create a chart with viewBox for responsive scaling
         d3.select("#score-chart")
             .attr("viewBox", `0 0 ${svgWidth} ${svgHeight}`)
-            .attr("preserveAspectRatio", "xMidYMid meet")
-            .attr("width", "100%") // Ensure width is 100%
-            .attr("height", "100%"); // Ensure height is 100%
+            .attr("preserveAspectRatio", "xMidYMid meet");
             
-        // Main SVG group with proper margins
         this.svg = d3.select("#score-chart")
             .append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
 
-        // Line paths
         this.svg.append("path")
             .attr("class", "line line1")
-            .style("stroke-width", "2");  // Keep this same thickness
+            .style("stroke-width", "0.2");
 
         this.svg.append("path")
             .attr("class", "line line2")
-            .style("stroke-width", "2");  // Keep this same thickness
+            .style("stroke-width", "0.2");
 
-        // Create a simplified y-axis with improved positioning
+        // Create a simplified y-axis
         this.yAxis = this.svg.append("g")
             .attr("class", "y axis");
 
-        // Create a simplified x-axis with improved positioning
+        // Create a simplified x-axis
         this.xAxis = this.svg.append("g")
             .attr("class", "x axis")
             .attr("transform", `translate(0,${chartHeight})`);
@@ -294,56 +282,58 @@ export class ScoreChartRenderer {
             .attr("class", "x-axis-labels")
             .attr("transform", `translate(0,${chartHeight})`);
 
-        // Style the axis lines to match score lines but make them more visible
+        // Style the axis lines to match score lines
         this.svg.selectAll(".axis path, .axis line")
-            .style("stroke-width", "2")  // Match line width
+            .style("stroke-width", "0.2")
             .style("stroke", "#aaaaaa");
 
         this.svg.selectAll(".axis text")
-            .style("font-size", "15")
-            .style("fill", "#ffffff");  // White for better visibility
+            .style("font-size", "2.5")
+            .style("fill", "#cccccc");
 
         this.reset();
     }
 
-    // Update now takes score history as arguments
-    update(currentPlayer, scores, scoreHistory1, scoreHistory2) {
-        // Ensure histories are valid arrays
-        const history1 = Array.isArray(scoreHistory1) ? scoreHistory1 : [0];
-        const history2 = Array.isArray(scoreHistory2) ? scoreHistory2 : [0];
+
+    update(currentPlayer, scores) {
+
+        // Add the scores to the history arrays
+        this.scoreHistory1.push(scores[0]);
+        this.scoreHistory2.push(scores[1]);
 
         // Update the domain of the x scale
-        let moveCount = Math.max(history1.length, history2.length) - 1;
-        this.xScale.domain([0, moveCount <= 0 ? 1 : moveCount]); // Ensure domain is never zero or negative
+        let moveCount = Math.max(this.scoreHistory1.length, this.scoreHistory2.length) - 1;
+        this.xScale.domain([0, moveCount]);
 
         // Update the domain of the y scale
-        let maxScore = Math.max(d3.max(history1) || 1, d3.max(history2) || 1);
-        this.yScale.domain([this.safeLogValue(0.1), this.safeLogValue(maxScore * 1.1)]); // Add 10% headroom
+        let maxScore = d3.max(this.scoreHistory1.concat(this.scoreHistory2)) || 1;
+        
+        // Set proper range for the y-axis domain to ensure max value is at the top
+        // Always use a fixed minimum value to maintain visual consistency
+        this.yScale.domain([this.safeLogValue(0.1), this.safeLogValue(maxScore)]);
         
         // Determine which player has the highest score for coloring the max score label
-        const player1HasMax = (d3.max(history1) ?? 0) >= (d3.max(history2) ?? 0);
+        const player1HasMax = Math.max(...this.scoreHistory1) >= Math.max(...this.scoreHistory2);
         const maxScoreColor = player1HasMax ? this.playerColors[0] : this.playerColors[1];
         
-        // Update line paths using the passed history
+        // Update line paths
         this.svg.selectAll(".line1")
             .attr("stroke", this.playerColors[0])
-            .attr("fill", "none")
-            .datum(history1)
+            .datum(this.scoreHistory1)
             .attr("d", this.line1);
 
         this.svg.selectAll(".line2")
             .attr("stroke", this.playerColors[1])
-            .attr("fill", "none")
-            .datum(history2)
+            .datum(this.scoreHistory2)
             .attr("d", this.line2);
 
-        // Update markers using the passed history
+        // Update markers
         if (currentPlayer === 0) {
-            this._updateMarkers(0, history1, this.playerColors[0], currentPlayer === 0);
-            this._updateMarkers(1, history2, this.playerColors[1], currentPlayer === 1);
+            this._updateMarkers(0, this.scoreHistory1, this.playerColors[0], currentPlayer === 0);
+            this._updateMarkers(1, this.scoreHistory2, this.playerColors[1], currentPlayer === 1);
         } else {
-            this._updateMarkers(1, history2, this.playerColors[1], currentPlayer === 1);
-            this._updateMarkers(0, history1, this.playerColors[0], currentPlayer === 0);
+            this._updateMarkers(1, this.scoreHistory2, this.playerColors[1], currentPlayer === 1);
+            this._updateMarkers(0, this.scoreHistory1, this.playerColors[0], currentPlayer === 0);
         }
         
         // Bring the labels overlay to the front after updating markers
@@ -360,81 +350,89 @@ export class ScoreChartRenderer {
             .attr("x2", 0)
             .attr("y2", this.yScale.range()[0])
             .style("stroke", "#aaaaaa")
-            .style("stroke-width", "2");  // Match line width
-                        
-        // Add only the max score label with improved visibility
+            .style("stroke-width", "0.2");
+            
+        // Add tick mark at the top (max value)
+        this.yAxis.append("line")
+            .attr("x1", -2)
+            .attr("y1", this.yScale(this.safeLogValue(maxScore)))
+            .attr("x2", 0)
+            .attr("y2", this.yScale(this.safeLogValue(maxScore)))
+            .style("stroke", "#aaaaaa")
+            .style("stroke-width", "0.2");
+            
+        // Add only the max score label
         this.yAxis.append("text")
-            .attr("x", 10)
-            .attr("y", 10)
-            .style("text-anchor", "start")  // Left align text
-            .style("font-size", "15")
-            .style("font-weight", "bold")
-            .style("fill", maxScoreColor)
+            .attr("x", -2)
+            .attr("y", this.yScale(this.safeLogValue(maxScore)))
+            .attr("dy", "0.3em")
+            .style("text-anchor", "end")
+            .style("font-size", "2.5")
+            .style("fill", maxScoreColor)  // Use color of player with highest score
             .text(maxScore);
             
-        // Create a custom minimalist x-axis 
+        // Create a custom minimalist x-axis (showing only the most recent player's move count)
+        // Clear the existing x-axis
         this.xAxis.selectAll("*").remove();
+        
+        // Add the axis line
         this.xAxis.append("line")
-            .attr("x1", 0).attr("y1", 0)
-            .attr("x2", this.xScale.range()[1]).attr("y2", 0)
-            .style("stroke", "#aaaaaa").style("stroke-width", "2");  // Match line width
+            .attr("x1", 0)
+            .attr("y1", 0)
+            .attr("x2", this.xScale.range()[1])
+            .attr("y2", 0)
+            .style("stroke", "#aaaaaa")
+            .style("stroke-width", "0.2");
             
+        // Clear existing labels in the overlay
         this.xAxisLabels.selectAll("*").remove();
         
         // Show the round number instead of move count
-        const roundNumber = Math.floor((moveCount + 1) / 2);
-        if (moveCount >= 0) {
-                
-            const xPos = this.xScale.range()[1];
-
-            // Add the round number label with improved visibility
-            this.xAxisLabels.append("text")
-                .attr("x", xPos+15)
-                .attr("y", -10)  
-                .attr("dy", "1em")
-                .attr("text-anchor", "middle")
-                .attr("font-size", "15")  
-                .attr("font-weight", "bold")
-                .attr("fill", "#ffffff")
-                .text(roundNumber);  // Show round number instead of move count
-        }
+        const roundNumber = Math.floor((moveCount+1) / 2);
+            
+        // Add the round number label in the overlay (above everything else)
+        this.xAxisLabels.append("rect")
+            .attr("x", this.xScale(moveCount)-2)
+            .attr("y", -2)
+            .attr("width", 4)
+            .attr("height", 4)
+            .attr("rx", 2)
+            .attr("ry", 2)
+            .style("fill", "#121212");
+            
+        this.xAxisLabels.append("text")
+            .attr("x", this.xScale(moveCount))
+            .attr("y", 1)
+            .attr("dy", "-0.2em")
+            .attr("text-anchor", "middle")
+            .style("font-size", "2.5")
+            .style("fill", "#aaaaaa")
+            .text(roundNumber);
     }
     
-    // Update markers to visualize score values on the graph
+
     _updateMarkers(player, history, color, isCurrentPlayer) {
-        // Create a selection and join data
-        const dots = this.svg.selectAll(`.dot${player}`)
-            .data(history);
-            
-        // Remove markers that no longer have data
-        dots.exit().remove();
-            
-        // Update existing markers
-        dots.attr("cx", (d, i) => this.xScale(i))
-            .attr("cy", d => this.yScale(this.safeLogValue(d)))
-            .attr("fill", color)
-            .attr("r", (d, i) => {
-                // Determine if this point was created on this player's turn
-                // For player 0, they play on even-indexed moves (0, 2, 4...)
-                // For player 1, they play on odd-indexed moves (1, 3, 5...)
-                const isPlayerTurn = (player === 0 && i % 2 === 0) || (player === 1 && i % 2 === 1);
-                return isPlayerTurn ? 3 : 1; // Larger when it was this player's turn
-            });
-            
-        // Add new markers for new data points
-        dots.enter().append("circle")
+        let dots = this.svg.selectAll(`.dot${player}`)
+            .data(history, (d, i) => i);
+
+        dots.enter()
+            .append("circle")
             .attr("class", `dot${player}`)
+            .attr("r", 0.5)
+            .attr("fill", isCurrentPlayer ? color : "none")
+            .attr("stroke", color)
+            .attr("stroke-width", 0.25) 
+            .merge(dots)
             .attr("cx", (d, i) => this.xScale(i))
-            .attr("cy", d => this.yScale(this.safeLogValue(d)))
-            .attr("r", (d, i) => {
-                // Same logic for determining radius size
-                const isPlayerTurn = (player === 0 && i % 2 === 0) || (player === 1 && i % 2 === 1);
-                return isPlayerTurn ? 3 : 1; // Larger when it was this player's turn
-            })
-            .attr("fill", color);
+            .attr("cy", d => this.yScale(this.safeLogValue(d)));  // Use safe log value
+
+        dots.exit().remove();
     }
 
     reset() {
+        this.scoreHistory1 = [0];
+        this.scoreHistory2 = [0];
+        
         // Set up initial state with just axes and labels
         let moveCount = 0;
         this.xScale.domain([0, 1]);
@@ -466,25 +464,25 @@ export class ScoreChartRenderer {
             .attr("x2", 0)
             .attr("y2", this.yScale.range()[0])
             .style("stroke", "#aaaaaa")
-            .style("stroke-width", "2");  // Match line width
+            .style("stroke-width", "0.2");
             
         // Add tick mark at the top for max value (1 initially)
         this.yAxis.append("line")
-            .attr("x1", -4)  
+            .attr("x1", -2)
             .attr("y1", this.yScale(this.safeLogValue(1)))
             .attr("x2", 0)
             .attr("y2", this.yScale(this.safeLogValue(1)))
             .style("stroke", "#aaaaaa")
-            .style("stroke-width", "2");  // Match line width
+            .style("stroke-width", "0.2");
             
-        // Add the initial label for the y-axis with improved visibility
+        // Add the initial label for the y-axis
         this.yAxis.append("text")
-            .attr("x", 5)  // Slightly to the right of the y-axis
-            .attr("y", -10)  // Above the y-axis
-            .style("text-anchor", "start")  // Left align text
-            .style("font-size", "15")
-            .style("font-weight", "bold")  // Added bold
-            .style("fill", "#ffffff")  // Brighter color for better visibility
+            .attr("x", -2)
+            .attr("y", this.yScale(this.safeLogValue(1)))
+            .attr("dy", "0.3em")
+            .style("text-anchor", "end")
+            .style("font-size", "2.5")
+            .style("fill", "#aaaaaa")
             .text("1");
             
         // Add the x-axis line
@@ -494,22 +492,32 @@ export class ScoreChartRenderer {
             .attr("x2", this.xScale.range()[1])
             .attr("y2", 0)
             .style("stroke", "#aaaaaa")
-            .style("stroke-width", "2");  // Match line width
+            .style("stroke-width", "0.2");
                        
         // Clear the labels overlay as well
         this.xAxisLabels.selectAll("*").remove();
             
-        // Add initial '1' label on x-axis
+        // Add initial '1' label on x-axis with background in the overlay
+        this.xAxisLabels.append("rect")
+            .attr("x", this.xScale(1)-2)
+            .attr("y", -2)
+            .attr("width", 4)
+            .attr("height", 4)
+            .attr("rx", 2)
+            .attr("ry", 2)
+            .style("fill", "#121212");
+        
         this.xAxisLabels.append("text")
-            .attr("x", this.xScale(1)+15)
-            .attr("y", -10)  
+            .attr("x", this.xScale(1))
+            .attr("y", 1)
+            .attr("dy", "-0.2em")
             .attr("text-anchor", "middle")
-            .attr("font-size", "15")  
-            .attr("font-weight", "bold")
-            .attr("fill", "#ffffff")
+            .attr("font-size", "2.5")
+            .attr("fill", "#aaaaaa")
             .text("1");
             
         // Bring the labels overlay to the front
         this.labelsOverlay.raise();
     }
+
 } 
