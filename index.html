@@ -19,288 +19,126 @@
         </script>        
     </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="navbar-logo">
-            <img src="favicons/favicon-32x32.png" alt="Cell Extension Logo">
-            <h1 class="navbar-title">Cell Production</h1>
-        </div>
+    <!-- Game container with 9/16 aspect ratio for portrait mode -->
+    <div class="game-container">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <div class="navbar-logo">
+                <img src="favicons/favicon-32x32.png" alt="Cell Extension Logo">
+                <h1 class="navbar-title">Cell Production</h1>
+            </div>
+            
+            <!-- Game Settings Menu in Navbar -->
+            <div class="settings-dropdown">
+                <button id="settings-toggle" class="settings-toggle">
+                    <span class="settings-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" stroke="currentColor" stroke-width="0.5">
+                            <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                            <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+                        </svg>
+                    </span> 
+                </button>
+                <div class="settings-menu">
+                    <!-- Game Settings -->
+                    <div class="settings-group">
+                        <label for="player-mode">Player Mode</label>
+                        <select id="player-mode">
+                            <option value="ai">AI Player</option>
+                            <option value="user">Two Player</option>
+                        </select>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <label for="scoring-mechanism">Scoring Mechanism</label>
+                        <select id="scoring-mechanism" title="Select a scoring mechanism">
+                            <option value="cell-multiplication" selected title="Product of the size of the cells">Cell-Multiplication</option>                        
+                            <option value="cell-connection" title="Product of the number of directed edges (connections)">Cell-Connection</option>
+                            <option value="cell-extension" title="Product of the number of undirected edges (extensions)">Cell-Extension</option>                    
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mobile menu hamburger icon stays -->
+            <div class="hamburger-menu" id="hamburger-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
         
-        <!-- Game Settings Menu in Navbar -->
-        <div class="settings-dropdown">
-            <button id="settings-toggle" class="settings-toggle">
-                <span class="settings-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" stroke="currentColor" stroke-width="0.5">
-                        <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
-                        <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
-                    </svg>
-                </span> 
-            </button>
-            <div class="settings-menu">
-                <!-- Game Settings -->
-                <div class="settings-group">
-                    <label for="player-mode">Player Mode</label>
-                    <select id="player-mode">
+        <!-- Mobile Menu with Static List Structure -->
+        <div class="mobile-menu" id="mobile-menu">
+            <ul class="mobile-menu-list">
+                <li class="mobile-menu-item">
+                    <span class="mobile-menu-item-label">Player Mode</span>
+                    <select id="player-mode-mobile">
                         <option value="ai">AI Player</option>
                         <option value="user">Two Player</option>
                     </select>
-                </div>
-                
-                <div class="settings-group">
-                    <label for="scoring-mechanism">Scoring Mechanism</label>
-                    <select id="scoring-mechanism" title="Select a scoring mechanism">
+                </li>
+                <li class="mobile-menu-item">
+                    <span class="mobile-menu-item-label">Scoring Mechanism</span>
+                    <select id="scoring-mechanism-mobile" title="Select a scoring mechanism">
                         <option value="cell-multiplication" selected title="Product of the size of the cells">Cell-Multiplication</option>                        
                         <option value="cell-connection" title="Product of the number of directed edges (connections)">Cell-Connection</option>
-                        <option value="cell-extension" title="Product of the number of undirected edges (extensions)">Cell-Extension</option>                    
+                        <option value="cell-extension" title="Product of the number of undirected edges (extensions)">Cell-Extension</option>
                     </select>
-                </div>
+                </li>
+                <li class="mobile-menu-item">
+                    <button id="undo-mobile" class="mobile-undo-button">Undo</button>
+                </li>
+            </ul>
+            <!-- Close button -->
+            <div class="mobile-menu-close">
+                <button id="mobile-menu-close-btn">Close Menu</button>
             </div>
         </div>
         
-        <!-- Mobile menu hamburger icon stays -->
-        <div class="hamburger-menu" id="hamburger-menu">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-    </nav>
-    
-    <!-- Mobile Menu with Static List Structure -->
-    <div class="mobile-menu" id="mobile-menu">
-        <ul class="mobile-menu-list">
-            <li class="mobile-menu-item">
-                <span class="mobile-menu-item-label">Player Mode</span>
-                <select id="player-mode-mobile">
-                    <option value="ai">AI Player</option>
-                    <option value="user">Two Player</option>
-                </select>
-            </li>
-            <li class="mobile-menu-item">
-                <span class="mobile-menu-item-label">Scoring Mechanism</span>
-                <select id="scoring-mechanism-mobile" title="Select a scoring mechanism">
-                    <option value="cell-multiplication" selected title="Product of the size of the cells">Cell-Multiplication</option>                        
-                    <option value="cell-connection" title="Product of the number of directed edges (connections)">Cell-Connection</option>
-                    <option value="cell-extension" title="Product of the number of undirected edges (extensions)">Cell-Extension</option>
-                </select>
-            </li>
-            <li class="mobile-menu-item">
-                <button id="undo-mobile" class="mobile-undo-button">Undo</button>
-            </li>
-        </ul>
-        <!-- Close button -->
-        <div class="mobile-menu-close">
-            <button id="mobile-menu-close-btn">Close Menu</button>
-        </div>
-    </div>
-    
-    <!-- Remove overlay -->
-    <!-- <div class="mobile-menu-overlay"></div> -->
-    
-    <div id="game">
-        <!-- Game content wrapper for vertical centering -->
-        <div class="game-content-wrapper">
-            <!-- Board UI group for better spacing control - changed to board-group class -->
-            <div class="board-group">
-                <div id="player-scores"></div>
-                <div id="score-breakdown"></div>
-                <!-- Add board-container div around the board SVG -->
-                <div id="board-container">
-                    <svg id="board"></svg>
+        <div id="game">
+            <!-- Game content wrapper for vertical centering -->
+            <div class="game-content-wrapper">
+                <!-- Board UI group for better spacing control - changed to board-group class -->
+                <div class="board-group">
+                    <div id="player-scores"></div>
+                    <div id="score-breakdown"></div>
+                    <!-- Add board-container div around the board SVG -->
+                    <div id="board-container">
+                        <svg id="board"></svg>
+                    </div>
                 </div>
-            </div>
-                        
-            <!-- Score chart -->
-            <div id="score-chart-container">
-                <svg id="score-chart"></svg>
-            </div>
-            
-            <!-- Now only contains game control buttons (not settings) -->
-            <div id="game-controls">
-                <button id="reset">
-                    <span class="button-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" stroke="currentColor" stroke-width="0.5">
-                            <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-                        </svg>
-                    </span> 
-                    Reset
-                </button>
-                <button id="undo" disabled>
-                    <span class="button-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" stroke="currentColor" stroke-width="0.5">
-                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
-                            <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
-                        </svg>
-                    </span>
-                    Undo
-                </button>
+                            
+                <!-- Score chart -->
+                <div id="score-chart-container">
+                    <svg id="score-chart"></svg>
+                </div>
+                
+                <!-- Now only contains game control buttons (not settings) -->
+                <div id="game-controls">
+                    <button id="reset">
+                        <span class="button-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" stroke="currentColor" stroke-width="0.5">
+                                <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                            </svg>
+                        </span> 
+                        Reset
+                    </button>
+                    <button id="undo" disabled>
+                        <span class="button-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" stroke="currentColor" stroke-width="0.5">
+                                <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
+                                <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
+                            </svg>
+                        </span>
+                        Undo
+                    </button>
+                </div>
             </div>
         </div>
     </div>
     
     <!-- Load the main application script -->
     <script type="module" src="src/main.js"></script>
-    
-    <!-- Removed old inline script -->
-    <!-- 
-    <script type="module">
-        import { Game } from "./js/game.js"; // Game class now orchestrates everything
-        import { updateNavbarTitle } from "./js/utils.js";
-                
-        // --- Game Configuration ---
-        const gridDimension = 100; // Logical size for viewBox
-        const cellsPerRow = 6;
-        const cellDimension = gridDimension / cellsPerRow; // Cell size in logical units
-        const playerColors = ["#00FF00", "#1E90FF"];
-        
-        // --- Initial Game State ---
-        let initialPlayer = 0; // Player 0 starts
-        let initialScores = [0, 0];
-        let initialProgress = "playing";
-        
-        // --- SVG Setup ---
-        d3.select("#board")
-            .attr("viewBox", `0 0 ${gridDimension} ${gridDimension}`)
-            .attr("preserveAspectRatio", "xMidYMid meet");
-
-        // --- Create Game Instance ---
-        // Pass initial state values to the constructor
-        let game = new Game(gridDimension, cellDimension, playerColors, initialPlayer, initialScores, initialProgress);
-
-        // --- UI Control Setup ---
-        
-        // Reset Button
-        d3.select("#reset").on("click", game.reset.bind(game));
-        
-        // Undo Buttons
-        d3.select("#undo").on("click", () => {
-            game.undo(); 
-        });
-        d3.select("#undo-mobile").on("click", () => {
-            game.undo();
-            // Close mobile menu after clicking undo
-            const mobileMenu = document.getElementById('mobile-menu');
-            const hamburgerBtn = document.getElementById('hamburger-menu');
-            if (mobileMenu && hamburgerBtn) { // Check if elements exist
-                mobileMenu.classList.remove('active');
-                hamburgerBtn.classList.remove('active');
-            }
-        });
-        
-        // Sync controls between desktop and mobile (Dropdowns, Menu Toggle)
-        function syncControls() {
-            const playerModeDropdown = document.getElementById("player-mode");
-            const playerModeMobile = document.getElementById("player-mode-mobile");
-            const scoringSelect = document.getElementById("scoring-mechanism");
-            const scoringSelectMobile = document.getElementById("scoring-mechanism-mobile");
-            const hamburgerBtn = document.getElementById('hamburger-menu');
-            const mobileMenu = document.getElementById('mobile-menu');
-            const closeBtn = document.getElementById('mobile-menu-close-btn');
-            const navbar = document.querySelector('.navbar');
-
-            // --- Event Listeners --- 
-
-            // Player Mode Sync
-            if (playerModeDropdown && playerModeMobile) {
-                playerModeDropdown.addEventListener("change", function() {
-                    playerModeMobile.value = this.value;
-                    game.reset(); // Reset game on mode change
-                });
-                playerModeMobile.addEventListener("change", function() {
-                    playerModeDropdown.value = this.value;
-                    game.reset(); // Reset game on mode change
-                });
-            }
-
-            // Scoring Mechanism Sync & Tooltip
-            if (scoringSelect && scoringSelectMobile) {
-                const handleScoringChange = function() {
-                    if (!this.options[this.selectedIndex].disabled) {
-                        // Sync the other dropdown
-                        const otherSelect = (this.id === "scoring-mechanism") ? scoringSelectMobile : scoringSelect;
-                        otherSelect.value = this.value;
-                        updateNavbarTitle();
-                        game.reset(); // Reset game on scoring change
-                    } else {
-                        alert("This scoring mechanism is not yet implemented.");
-                        // Revert to the previous valid selection (or a default)
-                        // This requires knowing the previous value, might need to store it
-                        const currentMechanism = game.scoringMechanism || 'cell-multiplication'; // Get current from game
-                        this.value = currentMechanism;
-                        const otherSelect = (this.id === "scoring-mechanism") ? scoringSelectMobile : scoringSelect;
-                        otherSelect.value = currentMechanism; 
-                        updateNavbarTitle();
-                    }
-                };
-                scoringSelect.addEventListener("change", handleScoringChange);
-                scoringSelectMobile.addEventListener("change", handleScoringChange);
-                
-                // Add tooltips to options
-                scoringSelect.querySelectorAll("option").forEach(option => {
-                    const title = option.getAttribute("title");
-                    if (title) option.setAttribute("title", title);
-                });
-                 scoringSelectMobile.querySelectorAll("option").forEach(option => {
-                    const title = option.getAttribute("title");
-                    if (title) option.setAttribute("title", title);
-                });
-            }
-            
-            // Mobile Menu Toggle
-            if (hamburgerBtn && mobileMenu) {
-                hamburgerBtn.addEventListener('click', function(e) {
-                    e.stopPropagation(); // Prevent document click handler from closing immediately
-                    mobileMenu.classList.toggle('active');
-                    hamburgerBtn.classList.toggle('active');
-                });
-            }
-
-            // Mobile Menu Close Button
-            if (closeBtn && mobileMenu && hamburgerBtn) {
-                closeBtn.addEventListener('click', function() {
-                    mobileMenu.classList.remove('active');
-                    hamburgerBtn.classList.remove('active');
-                });
-            }
-            
-            // Close Mobile Menu on Outside Click
-            document.addEventListener('click', function(e) {
-                if (mobileMenu && mobileMenu.classList.contains('active')) {
-                     // Don't close if clicking inside the menu itself or the hamburger
-                    if (!mobileMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
-                        mobileMenu.classList.remove('active');
-                        hamburgerBtn.classList.remove('active');
-                    }
-                }
-            });
-
-            // Close Mobile Menu on Resize
-            window.addEventListener('resize', function() {
-                if (window.innerWidth > 768 && mobileMenu && hamburgerBtn) {
-                    mobileMenu.classList.remove('active');
-                    hamburgerBtn.classList.remove('active');
-                }
-            });
-
-            // Navbar Scroll Effect
-            const handleScroll = () => {
-                if (navbar) {
-                    navbar.classList.toggle('scrolled', window.scrollY > 10);
-                }
-            }
-            window.addEventListener('scroll', handleScroll);
-            handleScroll(); // Initial check
-        }
-        
-        // Initialize UI Controls and Syncing
-        // syncControls();
-        
-        // Set the initial navbar title based on the default scoring mechanism
-        // updateNavbarTitle();
-        
-        // console.log("index.html script setup complete.");
-
-    </script>    
-    -->
 </body>
 </html>

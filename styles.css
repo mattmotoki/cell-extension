@@ -1,4 +1,4 @@
-/* Modern UI styling with mobile responsiveness */
+/* Modern UI styling with mobile responsiveness - Portrait focus */
 :root {
     --primary-color: #6c84ff;
     --secondary-color: #8293a7;
@@ -12,117 +12,132 @@
     /* Dark Mode Colors */
     --bg-color: #121212;
     --text-color: #f0f0f0;
-    --board-bg: #1e1e1e; /* Keep for potential use, but board SVG itself won't use this */
+    --board-bg: #1e1e1e;
     --input-bg: #2a2a2a;
     --border-color: #444444;
     --navbar-bg: rgba(30, 30, 30, 0.9);
     
     /* Layout Variables - Using relative units */
-    --navbar-height: 10vh; /* 10% of viewport height */
-    --score-chart-height: 15vh; /* Reduced from 20% to 15% of viewport height */
-    --game-controls-height: 8vh; /* Reduced from 10% to 8% of viewport height */
-    --max-content-width: 90vh; /* Relative to viewport height */
-    --content-padding: 2vh; /* Relative padding */
-    --elements-gap: 1.5vh; /* Reduced from 2vh to 1.5vh - smaller gaps between elements */
-    --board-group-height: 60vh; /* Allocate 60% of viewport height to board group */
+    --navbar-height: 10%;
+    --score-chart-height: 20%;
+    --game-controls-height: 5%;
+    --board-group-height: 60%;
+    --elements-gap: 1%;
     
-    /* Font sizes in relative units */
-    --font-size-large: 1.1rem;
-    --font-size-medium: 1rem;
-    --font-size-small: 0.9rem;
-    --font-size-xs: 0.75rem;
+    /* Font sizes in viewport height units - directly relative to screen size */
+    --font-size-large: 2.2vh;
+    --font-size-medium: 1.8vh;
+    --font-size-small: 1.5vh;
+    --font-size-xs: 1.2vh;
 }
 
 html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Prevent any scrollbars */
+    overflow: hidden;
     box-sizing: border-box;
+    background-color: var(--bg-color);
 }
 
 body {
     font-family: var(--font-main);
-    background-color: var(--bg-color);
     color: var(--text-color);
     line-height: 1.6;
     display: flex;
     flex-direction: column;
-    min-height: 100%;
-    max-height: 100vh; 
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
 }
 
+/* Game container with fixed 9/16 aspect ratio */
+.game-container {
+    width: 100%;
+    max-width: min(100vh * 9/16, 100vw); /* 9:16 aspect ratio, never wider than viewport */
+    aspect-ratio: 9/16;
+    background-color: var(--bg-color);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Navbar styling - fixed at top */
+.navbar {
+    width: 100%;
+    height: var(--navbar-height);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 5%;
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
+    box-sizing: border-box;
+    z-index: 100;
+}
+
+.navbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.navbar-logo img {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.navbar-title {
+    color: var(--primary-color);
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.03em;
+    font-size: 2.4vh;
+    margin: 0;
+}
+
+/* Main game area */
 #game {
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 100%;
-    max-width: var(--max-content-width);
+    height: calc(100% - var(--navbar-height));
     box-sizing: border-box;
-    margin: 0 auto; 
-    padding: var(--content-padding);
-    height: calc(100vh - var(--navbar-height)); /* Full height minus navbar */
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 .game-content-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
-    box-sizing: border-box;
-    gap: var(--elements-gap);
-    height: calc(100vh - var(--navbar-height) - var(--content-padding) * 2); /* Full height minus navbar and padding */
-    justify-content: space-between; /* Distribute space between elements */
-}
-
-/* Game controls take 10% of viewport height */
-#game-controls {
-    display: flex;
     justify-content: space-between;
-    gap: 2vw;
     width: 100%;
-    height: var(--game-controls-height);
-    min-height: 3rem; /* Minimum height for very small screens */
-    flex: 0 0 auto;
-    flex-direction: row;
+    height: 100%;
+    gap: var(--elements-gap);
+    padding: 2%;
+    box-sizing: border-box;
 }
 
-#game-controls button {
-    flex: 1 1 auto; 
-    min-width: 0; /* Allow buttons to be smaller on narrow screens */
-    padding: 0.5em 1em;
-    font-size: var(--font-size-medium);
-}
-
-/* New board group that contains the board and scores */
+/* Board group - main content area */
 .board-group {
+    width: 100%;
+    height: var(--board-group-height);
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
-    max-width: var(--max-content-width);
-    height: var(--board-group-height); /* Explicitly set height */
-    gap: 0.5vh; /* Reduce gap to allow more space for board */
-    flex: 0 0 auto; /* Fixed size, don't grow or shrink */
+    gap: 1%;
 }
 
-/* Score display and breakdown - part of board group */
-#score-display {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    flex: 0 0 auto;
-    gap: 0.5vh;
-}
-
+/* Score display area */
 #player-scores {
     display: flex;
     justify-content: space-between;
     width: 100%;
     font-size: var(--font-size-medium);
-    padding: 0 2vw;
+    padding: 0 2%;
     box-sizing: border-box;
     font-weight: 500;
 }
@@ -132,17 +147,16 @@ body {
     justify-content: space-between;
     width: 100%;
     font-size: var(--font-size-small);
-    padding: 0 2vw;
+    padding: 0 2%;
     box-sizing: border-box;
-    min-height: 1.5em;
+    min-height: 1.2em;
 }
 
 /* Board container - square aspect ratio */
 #board-container {
-    width: 100%;
-    height: calc(var(--board-group-height) - 4vh); /* Height minus space for scores */
-    max-width: var(--board-group-height); /* Same as height for square ratio */
-    aspect-ratio: 1 / 1; /* Enforce square aspect ratio */
+    width: 96%;
+    height: calc(var(--board-group-height) - 10%);
+    aspect-ratio: 1 / 1;
     margin: 0 auto;
     position: relative;
     display: flex;
@@ -150,26 +164,22 @@ body {
     align-items: center;
 }
 
-/* Board SVG fills its container */
+/* Board SVG */
 #board {
-    display: block;
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    background-color: transparent;
-    border-radius: 0;
+    display: block;
+    viewBox: "0 0 100 100";
+    preserveAspectRatio: "xMidYMid meet";
 }
 
-/* Score chart takes 20% of viewport height */
+/* Score chart area */
 #score-chart-container {
-    width: 100%;
+    width: 96%;
     height: var(--score-chart-height);
-    flex: 0 0 auto;
     display: flex;
     justify-content: center;
     align-items: center;
-    position: relative;
-    margin: 1vh 0;
 }
 
 #score-chart {
@@ -178,190 +188,47 @@ body {
     display: block;
 }
 
+/* Game controls area */
+#game-controls {
+    display: flex;
+    justify-content: space-between;
+    width: 96%;
+    height: var(--game-controls-height);
+    gap: 4%;
+}
+
+#game-controls button {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.5em 1em;
+    font-size: var(--font-size-medium);
+}
+
+/* Add score-display container if it's used in HTML */
+#score-display {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3%;
+}
+
+/* Ensure SVG elements display correctly */
 svg {
-    display: block; 
+    display: block;
     max-width: 100%;
     height: auto;
 }
 
-/* Keep existing button styling but update sizing */
-.button-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 0.7em;
-}
-
-.button-icon svg {
-    width: 1em;
-    height: 1em;
-    display: block;
-    margin: 0;
-    stroke-width: 0.5;
-}
-
-/* Regular button styling */
-button {
-    background-color: var(--primary-color);
-    color: var(--text-color);
-    border: none;
-    border-radius: 6px;
-    padding: 0.6em 1.2em;
-    cursor: pointer;
-    font-size: var(--font-size-medium);
-    font-weight: 600;
-    transition: background-color 0.3s, transform 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-button:hover {
-    background-color: #3a5eff;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-button:active {
-    transform: translateY(1px);
-    box-shadow: none;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    :root {
-        --navbar-height: 8vh; /* Slightly smaller navbar on mobile */
-        --score-chart-height: 12vh; /* Smaller chart height */
-        --game-controls-height: 7vh; /* Smaller controls */
-        --board-group-height: 65vh; /* More height for board on mobile */
-        --content-padding: 1vh;
-        --elements-gap: 1vh;
-    }
-    
-    .board-group {
-        width: 95%;
-        height: var(--board-group-height);
-    }
-    
-    #board-container {
-        width: 100%;
-        height: calc(var(--board-group-height) - 3.5vh); /* Height minus space for scores */
-    }
-    
-    #game-controls {
-        gap: 1.5vw;
-    }
-    
-    #player-scores {
-        font-size: var(--font-size-small);
-    }
-    
-    #score-breakdown {
-        font-size: var(--font-size-xs);
-    }
-}
-
-/* Very short screens */
-@media (max-height: 500px) {
-    :root {
-        --navbar-height: 12vw; /* Use viewport width for height on very short screens */
-        --score-chart-height: 20vw;
-        --game-controls-height: 12vw;
-        --board-group-height: 50vh; /* Adjusted for very short screens */
-        --elements-gap: 0.5vh;
-    }
-    
-    /* Stack items differently on short screens */
-    .game-content-wrapper {
-        gap: 0.5vh;
-    }
-    
-    #board-container {
-        height: calc(var(--board-group-height) - 2.5vh); /* Less space for scores */
-    }
-}
-
-/* Landscape mode - wider screens */
-@media (min-aspect-ratio: 4/3) {
-    :root {
-        --max-content-width: 80vh; /* Relative to height for landscape */
-    }
-}
-
-/* Dropdown styling for both desktop and mobile - keep some existing styles but update sizing */
-.player-dropdown, .scoring-dropdown {
-    position: relative;
-    display: inline-block;
-    background-color: var(--input-bg);
-    color: var(--text-color);
-    border-radius: 6px;
-    padding: 0.5em 0.8em;
-    cursor: pointer;
-    min-width: 8em;
-    flex: 1;
-}
-
-.player-dropdown select, .scoring-dropdown select {
-    border: none;
-    background: transparent;
-    width: 100%;
-    font-family: var(--font-main);
-    font-size: var(--font-size-small);
-    cursor: pointer;
-    outline: none;
-    padding: 0.15em 0.3em;
-    color: var(--text-color);
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 0.2em center;
-    background-size: 1.5em;
-    padding-right: 1.8em;
-}
-
-/* Dropdown arrow styling for Firefox */
-.player-dropdown select::-ms-expand, 
-.scoring-dropdown select::-ms-expand {
-    display: none;
-}
-
-/* Style the dropdown menu options */
-.player-dropdown select option, 
-.scoring-dropdown select option {
-    background-color: #2a2a2a;
-    color: var(--text-color);
-    padding: 10px;
-}
-
-.player-dropdown select:focus, 
-.scoring-dropdown select:focus {
-    box-shadow: 0 0 0 1px var(--primary-color);
-}
-
-.scoring-dropdown option:disabled {
-    color: var(--secondary-color);
-    font-style: italic;
-}
-
-/* For Webkit browsers */
-@supports (-webkit-appearance: none) {
-    .player-dropdown select,
-    .scoring-dropdown select {
-        background-color: var(--input-bg);
-    }
-}
-
-/* Mobile Menu Styles */
+/* Mobile Menu - adjusted for game-container */
 .mobile-menu {
-    position: absolute; /* Changed from fixed to absolute */
-    top: var(--navbar-height); /* Still position below navbar */
+    position: absolute;
+    top: var(--navbar-height);
     left: 0;
     width: 100%;
-    height: calc(100vh - var(--navbar-height));
+    height: calc(100% - var(--navbar-height));
     background-color: #1a1a1a;
-    z-index: 99; /* Make sure it's below navbar */
+    z-index: 99;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     visibility: hidden;
     opacity: 0;
@@ -382,36 +249,31 @@ button:active {
     padding: 0;
     margin: 0;
     flex: 1;
-    overflow-y: auto; /* Allow scrolling if content is too tall */
+    overflow-y: auto;
 }
 
 .mobile-menu-item {
-    padding: 22px 15px; /* Increased vertical padding from 15px to 22px */
+    padding: 5%;
     display: flex;
     flex-direction: column;
-    gap: 15px; /* Increased gap from 10px to 15px */
-}
-
-.mobile-menu-item:last-child {
-    border-bottom: none;
-    margin-bottom: 10px; /* Add space after the last item */
+    gap: 3%;
 }
 
 .mobile-menu-item-label {
     font-weight: 500;
     color: var(--text-color);
-    margin-bottom: 5px; /* Add space below labels */
-    font-size: 1.1rem; /* Slightly larger font */
+    margin-bottom: 1%;
+    font-size: 1.8vh;
 }
 
 .mobile-menu select {
     width: 100%;
-    padding: 12px; /* Increased from 8px to 12px for better tap targets */
+    padding: 3%;
     background-color: var(--bg-color);
     color: var(--text-color);
     border: 1px solid var(--border-color);
-    border-radius: 6px; /* Increased from 4px */
-    font-size: 1rem; /* Slightly larger font */
+    border-radius: 6px;
+    font-size: 1.5vh;
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
@@ -422,45 +284,22 @@ button:active {
     padding-right: 40px;
 }
 
-.mobile-menu select::-ms-expand {
-    display: none;
-}
-
-.mobile-menu select option {
-    background-color: #2a2a2a;
-    color: var(--text-color);
-    padding: 12px;
-}
-
-.mobile-menu select:focus {
-    border-color: var(--primary-color);
-    outline: none;
-}
-
-/* Mobile menu close button */
 .mobile-menu-close {
-    padding: 25px 15px; /* Increased padding from 15px to 25px */
+    padding: 5%;
     display: flex;
     justify-content: center;
-    margin-top: auto; /* Push to bottom when there's space */
-    padding-top: 30px; /* Add more space above the border */
+    margin-top: auto;
 }
 
 .mobile-menu-close button {
-    width: 100%;
-    max-width: 200px;
+    width: 80%;
     background-color: transparent;
     border: 1px solid var(--primary-color);
     color: var(--primary-color);
-    padding: 10px;
+    padding: 3%;
     border-radius: 4px;
     font-weight: 500;
     transition: all 0.2s ease;
-}
-
-.mobile-menu-close button:hover {
-    background-color: rgba(108, 132, 255, 0.1);
-    transform: translateY(-1px);
 }
 
 /* Hamburger Menu Button */
@@ -494,194 +333,64 @@ button:active {
     transform: translateY(-8px) rotate(-45deg);
 }
 
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-    :root {
-        --navbar-height: 50px;
-        --score-chart-height: 100px; /* Adjust chart height for mobile */
-        --content-padding: 10px;
-    }
-    
-    body {
-        padding-top: 15px; /* Add padding to push content below URL bar */
-    }
-    
-    .navbar {
-        justify-content: space-between;
-        padding: 8px 15px;
-        background-color: var(--bg-color);
-        height: var(--navbar-height);
-    }
-    
-    .navbar-logo {
-        order: 1;
-    }
-    
-    .navbar-title {
-        font-size: 1.3rem;
-    }
-    
-    .hamburger-menu {
-        display: flex;
-        order: 3;
-    }
-    
-    .mobile-menu {
-        display: block;
-    }
-    
-    .mobile-controls {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        padding: 15px 0;
-        gap: 15px;
-    }
-    
-    /* Mobile menu styling for controls */
-    .mobile-menu .control-group {
-        flex-direction: column;
-        width: 100%;
-        gap: 15px;
-    }
-    
-    .mobile-menu .player-dropdown, 
-    .mobile-menu .scoring-dropdown {
-        width: 100%;
-        margin-bottom: 10px;
-    }
-    
-    #game {
-        padding: var(--content-padding);
-    }
-    
-    .game-content-wrapper {
-        gap: 8px; /* Adjust gap for mobile */
-        justify-content: flex-start; /* Align top on mobile */
-    }
-    
-    #widget {
-        display: none;
-    }
-    
-    #board-container {
-        width: 95%; /* Slightly smaller width on mobile */
-        margin: 5px auto;
-    }
-    
-    /* Adjust score text sizes */
-    #player-scores {
-        font-size: 1rem;
-        padding: 0 5px;
-    }
-    
-    #score-breakdown {
-        font-size: 0.85rem;
-        padding: 0 5px;
-        min-height: 16px;
-    }
-    
-    #score-chart-container {
-        margin: 3px 0;
-    }
-    
-    #game-controls {
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        margin: 10px auto;
-        width: 95%;
-        max-width: 450px;
-    }
-    
-    #game-controls button {
-        flex: 1;
-        min-width: 0;
-        max-width: 48%;
-        padding: 8px 5px;
-        font-size: 14px;
-        white-space: nowrap;
-        justify-content: center;
-    }
-    
-    /* Remove the overlay as it's not needed */
-    .mobile-menu-overlay {
-        display: none;
-    }
-    
-    /* Hide desktop-only elements if necessary */
-    .settings-dropdown {
-        display: none;
-    }
-    
-    .button-icon {
-        margin-right: 6px; /* Slightly less spacing on mobile but still more than original */
-    }
-    
-    .button-icon svg {
-        width: 14px;
-        height: 14px;
-        stroke-width: 0.5; /* Maintain bold appearance at smaller size */
-    }
+/* Button styling */
+.button-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.5em;
 }
 
-/* Example: Short screen adjustments */
-@media (max-height: 650px) {
-    :root {
-        --score-chart-height: 80px; /* Further reduce chart height */
-    }
-
-    .game-content-wrapper {
-        gap: 5px; /* Reduce gap */
-    }
-
-    #board-container {
-        margin: 5px auto;
-    }
-    
-    #player-scores {
-        font-size: 0.9rem;
-    }
-    
-    #score-breakdown {
-        font-size: 0.75rem;
-        min-height: 14px;
-    }
-    
-    #game-controls {
-        margin: 5px 0;
-        gap: 8px;
-    }
-
-    #game-controls button {
-        padding: 6px 10px;
-        font-size: 13px;
-    }
+.button-icon svg {
+    width: 1em;
+    height: 1em;
+    display: block;
+    margin: 0;
+    stroke-width: 0.5;
 }
 
-/* Add tooltip styles for better description display */
-[title] {
-    position: relative;
-    cursor: help;
+button {
+    background-color: var(--primary-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: 6px;
+    padding: 0.6em 1em;
+    cursor: pointer;
+    font-size: var(--font-size-medium);
+    font-weight: 600;
+    transition: background-color 0.3s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Game Settings Menu in Navbar */
+button:hover {
+    background-color: #3a5eff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+button:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
+
+/* Settings menu styling */
 .settings-dropdown {
     position: relative;
-    margin-right: 20px;
+    margin-right: 1rem;
 }
 
 .settings-toggle {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: transparent; /* Remove background color */
+    background-color: transparent;
     border: none;
-    color: var(--primary-color); /* Match navbar title color */
-    padding: 8px 12px;
-    font-size: 14px;
-    border-radius: 6px;
+    color: var(--primary-color);
+    padding: 0.4rem 0.6rem;
+    font-size: 1.7vh;
+    border-radius: 0.375rem;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -694,40 +403,14 @@ button:active {
 }
 
 .settings-toggle .settings-icon svg {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem;
+    height: 1.125rem;
     display: block;
     margin: 0;
 }
 
-/* Media query for larger screens to show only the gear icon */
-@media (min-width: 769px) {
-    .settings-toggle {
-        padding: 8px;
-        border-radius: 50%;
-        width: 36px;
-        height: 36px;
-        justify-content: center;
-        background-color: transparent; /* Ensure transparent background on larger screens too */
-    }
-    
-    .settings-toggle .settings-icon {
-        margin-right: 0;
-    }
-    
-    .settings-toggle .settings-icon svg {
-        width: 20px;
-        height: 20px;
-    }
-    
-    .settings-toggle span:not(.settings-icon) {
-        display: none;
-    }
-}
-
-/* Hover styles for settings-toggle */
 .settings-toggle:hover {
-    background-color: rgba(255, 255, 255, 0.1); /* Subtle hover effect */
+    background-color: rgba(255, 255, 255, 0.1);
     color: var(--secondary-color);
 }
 
@@ -737,9 +420,9 @@ button:active {
     right: 0;
     background-color: var(--input-bg);
     border-radius: 6px;
-    padding: 15px;
-    margin-top: 5px;
-    min-width: 220px;
+    padding: 4%;
+    margin-top: 2%;
+    width: 200px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     display: none;
     z-index: 101;
@@ -751,7 +434,7 @@ button:active {
 }
 
 .settings-group {
-    margin-bottom: 12px;
+    margin-bottom: 4%;
 }
 
 .settings-group:last-child {
@@ -760,20 +443,20 @@ button:active {
 
 .settings-group label {
     display: block;
-    margin-bottom: 6px;
-    font-size: 14px;
+    margin-bottom: 2%;
+    font-size: 1.5vh;
     font-weight: 500;
     color: var(--text-color);
 }
 
 .settings-group select {
     width: 100%;
-    padding: 8px;
+    padding: 3%;
     border: none;
     background-color: var(--dark-color);
     color: var(--text-color);
     border-radius: 4px;
-    font-size: 14px;
+    font-size: 1.5vh;
     cursor: pointer;
     outline: none;
     -webkit-appearance: none;
@@ -786,259 +469,96 @@ button:active {
     padding-right: 32px;
 }
 
-/* Media query for larger screens - smaller buttons */
-@media (min-width: 1024px) {
-    #game-controls button {
-        padding: 8px 16px;
-        font-size: 14px;
-        max-width: 100px;
+/* Responsive adjustments for smaller phones */
+@media (max-height: 600px) {
+    :root {
+        --navbar-height: 8%;
+        --score-chart-height: 12%;
+        --game-controls-height: 8%;
+        --board-group-height: 65%;
+        --elements-gap: 0.5%;
+        
+        /* Adjust font sizes for smaller screens */
+        --font-size-large: 1.9vh;
+        --font-size-medium: 1.6vh;
+        --font-size-small: 1.4vh;
+        --font-size-xs: 1.1vh;
     }
     
-    button {
-        padding: 8px 16px;
-        font-size: 14px;
+    .game-content-wrapper {
+        padding: 1%;
     }
     
-    .button-icon {
-        margin-right: 8px; /* Slightly reduced spacing for smaller buttons but still more than before */
-    }
-    
-    .button-icon svg {
-        width: 14px;
-        height: 14px;
-        stroke-width: 0.5; /* Maintain bold appearance at smaller size */
-    }
-}
-
-/* Navbar styling with relative units */
-.navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    position: relative;
-    padding: 0 3vw;
-    z-index: 100;
-    background-color: var(--bg-color);
-    box-sizing: border-box;
-    transition: border-color 0.3s ease;
-    border-bottom: 1px solid var(--border-color);
-    height: var(--navbar-height);
-}
-
-.navbar.scrolled {
-    border-bottom: 1px solid var(--border-color);
-}
-
-.navbar-logo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.navbar-logo img {
-    width: 2rem;
-    height: 2rem;
-}
-
-.navbar-title {
-    color: var(--primary-color);
-    font-weight: 600;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    letter-spacing: 0.03em;
-    font-size: 1.5rem;
-    margin: 0;
-}
-
-/* Update mobile media query with better relative values */
-@media (max-width: 768px) {
-    body {
-        padding-top: 1vh; /* Convert to relative unit */
-    }
-    
-    .navbar {
-        padding: 0 2vw;
+    #board-container {
+        height: calc(var(--board-group-height) - 8%);
     }
     
     .navbar-logo img {
-        width: 1.75rem;
-        height: 1.75rem;
-    }
-    
-    .navbar-title {
-        font-size: 1.2rem;
-    }
-    
-    .hamburger-menu {
-        display: flex;
-        order: 3;
-        width: 1.5rem; /* Relative sizing for hamburger */
-        height: 1.1rem;
-    }
-    
-    .hamburger-menu span {
-        height: 0.125rem;
-    }
-    
-    .mobile-menu {
-        top: var(--navbar-height);
-        height: calc(100vh - var(--navbar-height));
-    }
-    
-    /* Mobile menu items with relative units */
-    .mobile-menu-item {
-        padding: 1.5rem 1rem;
-        gap: 1rem;
-    }
-    
-    .mobile-menu-item-label {
-        font-size: 1.1rem;
-        margin-bottom: 0.3rem;
-    }
-    
-    .mobile-menu select {
-        padding: 0.75rem;
-        font-size: 1rem;
-        border-radius: 0.4rem;
-        padding-right: 2.5rem;
-        background-position: right 0.75rem center;
-    }
-    
-    .mobile-menu-close {
-        padding: 1.5rem 1rem;
-    }
-    
-    .mobile-menu-close button {
-        padding: 0.75rem;
-        border-radius: 0.4rem;
-    }
-    
-    /* Game component styling for mobile */
-    .game-content-wrapper {
-        justify-content: flex-start;
-    }
-    
-    #widget {
-        display: none;
-    }
-}
-
-/* Fix hover styling for dropdowns */
-.player-dropdown select:hover, 
-.scoring-dropdown select:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-/* Settings menu with relative units */
-.settings-dropdown {
-    position: relative;
-    margin-right: 1.25rem;
-}
-
-.settings-toggle {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    border-radius: 0.375rem;
-}
-
-.settings-toggle .settings-icon svg {
-    width: 1.125rem;
-    height: 1.125rem;
-}
-
-@media (min-width: 769px) {
-    .settings-toggle {
-        padding: 0.5rem;
-        border-radius: 50%;
-        width: 2.25rem;
-        height: 2.25rem;
-    }
-    
-    .settings-toggle .settings-icon svg {
         width: 1.25rem;
         height: 1.25rem;
     }
+    
+    .navbar-title {
+        font-size: 2.1vh;
+    }
 }
 
-.settings-menu {
-    border-radius: 0.375rem;
-    padding: 1rem;
-    margin-top: 0.3rem;
-    min-width: 14rem;
-    box-shadow: 0 0.25rem 0.625rem rgba(0, 0, 0, 0.3);
+/* Dropdown styling for both desktop and mobile */
+.player-dropdown, .scoring-dropdown {
+    position: relative;
+    display: inline-block;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border-radius: 6px;
+    padding: 0.5em 0.8em;
+    cursor: pointer;
+    min-width: 8em;
+    flex: 1;
 }
 
-.settings-group {
-    margin-bottom: 0.75rem;
+.player-dropdown select, .scoring-dropdown select {
+    border: none;
+    background: transparent;
+    width: 100%;
+    font-family: var(--font-main);
+    font-size: var(--font-size-small);
+    cursor: pointer;
+    outline: none;
+    padding: 0.15em 0.3em;
+    color: var(--text-color);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0.2em center;
+    background-size: 1.5em;
+    padding-right: 1.8em;
 }
 
-.settings-group label {
-    margin-bottom: 0.375rem;
-    font-size: 0.875rem;
-}
-
-/* Landscape orientation - two-column layout potential */
-@media (min-aspect-ratio: 3/2) {
+/* Mobile specific settings */
+@media (max-width: 480px) {
+    .hamburger-menu {
+        display: flex;
+    }
+    
+    .settings-dropdown {
+        display: none;
+    }
+    
+    .game-container {
+        height: 100vh;
+        max-height: 100vh;
+        /* On very small devices, prioritize height over aspect ratio */
+        aspect-ratio: auto;
+    }
+    
+    /* Adjust font sizes for mobile */
     :root {
-        --max-content-width: 85vh; /* Relative to height for landscape */
-        --board-group-height: 70vh; /* More height in landscape orientation */
-    }
-    
-    /* Could eventually implement two-column layout here */
-    /* For now, just ensure consistent sizing */
-    .board-group {
-        max-width: var(--board-group-height); /* Keep square-ish aspect ratio */
-    }
-    
-    #board-container {
-        max-width: var(--board-group-height);
-        height: calc(var(--board-group-height) - 3vh); /* Height minus space for scores */
-    }
-}
-
-/* Large screens get proportionally sized elements */
-@media (min-width: 1200px) and (min-height: 800px) {
-    :root {
-        --font-size-medium: 1.1rem;
-        --font-size-large: 1.2rem;
-    }
-    
-    .board-group {
-        max-width: var(--board-group-height);
-    }
-    
-    #board-container {
-        border-radius: 4px;
-    }
-    
-    #score-chart-container {
-        max-width: calc(var(--max-content-width) * 0.9);
-    }
-}
-
-/* Remove some old mobile-specific rules that are no longer needed */
-@media (max-width: 768px) {
-    /* Keep existing root variable adjustments */
-    
-    body {
-        padding-top: 1vh;
-    }
-    
-    /* Remove old board-ui-group adjustments as they're replaced by board-group */
-    
-    /* Use viewport-relative units for spacing */
-    #player-scores {
-        padding: 0 3vw;
-    }
-    
-    #score-breakdown {
-        padding: 0 3vw;
-    }
-    
-    /* Adjust game controls for better mobile display */
-    #game-controls {
-        width: 95%;
-        max-width: calc(var(--board-group-height) * 0.9);
+        --font-size-large: 2.4vh;
+        --font-size-medium: 2vh;
+        --font-size-small: 1.7vh;
+        --font-size-xs: 1.4vh;
     }
 }
 
