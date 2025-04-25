@@ -11,7 +11,6 @@
  * - Adapts scoring based on the current game configuration
  * 
  * Revision Log:
- * - Updated header comment structure
  * 
  * Note: This revision log should be updated whenever this file is modified.
  */

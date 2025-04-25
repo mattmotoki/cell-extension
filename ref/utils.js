@@ -76,7 +76,6 @@ export function getScoringDescription(mechanism) {
     const descriptions = {
         'cell-connection': 'Product of the number of directed edges (connections)',
         'cell-multiplication': 'Product of the size (number of cells) of the connected components',
-        'cell-multiplication': 'Product of the size (number of cells) of the connected components',
         'cell-extension': 'Product of the number of undirected edges (extensions)',
     };
     

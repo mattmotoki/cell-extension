@@ -10,7 +10,6 @@
  * - Serves as the public API for the board logic module
  * 
  * Revision Log:
- * - Updated header comment structure
  * 
  * Note: This revision log should be updated whenever this file is modified.
  */

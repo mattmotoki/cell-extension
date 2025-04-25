@@ -12,7 +12,6 @@
  * - Works with D3.js for SVG manipulation and rendering
  * 
  * Revision Log:
- * - Updated header comment structure
  * - Added logger implementation for verbosity control
  * 
  * Note: This revision log should be updated whenever this file is modified.
@@ -223,9 +222,8 @@ export class BoardRenderer {
             .attr("y1", y1)
             .attr("x2", x2)
             .attr("y2", y2)
-            .attr("stroke", this.playerColors[playerIndex])
-            .attr("stroke-width", this.cellSize * 0.1)
-            .attr("opacity", 0.6);
+            .attr("stroke", "black")
+            .attr("stroke-width", this.cellSize * 0.01);
     }
 
     drawConnectionAnnotation(xMid, yMid, count, playerIndex) {

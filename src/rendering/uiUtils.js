@@ -18,7 +18,6 @@
  * - Accesses DOM elements to read user settings
  * 
  * Revision Log:
- * - Updated header comment structure
  * 
  * Note: This revision log should be updated whenever this file is modified.
  */

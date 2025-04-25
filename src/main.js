@@ -12,7 +12,6 @@
  * - Imports UI utility functions from ./rendering/uiUtils.js
  * 
  * Revision Log:
- * - Updated header comment structure
  * - Added logger implementation for verbosity control
  * 
  * Note: This revision log should be updated whenever this file is modified.

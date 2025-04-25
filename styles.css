@@ -10,7 +10,7 @@
     --card-bg: rgba(40, 40, 40, 0.8);
     
     /* Dark Mode Colors */
-    --bg-color: #121212;
+    --bg-color: #444444; /*  121212 */
     --text-color: #f0f0f0;
     --board-bg: #1e1e1e;
     --input-bg: #2a2a2a;
@@ -18,11 +18,11 @@
     --navbar-bg: rgba(30, 30, 30, 0.9);
     
     /* Layout Variables - Using relative units */
-    --navbar-height: 10%;
-    --score-chart-height: 20%;
-    --game-controls-height: 5%;
-    --board-group-height: 60%;
-    --scores-ui-height: 10%; /* Combined height for scores and breakdown UI */
+    --navbar-height: 8vh;
+    --score-chart-height: 26vh;
+    --game-controls-height: 10vh;
+    --board-height: 50vh;
+    --scores-ui-height: 6vh;
     
     /* Font sizes in viewport height units - directly relative to screen size */
     --font-size-large: 2.2vh;
@@ -107,18 +107,28 @@ body {
     height: calc(100% - var(--navbar-height));
     box-sizing: border-box;
     overflow: hidden;
-    padding: 1%; /* Small overall padding */
-    gap: 1%; /* Consistent small gap between main sections */
 }
 
 /* Board group - main content area */
 .board-group {
     width: 100%;
-    height: var(--board-group-height);
+    height: calc(var(--board-height) + var(--scores-ui-height));
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.2%; /* Minimal gap between score elements and board */
+}
+
+/* Scores container - groups player scores and breakdown */
+#scores-container {
+    width: 100%;
+    height: var(--scores-ui-height);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* Aligns content to the top */
+    padding: 1.5% 3%; /* Vertical and horizontal padding */
+    box-sizing: border-box;
 }
 
 /* Score display area */
@@ -127,10 +137,9 @@ body {
     justify-content: space-between;
     width: 100%;
     font-size: var(--font-size-medium);
-    padding: 0 1%;
+    
     box-sizing: border-box;
     font-weight: 500;
-    height: calc(var(--scores-ui-height) * 0.6); /* 60% of the scores UI height */
 }
 
 #score-breakdown {
@@ -138,9 +147,8 @@ body {
     justify-content: space-between;
     width: 100%;
     font-size: var(--font-size-small);
-    padding: 0 1%;
+    
     box-sizing: border-box;
-    height: calc(var(--scores-ui-height) * 0.4); /* 40% of the scores UI height */
 }
 
 /* Board container - full width, fills remaining height in board-group */
@@ -169,6 +177,8 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 0 5%; /* Add some horizontal padding */
+    box-sizing: border-box;
 }
 
 #score-chart {
@@ -181,16 +191,16 @@ body {
 #game-controls {
     display: flex;
     justify-content: space-between;
-    width: 100%; /* Full width */
+    width: 100%; 
     height: var(--game-controls-height);
-    gap: 5%;
+    gap: 10%;
 }
 
 #game-controls button {
     flex: 1 1 auto;
     min-width: 0;
-    padding: 0.5em 1em;
     font-size: var(--font-size-medium);
+    margin: 5% 5%;
 }
 
 /* Add score-display container if it's used in HTML */

@@ -25,7 +25,6 @@
  * - Works with various scoring mechanisms defined in the game
  * 
  * Revision Log:
- * - Updated header comment structure
  * 
  * Note: This revision log should be updated whenever this file is modified.
  */
@@ -223,15 +222,16 @@ export class ScoreChartRenderer {
 
         // Use relative units for flexibility
         const container = d3.select("#score-chart-container");
-        const svgWidth = container.node() ? container.node().getBoundingClientRect().width : 100;
-        const svgHeight = svgWidth * 0.25; // Maintain aspect ratio
+        const containerRect = container.node() ? container.node().getBoundingClientRect() : { width: 100, height: 25 };
+        const svgWidth = containerRect.width;
+        const svgHeight = containerRect.height; // Use the full container height instead of width-based calculation
         
-        // Increase margins to make room for labels, especially on the left and bottom
+        // Adjust margins to be proportional to the actual container size
         let margin = {
-            top: svgHeight * 0.2,
+            top: svgHeight * 0.15,
             right: svgWidth * 0.05,
-            bottom: svgHeight * 0.25, 
-            left: svgWidth * 0.1     
+            bottom: svgHeight * 0.1, 
+            left: svgWidth * 0.05
         };
         let chartWidth = svgWidth - margin.left - margin.right;
         let chartHeight = svgHeight - margin.top - margin.bottom;
@@ -258,7 +258,9 @@ export class ScoreChartRenderer {
         // Create a chart with viewBox for responsive scaling
         d3.select("#score-chart")
             .attr("viewBox", `0 0 ${svgWidth} ${svgHeight}`)
-            .attr("preserveAspectRatio", "xMidYMid meet");
+            .attr("preserveAspectRatio", "xMidYMid meet")
+            .attr("width", "100%") // Ensure width is 100%
+            .attr("height", "100%"); // Ensure height is 100%
             
         // Main SVG group with proper margins
         this.svg = d3.select("#score-chart")
@@ -268,11 +270,11 @@ export class ScoreChartRenderer {
         // Line paths
         this.svg.append("path")
             .attr("class", "line line1")
-            .style("stroke-width", "1.2");  // Keep this same thickness
+            .style("stroke-width", "2");  // Keep this same thickness
 
         this.svg.append("path")
             .attr("class", "line line2")
-            .style("stroke-width", "1.2");  // Keep this same thickness
+            .style("stroke-width", "2");  // Keep this same thickness
 
         // Create a simplified y-axis with improved positioning
         this.yAxis = this.svg.append("g")
@@ -294,11 +296,11 @@ export class ScoreChartRenderer {
 
         // Style the axis lines to match score lines but make them more visible
         this.svg.selectAll(".axis path, .axis line")
-            .style("stroke-width", "1.2")  // Match line width
+            .style("stroke-width", "2")  // Match line width
             .style("stroke", "#aaaaaa");
 
         this.svg.selectAll(".axis text")
-            .style("font-size", "14")
+            .style("font-size", "15")
             .style("fill", "#ffffff");  // White for better visibility
 
         this.reset();
@@ -325,11 +327,13 @@ export class ScoreChartRenderer {
         // Update line paths using the passed history
         this.svg.selectAll(".line1")
             .attr("stroke", this.playerColors[0])
+            .attr("fill", "none")
             .datum(history1)
             .attr("d", this.line1);
 
         this.svg.selectAll(".line2")
             .attr("stroke", this.playerColors[1])
+            .attr("fill", "none")
             .datum(history2)
             .attr("d", this.line2);
 
@@ -356,24 +360,14 @@ export class ScoreChartRenderer {
             .attr("x2", 0)
             .attr("y2", this.yScale.range()[0])
             .style("stroke", "#aaaaaa")
-            .style("stroke-width", "1.2");  // Match line width
-            
-        // Add tick mark at the top (max value)
-        this.yAxis.append("line")
-            .attr("x1", -10)  
-            .attr("y1", this.yScale(this.safeLogValue(maxScore)))
-            .attr("x2", 0)
-            .attr("y2", this.yScale(this.safeLogValue(maxScore)))
-            .style("stroke", "#aaaaaa")
-            .style("stroke-width", "1.2");  // Match line width
-            
+            .style("stroke-width", "2");  // Match line width
+                        
         // Add only the max score label with improved visibility
         this.yAxis.append("text")
-            .attr("x", -15)
-            .attr("y", this.yScale(this.safeLogValue(maxScore)))
-            .attr("dy", "0.3em")
-            .style("text-anchor", "end")
-            .style("font-size", "14")
+            .attr("x", 10)
+            .attr("y", 10)
+            .style("text-anchor", "start")  // Left align text
+            .style("font-size", "15")
             .style("font-weight", "bold")
             .style("fill", maxScoreColor)
             .text(maxScore);
@@ -383,7 +377,7 @@ export class ScoreChartRenderer {
         this.xAxis.append("line")
             .attr("x1", 0).attr("y1", 0)
             .attr("x2", this.xScale.range()[1]).attr("y2", 0)
-            .style("stroke", "#aaaaaa").style("stroke-width", "1.2");  // Match line width
+            .style("stroke", "#aaaaaa").style("stroke-width", "2");  // Match line width
             
         this.xAxisLabels.selectAll("*").remove();
         
@@ -393,23 +387,13 @@ export class ScoreChartRenderer {
                 
             const xPos = this.xScale.range()[1];
 
-            // Add a translucent background rectangle for better visibility
-            this.xAxisLabels.append("rect")
-                .attr("x", xPos+30)  
-                .attr("y", 5)
-                .attr("width", 30)  
-                .attr("height", 20)  
-                .attr("rx", 4).attr("ry", 4)  
-                .style("fill", "#121212")
-                .style("opacity", 0.8);  // Slightly translucent
-                
             // Add the round number label with improved visibility
             this.xAxisLabels.append("text")
                 .attr("x", xPos+15)
-                .attr("y", 5)  
+                .attr("y", -10)  
                 .attr("dy", "1em")
                 .attr("text-anchor", "middle")
-                .attr("font-size", "14")  
+                .attr("font-size", "15")  
                 .attr("font-weight", "bold")
                 .attr("fill", "#ffffff")
                 .text(roundNumber);  // Show round number instead of move count
@@ -429,14 +413,24 @@ export class ScoreChartRenderer {
         dots.attr("cx", (d, i) => this.xScale(i))
             .attr("cy", d => this.yScale(this.safeLogValue(d)))
             .attr("fill", color)
-            .attr("r", isCurrentPlayer ? 2.2 : 1.8);  // Larger for current player
+            .attr("r", (d, i) => {
+                // Determine if this point was created on this player's turn
+                // For player 0, they play on even-indexed moves (0, 2, 4...)
+                // For player 1, they play on odd-indexed moves (1, 3, 5...)
+                const isPlayerTurn = (player === 0 && i % 2 === 0) || (player === 1 && i % 2 === 1);
+                return isPlayerTurn ? 3 : 1; // Larger when it was this player's turn
+            });
             
         // Add new markers for new data points
         dots.enter().append("circle")
             .attr("class", `dot${player}`)
             .attr("cx", (d, i) => this.xScale(i))
             .attr("cy", d => this.yScale(this.safeLogValue(d)))
-            .attr("r", isCurrentPlayer ? 2.2 : 1.8)  // Larger for current player
+            .attr("r", (d, i) => {
+                // Same logic for determining radius size
+                const isPlayerTurn = (player === 0 && i % 2 === 0) || (player === 1 && i % 2 === 1);
+                return isPlayerTurn ? 3 : 1; // Larger when it was this player's turn
+            })
             .attr("fill", color);
     }
 
@@ -472,7 +466,7 @@ export class ScoreChartRenderer {
             .attr("x2", 0)
             .attr("y2", this.yScale.range()[0])
             .style("stroke", "#aaaaaa")
-            .style("stroke-width", "1.2");  // Match line width
+            .style("stroke-width", "2");  // Match line width
             
         // Add tick mark at the top for max value (1 initially)
         this.yAxis.append("line")
@@ -481,15 +475,14 @@ export class ScoreChartRenderer {
             .attr("x2", 0)
             .attr("y2", this.yScale(this.safeLogValue(1)))
             .style("stroke", "#aaaaaa")
-            .style("stroke-width", "1.2");  // Match line width
+            .style("stroke-width", "2");  // Match line width
             
         // Add the initial label for the y-axis with improved visibility
         this.yAxis.append("text")
-            .attr("x", -10)  // Move further left for better visibility
-            .attr("y", this.yScale(this.safeLogValue(1)))
-            .attr("dy", "0.3em")
-            .style("text-anchor", "end")
-            .style("font-size", "14")
+            .attr("x", 5)  // Slightly to the right of the y-axis
+            .attr("y", -10)  // Above the y-axis
+            .style("text-anchor", "start")  // Left align text
+            .style("font-size", "15")
             .style("font-weight", "bold")  // Added bold
             .style("fill", "#ffffff")  // Brighter color for better visibility
             .text("1");
@@ -501,26 +494,17 @@ export class ScoreChartRenderer {
             .attr("x2", this.xScale.range()[1])
             .attr("y2", 0)
             .style("stroke", "#aaaaaa")
-            .style("stroke-width", "1.2");  // Match line width
+            .style("stroke-width", "2");  // Match line width
                        
         // Clear the labels overlay as well
         this.xAxisLabels.selectAll("*").remove();
             
-        // Add initial '1' label on x-axis with background in the overlay with improved visibility
-        this.xAxisLabels.append("rect")
-            .attr("x", this.xScale(1)+30)  
-            .attr("y", 5)
-            .attr("width", 30)  
-            .attr("height", 20)  
-            .attr("rx", 4).attr("ry", 4)  
-            .style("fill", "#121212")
-            .style("opacity", 0.8);
-        
+        // Add initial '1' label on x-axis
         this.xAxisLabels.append("text")
             .attr("x", this.xScale(1)+15)
-            .attr("y", 5)  
+            .attr("y", -10)  
             .attr("text-anchor", "middle")
-            .attr("font-size", "14")  
+            .attr("font-size", "15")  
             .attr("font-weight", "bold")
             .attr("fill", "#ffffff")
             .text("1");
