@@ -103,10 +103,10 @@ export function syncDropdowns(elementId, value) {
 }
 
 export function closeMobileMenu() {
-    const mobileMenu = document.getElementById('mobile-menu');
-    const hamburgerBtn = document.getElementById('hamburger-menu');
-    if (mobileMenu && hamburgerBtn) { 
-        mobileMenu.classList.remove('active');
-        hamburgerBtn.classList.remove('active');
+    const gameSettingsPanel = document.getElementById('game-settings-panel');
+    const gameSettingsMenu = document.getElementById('game-settings-menu');
+    if (gameSettingsPanel && gameSettingsMenu) { 
+        gameSettingsPanel.classList.remove('active');
+        gameSettingsMenu.classList.remove('active');
     }
 } 

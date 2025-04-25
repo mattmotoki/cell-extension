@@ -23,6 +23,11 @@ export class BoardRenderer {
         // Reference to the main SVG element
         this.svg = d3.select("#board");
         
+        // Set the viewBox to scale the coordinate system to the SVG element
+        // The coordinate system goes from (0,0) to (gridSize, gridSize)
+        this.svg.attr("viewBox", `0 0 ${this.gridSize} ${this.gridSize}`)
+                .attr("preserveAspectRatio", "xMidYMid meet"); // Ensure aspect ratio is maintained and centered
+        
         // D3 groups for organizing elements
         this.gridGroup = this.svg.append("g").attr("id", "grid-group");
         this.cellsGroup = this.svg.append("g").attr("id", "cells-group");

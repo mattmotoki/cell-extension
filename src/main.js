@@ -26,7 +26,7 @@ const cellDimension = gridDimension / cellsPerRow; // Cell size in logical units
 const playerColors = ["#00FF00", "#1E90FF"];
 const gridWidth = cellsPerRow; // Logical grid width for GameBoardLogic
 const gridHeight = cellsPerRow; // Logical grid height for GameBoardLogic
-const aiMoveDelay = 500; // ms delay before AI calculates move
+const aiMoveDelay = 0; // ms delay before AI calculates move
 const gameOverMessageDelayAI = 1350; // ms delay for game over message in AI mode
 const gameOverMessageDelayUser = 1000; // ms delay for game over message in User mode
 
