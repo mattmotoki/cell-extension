@@ -19,13 +19,17 @@
  * 
  * Revision Log:
  * - Updated header comment structure
+ * - Added logger implementation for verbosity control
  * 
  * Note: This revision log should be updated whenever this file is modified.
  */
 
 import { GameBoardLogic } from "./board/index.js"; // Correct relative path
 import { AIPlayer } from "./ai/AIPlayer.js"; // Correct relative path
-// import statement for scoring and utils removed as they are now passed in via constructor/methods
+import logger from '../utils/logger.js';
+
+// Create a module-specific logger
+const log = logger.createLogger('Game');
 
 export class Game {
 
@@ -78,13 +82,14 @@ export class Game {
             scoreHistory1: [...this.scoreHistory1],
             scoreHistory2: [...this.scoreHistory2],
             scoringMechanism: this.scoringMechanism, // Renderer might need this for context
+            historyLength: this.history.length,
             // Add any other relevant state needed by the renderer
         };
     }
 
 
     initializeGame() {
-        console.log("Initializing Game Logic...");
+        log.info("Initializing Game Logic...");
         // Reset logic 
         this.gameBoardLogic.reset();
         // REMOVED renderer resets (boardRenderer, scoreBreakdown, scoreChartRenderer)
@@ -103,7 +108,7 @@ export class Game {
         this.storeInitialState();
         
         this.stateChanged = true; // Indicate state change
-        console.log("Game Logic Initialized. Player:", this.currentPlayer + 1);
+        log.info("Game Logic Initialized. Player:", this.currentPlayer + 1);
 
         // // Trigger AI move if it starts - LOGIC ONLY, Game loop/main will handle timeout
         // if (getPlayerMode() === "ai" && this.currentPlayer === 1) {
@@ -121,9 +126,9 @@ export class Game {
 
     // Renamed from handleCellClick, receives grid coordinates
     handlePlayerMove(gridX, gridY) { // Renamed for clarity
-        console.log(`Logic attempting player move at: (${gridX}, ${gridY})`);
+        log.debug(`Logic attempting player move at: (${gridX}, ${gridY})`);
         if (this.progress !== "playing") {
-            console.log("Ignoring move: Game not in playing state.");
+            log.debug("Ignoring move: Game not in playing state.");
             return false; // Indicate move failed
         }
         
@@ -142,7 +147,7 @@ export class Game {
         const placed = this.gameBoardLogic.placeCell(gridX, gridY, this.currentPlayer);
 
         if (placed) {
-            console.log("Cell placed successfully by logic.");
+            log.debug("Cell placed successfully by logic.");
             this.stateChanged = true; // Indicate state change
             // 1. Update score
             this.updateScore();
@@ -166,12 +171,12 @@ export class Game {
                 //     this.progress = "waiting"; // Set progress to waiting for AI
                 //     console.log("Player move complete. AI needs to move.");
                 // } else {
-                     console.log(`Logic: Player ${this.currentPlayer + 1}'s turn.`);
+                     log.debug(`Logic: Player ${this.currentPlayer + 1}'s turn.`);
                 // }
             }
             return true; // Indicate move succeeded
         } else {
-            console.log("Invalid move attempt.");
+            log.debug("Invalid move attempt.");
             // If move was invalid, remove the state we optimistically stored
             this.history.pop();
             return false; // Indicate move failed
@@ -181,10 +186,10 @@ export class Game {
     // Method for the game loop to trigger the AI calculation
     requestAIMove() {
          if (this.progress !== "waiting") { // Should be called only when waiting for AI
-             console.warn("requestAIMove called when not waiting.");
+             log.warn("requestAIMove called when not waiting.");
              return null; // Indicate no move needed or error
          }
-         console.log("AI starting move calculation...");
+         log.info("AI starting move calculation...");
          // this.scoringMechanism = getScoringMechanism(); // Ensure mechanism is current - NO, use internal state
 
          // Store state *before* AI calculates and makes its move
@@ -195,24 +200,24 @@ export class Game {
          let move = this.opponent.getMove(this.gameBoardLogic, this.scoringMechanism); // Pass logic board
 
          if (move === null) {
-             console.warn("AI couldn't find a valid move.");
+             log.warn("AI couldn't find a valid move.");
              // If AI cannot move, check if game should end or if it's a bug
              if (this.isGameOver()) {
                  this.endGame();
              } else {
-                 console.error("AI failed to move, but game not over.");
+                 log.error("AI failed to move, but game not over.");
                  this.progress = "playing"; // Let human play again? Or flag error?
                  this.stateChanged = true;
              }
              return null; // Indicate AI failed or game ended
          }
 
-         console.log(`AI intends to move to: (${move.gridX}, ${move.gridY})`);
+         log.debug(`AI intends to move to: (${move.gridX}, ${move.gridY})`);
          // Attempt to place the cell using game logic
          const placed = this.gameBoardLogic.placeCell(move.gridX, move.gridY, this.currentPlayer); // AI is currentPlayer (1)
 
          if (placed) {
-             console.log("AI move placed successfully by logic.");
+             log.debug("AI move placed successfully by logic.");
              this.stateChanged = true;
              // 1. Update score
              this.updateScore();
@@ -233,12 +238,12 @@ export class Game {
              if (this.isGameOver()) {
                  this.endGame();
              } else {
-                 console.log(`AI move complete. Player ${this.currentPlayer + 1}'s turn.`);
+                 log.debug(`AI move complete. Player ${this.currentPlayer + 1}'s turn.`);
              }
              // Return the move AI made for potential rendering feedback
              return move; 
          } else {
-             console.error("AI attempted invalid move! Logic prevented placement.", move);
+             log.error("AI attempted invalid move! Logic prevented placement.", move);
              // If AI move was invalid according to logic, remove the stored state
              this.history.pop();
              this.progress = "playing"; // Allow player to try again or debug?
@@ -252,11 +257,11 @@ export class Game {
 
     // Example fallback if AI fails - now SYNCHRONOUS
     triggerRandomAIMove() {
-        console.warn("Attempting random fallback move for AI...");
+        log.warn("Attempting random fallback move for AI...");
         const available = this.gameBoardLogic.getAvailableCells();
         if (available.length > 0) {
              const randomMove = available[Math.floor(Math.random() * available.length)];
-             console.log(`AI fallback: trying random move at (${randomMove.gridX}, ${randomMove.gridY})`);
+             log.debug(`AI fallback: trying random move at (${randomMove.gridX}, ${randomMove.gridY})`);
              // Re-attempt the move sequence with the random choice
              this.storeState(); // Store before this attempt
              const placed = this.gameBoardLogic.placeCell(randomMove.gridX, randomMove.gridY, this.currentPlayer);
@@ -269,10 +274,10 @@ export class Game {
                  this.stateChanged = true;
                  // REMOVED UI updates
                  if (this.isGameOver()) this.endGame();
-                 else console.log(`AI fallback move complete. Player ${this.currentPlayer + 1}'s turn.`);
+                 else log.debug(`AI fallback move complete. Player ${this.currentPlayer + 1}'s turn.`);
                  return randomMove; // Return the move made
              } else {
-                 console.error("Fallback random AI move also failed!");
+                 log.error("Fallback random AI move also failed!");
                  this.history.pop(); // Remove the state stored for the fallback
                  this.progress = "playing"; // Give up for now
                  this.stateChanged = true; 
@@ -280,7 +285,7 @@ export class Game {
              }
              // REMOVED setTimeout
         } else {
-            console.log("No available cells for fallback AI move.");
+            log.debug("No available cells for fallback AI move.");
              this.progress = "playing"; // No moves left, should be game over soon
              this.stateChanged = true; 
              return null; // Indicate no move possible
@@ -295,7 +300,7 @@ export class Game {
         // Calculate scores using the logic class
         this.scores[0] = this.gameBoardLogic.calculateScore(0, mechanism);
         this.scores[1] = this.gameBoardLogic.calculateScore(1, mechanism);
-        console.log(`Logic Scores updated (${mechanism}): P1=${this.scores[0]}, P2=${this.scores[1]}`);
+        log.debug(`Logic Scores updated (${mechanism}): P1=${this.scores[0]}, P2=${this.scores[1]}`);
         this.stateChanged = true; 
     }
 
@@ -304,13 +309,13 @@ export class Game {
         const availableCellsCount = this.gameBoardLogic.getAvailableCells().length;
         const gameOver = availableCellsCount < 1;
         if (gameOver) {
-            console.log("Game Over condition met.");
+            log.debug("Game Over condition met.");
         }
         return gameOver;
     }
 
     endGame() {
-        console.log("Ending game logic...");
+        log.info("Ending game logic...");
         this.progress = "over";
         this.stateChanged = true; 
         // REMOVED UI updates (board, scores, chart, winner message)
@@ -330,7 +335,7 @@ export class Game {
             lastAction: "Initial game state",
             timestamp: new Date().toISOString()
         };
-        console.log("Storing initial game state");
+        log.debug("Storing initial game state");
         this.history = [state];
         // REMOVED UI updates (disable undo button)
     }
@@ -349,25 +354,25 @@ export class Game {
             lastAction: `Before Player ${this.currentPlayer + 1}'s move`,
             timestamp: new Date().toISOString()
         };
-        console.log(`Storing state: ${state.lastAction}, history length will be ${this.history.length + 1}`);
+        log.trace(`Storing state: ${state.lastAction}, history length will be ${this.history.length + 1}`);
         this.history.push(state);
         this.stateChanged = true; // Storing state changes history
         // REMOVED UI updates (enable undo button)
     }
 
     debugHistory() {
-        console.log("Current history stack:");
+        log.debug("Current history stack:");
         this.history.forEach((state, index) => {
-            console.log(`[${index}] ${state.lastAction || 'Initial state'} - Player ${state.currentPlayer + 1}'s turn next, scores: [${state.scores}]`);
+            log.debug(`[${index}] ${state.lastAction || 'Initial state'} - Player ${state.currentPlayer + 1}'s turn next, scores: [${state.scores}]`);
         });
     }
 
     undo() {
-        console.log("Undo method called. History length:", this.history.length);
+        log.info("Undo method called. History length:", this.history.length);
         this.debugHistory();
 
         if (this.history.length <= 1) {
-            console.log("No moves to undo. At initial state.");
+            log.debug("No moves to undo. At initial state.");
             return false; // Indicate undo failed
         }
 
@@ -386,13 +391,13 @@ export class Game {
         
         // Make sure there's still a state to restore
         if (this.history.length === 0) {
-             console.error("History became empty after popping, should not happen.");
+             log.error("History became empty after popping, should not happen.");
              this.reset(); // Reset to a known good state
              return false;
         }
 
         const prevState = this.history[this.history.length - 1];
-        console.log("Restoring to previous logic state:", { player: prevState.currentPlayer + 1, scores: prevState.scores });
+        log.debug("Restoring to previous logic state:", { player: prevState.currentPlayer + 1, scores: prevState.scores });
 
         // Restore core state variables
         this.scores = [...prevState.scores];
@@ -413,7 +418,7 @@ export class Game {
 
         // REMOVED UI updates
 
-        console.log("Undo complete. Player", this.currentPlayer + 1, "'s turn.");
+        log.debug("Undo complete. Player", this.currentPlayer + 1, "'s turn.");
         this.stateChanged = true; 
         
         // REMOVED UI updates (undo button state)
@@ -422,21 +427,21 @@ export class Game {
     
     // Undo specifically for AI mode, popping twice
     undoAIMove() {
-         console.log("Attempting AI double undo. History length:", this.history.length);
+         log.info("Attempting AI double undo. History length:", this.history.length);
          if (this.history.length <= 1) return false;
          this.history.pop(); // Pop AI's move result state
          if (this.history.length <= 1) { // Check again after first pop
-             console.log("Only one state left after first pop, cannot double undo.");
+             log.debug("Only one state left after first pop, cannot double undo.");
              // We need to restore the single remaining state
              return this.undo(); // Call the single undo logic
          } else {
-              console.log("Popping player's move state before AI moved.");
+              log.debug("Popping player's move state before AI moved.");
               this.history.pop(); // Pop player's move state
          }
          
          // Now restore the state from the top of the stack (which should be before player's last move)
         const prevState = this.history[this.history.length - 1];
-        console.log("Restoring to state before player's last move:", { player: prevState.currentPlayer + 1, scores: prevState.scores });
+        log.debug("Restoring to state before player's last move:", { player: prevState.currentPlayer + 1, scores: prevState.scores });
         
         // Restore core state variables
         this.scores = [...prevState.scores];
@@ -447,14 +452,14 @@ export class Game {
         this.gameBoardLogic.setState(prevState.boardLogicState);
         this.scoringMechanism = prevState.scoringMechanism; // Restore from history
 
-        console.log("AI double undo complete. Player", this.currentPlayer + 1, "'s turn.");
+        log.debug("AI double undo complete. Player", this.currentPlayer + 1, "'s turn.");
         this.stateChanged = true; 
         return true; // Indicate success
     }
 
 
     reset(newScoringMechanism, newPlayerMode) { // Accept new settings
-        console.log("Resetting game logic...");
+        log.info("Resetting game logic...");
         
         const previousMechanism = this.scoringMechanism;
         const isScoringChange = previousMechanism !== newScoringMechanism;
@@ -490,7 +495,7 @@ export class Game {
         this.storeInitialState(); // This resets history
         
         this.stateChanged = true; 
-        console.log("Game logic reset complete. Starting player:", this.currentPlayer + 1);
+        log.info("Game logic reset complete. Starting player:", this.currentPlayer + 1);
         
         // Return the starting player for the main loop
         return this.currentPlayer; 

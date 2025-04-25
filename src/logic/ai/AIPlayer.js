@@ -20,11 +20,16 @@
  * 
  * Revision Log:
  * - Updated header comment structure
+ * - Added logger implementation for verbosity control
  * 
  * Note: This revision log should be updated whenever this file is modified.
  */
 
 import { evaluateBoard } from './evaluateBoard.js';
+import logger from '../../utils/logger.js';
+
+// Create a module-specific logger
+const log = logger.createLogger('AIPlayer');
 
 export class Player {
     constructor(playerID) {
@@ -62,14 +67,14 @@ export class AIPlayer extends Player {
     }
 
     getMove(gameBoardLogic, scoringMechanism) {
-        console.log(`AI (Player ${this.playerID + 1}) calculating move #${this.moveCount + 1}...`);
+        log.info(`AI (Player ${this.playerID + 1}) calculating move #${this.moveCount + 1}...`);
         this.moveCount++;
         
         // Use minimax or a simpler strategy based on available cells
         const availableCells = gameBoardLogic.getAvailableCells();
 
         if (availableCells.length === 0) {
-            console.log("AI: No available cells found.");
+            log.warn("AI: No available cells found.");
             return null; // No possible moves
         }
 
@@ -87,7 +92,7 @@ export class AIPlayer extends Player {
             if (tempLogic.placeCell(cell.gridX, cell.gridY, this.playerID)) {
                 // Evaluate the board state after this move using minimax
                 let score = this.minimax(tempLogic, depth, false, -Infinity, Infinity, scoringMechanism);
-                 console.log(` AI testing move (${cell.gridX}, ${cell.gridY}): Score = ${score}`);
+                 log.debug(` AI testing move (${cell.gridX}, ${cell.gridY}): Score = ${score}`);
                 
                 // Update best move if this one is better
                 if (score > bestScore) {
@@ -95,16 +100,16 @@ export class AIPlayer extends Player {
                     bestMove = cell; // Store the cell object {gridX, gridY}
                 }
             } else {
-                 console.warn(` AI simulation failed for move (${cell.gridX}, ${cell.gridY}) - Should not happen if availableCells is correct`);
+                 log.warn(` AI simulation failed for move (${cell.gridX}, ${cell.gridY}) - Should not happen if availableCells is correct`);
             }
         }
 
         if (bestMove) {
-            console.log(`AI Best Move Chosen: (${bestMove.gridX}, ${bestMove.gridY}), Score: ${bestScore}`);
+            log.info(`AI Best Move Chosen: (${bestMove.gridX}, ${bestMove.gridY}), Score: ${bestScore}`);
             // Return the chosen cell coordinates
             return { gridX: bestMove.gridX, gridY: bestMove.gridY }; 
         } else {
-            console.error("AI: Minimax failed to find a best move. Falling back to random.");
+            log.error("AI: Minimax failed to find a best move. Falling back to random.");
             // Fallback to random move if minimax fails (shouldn't happen ideally)
              const randomCell = availableCells[Math.floor(Math.random() * availableCells.length)];
             return { gridX: randomCell.gridX, gridY: randomCell.gridY };

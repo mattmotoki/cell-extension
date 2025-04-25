@@ -13,11 +13,16 @@
  * 
  * Revision Log:
  * - Updated header comment structure
+ * - Added logger implementation for verbosity control
  * 
  * Note: This revision log should be updated whenever this file is modified.
  */
 
 // import { getScoringMechanism } from "../utils.js"; // Remove direct dependency on utils
+import logger from '../../utils/logger.js';
+
+// Create a module-specific logger
+const log = logger.createLogger('BoardRenderer');
 
 export class BoardRenderer {
 
@@ -81,7 +86,7 @@ export class BoardRenderer {
              // Pass grid coordinates to the external handler (Game class)
             this.externalClickHandler(gridX, gridY);
         } else {
-            console.error("Failed to get grid coordinates from clicked cell");
+            log.error("Failed to get grid coordinates from clicked cell");
         }
     }
 
@@ -96,9 +101,9 @@ export class BoardRenderer {
 
     // Main render method - takes the current board logic state
     render(boardLogicState) {
-        console.log("BoardRenderer rendering...");
+        log.debug("BoardRenderer rendering...");
         if (!boardLogicState || !boardLogicState.occupiedCells) {
-            console.error("Invalid state provided to BoardRenderer.render");
+            log.error("Invalid state provided to BoardRenderer.render");
             return;
         }
 
@@ -171,7 +176,7 @@ export class BoardRenderer {
                 }
             }
         }
-        console.log("BoardRenderer render complete.");
+        log.debug("BoardRenderer render complete.");
     }
     
     // Helper to get adjacent occupied cells based on provided state
@@ -255,13 +260,13 @@ export class BoardRenderer {
 
     // --- Reset --- 
     reset() {
-        console.log("BoardRenderer resetting visuals...");
+        log.debug("BoardRenderer resetting visuals...");
         // Clear dynamic elements
         this.cellsGroup.selectAll("*").remove();
         this.linesGroup.selectAll("*").remove();
         // Static grid background is usually kept, but redraw if needed
         // this.drawGridBackground(); 
-        console.log("BoardRenderer reset complete.");
+        log.debug("BoardRenderer reset complete.");
     }
     
     // --- Animation Placeholders (Optional) ---
@@ -270,7 +275,7 @@ export class BoardRenderer {
     animateCellPlacement(gridX, gridY, playerIndex) {
         // Placeholder for expansion animation
         const { x: pixelX, y: pixelY } = this.gridToPixel(gridX, gridY);
-        console.log(`Animating cell placement for Player ${playerIndex + 1} at (${gridX}, ${gridY})`);
+        log.debug(`Animating cell placement for Player ${playerIndex + 1} at (${gridX}, ${gridY})`);
         this.drawCell(pixelX, pixelY, playerIndex); // Simple draw for now
     }
     
@@ -278,7 +283,7 @@ export class BoardRenderer {
         // Placeholder for line drawing animation
          const { x: pixelX1, y: pixelY1 } = this.gridToPixel(fromGridX, fromGridY);
          const { x: pixelX2, y: pixelY2 } = this.gridToPixel(toGridX, toGridY);
-         console.log(`Animating connection for Player ${playerIndex + 1} from (${fromGridX}, ${fromGridY}) to (${toGridX}, ${toGridY})`);
+         log.debug(`Animating connection for Player ${playerIndex + 1} from (${fromGridX}, ${fromGridY}) to (${toGridX}, ${toGridY})`);
          this.drawConnectionLine(pixelX1 + this.cellSize / 2, pixelY1 + this.cellSize / 2, 
                                  pixelX2 + this.cellSize / 2, pixelY2 + this.cellSize / 2, 
                                  playerIndex);

@@ -13,6 +13,7 @@
  * 
  * Revision Log:
  * - Updated header comment structure
+ * - Added logger implementation for verbosity control
  * 
  * Note: This revision log should be updated whenever this file is modified.
  */
@@ -30,6 +31,10 @@ import {
     syncDropdowns,
     closeMobileMenu
 } from './rendering/uiUtils.js';
+import logger from './utils/logger.js';
+
+// Create a module-specific logger
+const log = logger.createLogger('Main');
 
 // --- Configuration ---
 const gridDimension = 100; // Logical size for viewBox used by renderers
@@ -53,7 +58,7 @@ let animationFrameId = null; // ID for the animation frame loop
 
 // --- Initialization ---
 function initializeApp() {
-    console.log("Initializing Application...");
+    log.info("Initializing Application...");
 
     // Read initial UI settings
     playerMode = getPlayerModeFromUI();
@@ -66,7 +71,7 @@ function initializeApp() {
     
     // Ensure score chart is correctly initialized
     if (!d3.select("#score-chart-container").node()) {
-        console.warn("#score-chart-container not found, chart might not render correctly. Adding a fallback container.");
+        log.warn("#score-chart-container not found, chart might not render correctly. Adding a fallback container.");
         // Create a container if missing
         d3.select("#game .game-content-wrapper")
             .append("div")
@@ -110,7 +115,7 @@ function initializeApp() {
     // --- Start Game Loop ---
     startGameLoop();
 
-    console.log("Application Initialized.");
+    log.info("Application Initialized.");
 }
 
 // --- Game Loop ---
@@ -128,22 +133,24 @@ function startGameLoop() {
         // 2. Check if AI needs to move
         const currentState = game.getCurrentState();
         if (playerMode === 'ai' && currentState.currentPlayer === 1 && currentState.progress === 'playing' && !isAIRunning) {
-            console.log("Main loop: AI's turn, scheduling move...");
+            log.debug("Main loop: AI's turn, scheduling move...");
             isAIRunning = true; 
             game.progress = 'waiting'; // Set logic state to waiting
             // Update UI immediately to show AI is thinking (optional)
             updateUI(); 
             
             setTimeout(() => {
-                console.time("AI Move Calculation");
+                log.debug("Starting AI Move Calculation");
+                const startTime = performance.now();
                 const aiMove = game.requestAIMove(); // Synchronous calculation
-                console.timeEnd("AI Move Calculation");
+                const endTime = performance.now();
+                log.debug(`AI Move Calculation took ${(endTime - startTime).toFixed(2)}ms`);
                 isAIRunning = false;
                 if (aiMove) {
-                    console.log("Main loop: AI move successful.");
+                    log.debug("Main loop: AI move successful.");
                     // State changed flag will be set within game.requestAIMove()
                 } else {
-                    console.log("Main loop: AI move failed or game ended.");
+                    log.debug("Main loop: AI move failed or game ended.");
                     // State might have changed (e.g., progress set to 'over' or 'playing')
                 }
                 // The next gameTick will pick up the state change and update UI
@@ -154,7 +161,7 @@ function startGameLoop() {
         if (currentState.progress === 'over') {
             // Ensure message is displayed only once
             if (!game.gameOverMessageShown) { 
-                console.log("Main loop: Game over detected.");
+                log.info("Main loop: Game over detected.");
                 setTimeout(() => {
                     const finalState = game.getCurrentState(); // Get latest scores
                     displayWinnerMessage(finalState.scores, playerMode);
@@ -169,12 +176,12 @@ function startGameLoop() {
 
     // Start the loop
     animationFrameId = requestAnimationFrame(gameTick);
-    console.log("Game loop started.");
+    log.debug("Game loop started.");
 }
 
 // --- UI Update Function ---
 function updateUI() {
-    console.log("Updating UI...");
+    log.trace("Updating UI...");
     const currentState = game.getCurrentState();
 
     // Update Board
@@ -210,12 +217,12 @@ function handleBoardClick(gridX, gridY) {
     if (!game || game.getCurrentState().progress !== 'playing') return; // Ignore clicks if not playing
     if (playerMode === 'ai' && game.getCurrentState().currentPlayer !== 0) return; // Ignore clicks if AI's turn
     
-    console.log(`UI: Board clicked at (${gridX}, ${gridY})`);
+    log.debug(`UI: Board clicked at (${gridX}, ${gridY})`);
     game.handlePlayerMove(gridX, gridY);
 }
 
 function handleResetClick() {
-    console.log("UI: Reset button clicked.");
+    log.info("UI: Reset button clicked.");
     // Read current settings from UI to pass to logic reset
     playerMode = getPlayerModeFromUI();
     scoringMechanism = getScoringMechanismFromUI();
@@ -234,7 +241,7 @@ function handleResetClick() {
 }
 
 function handleUndoClick() {
-    console.log("UI: Undo button clicked.");
+    log.info("UI: Undo button clicked.");
     if (game.getCurrentState().progress === 'over') return; // Can't undo after game over
 
     if (playerMode === 'ai') {
@@ -247,7 +254,7 @@ function handleUndoClick() {
 function handlePlayerModeChange(event) {
     const newMode = event.target.value;
     const elementId = event.target.id;
-    console.log(`UI: Player Mode changed to ${newMode} via ${elementId}`);
+    log.info(`UI: Player Mode changed to ${newMode} via ${elementId}`);
     syncDropdowns(elementId, newMode); // Sync the other dropdown
     playerMode = newMode;
     handleResetClick(); // Reset the game when mode changes
@@ -262,7 +269,7 @@ function handleScoringChange(event) {
         event.target.value = scoringMechanism; // Revert UI
         return;
     }
-    console.log(`UI: Scoring Mechanism changed to ${newMechanism} via ${elementId}`);
+    log.info(`UI: Scoring Mechanism changed to ${newMechanism} via ${elementId}`);
     syncDropdowns(elementId, newMechanism); // Sync the other dropdown
     scoringMechanism = newMechanism;
     updateNavbarTitle(newMechanism);
@@ -366,6 +373,49 @@ function setupEventListeners() {
     }
     window.addEventListener('scroll', handleScroll);
     handleScroll(); // Initial check
+
+    // Add a log level selector to the settings menu
+    addLogLevelControls();
+}
+
+// Add log level controls to the settings menu
+function addLogLevelControls() {
+    const settingsMenu = document.querySelector(".settings-menu");
+    if (!settingsMenu) return;
+
+    // Create a new settings group for log level
+    const logLevelGroup = document.createElement('div');
+    logLevelGroup.className = 'settings-group';
+    logLevelGroup.innerHTML = `
+        <div class="settings-header">Log Level</div>
+        <div class="settings-content">
+            <select id="log-level">
+                <option value="NONE">None</option>
+                <option value="ERROR">Error</option>
+                <option value="WARN">Warning</option>
+                <option value="INFO" selected>Info</option>
+                <option value="DEBUG">Debug</option>
+                <option value="TRACE">Trace</option>
+            </select>
+        </div>
+    `;
+
+    // Append to settings menu
+    settingsMenu.appendChild(logLevelGroup);
+
+    // Add event listener
+    const logLevelSelect = document.getElementById('log-level');
+    if (logLevelSelect) {
+        // Set initial value based on current log level
+        const currentLevel = logger.getLogLevelName(logger.getLogLevel());
+        logLevelSelect.value = currentLevel;
+
+        logLevelSelect.addEventListener('change', function() {
+            const level = this.value;
+            logger.setLogLevel(logger.LogLevel[level]);
+            log.info(`Log level changed to ${level}`);
+        });
+    }
 }
 
 // --- Run Application ---

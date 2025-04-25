@@ -14,6 +14,7 @@
  * 
  * Revision Log:
  * - Updated header comment structure
+ * - Added logger implementation for verbosity control
  * 
  * Note: This revision log should be updated whenever this file is modified.
  */
@@ -23,6 +24,10 @@ import {
     getConnectionScore, 
     getExtensionScore 
 } from "./scoring/index.js"; // Keep scoring logic linked for now
+import logger from '../../utils/logger.js';
+
+// Create a module-specific logger
+const log = logger.createLogger('GameBoardLogic');
 
 export class GameBoardLogic {
 
@@ -37,7 +42,7 @@ export class GameBoardLogic {
 
     reset() {
         this.occupiedCells = [{}, {}];
-        console.log("GameBoardLogic reset complete.");
+        log.debug("GameBoardLogic reset complete.");
     }
 
     getState() {
@@ -55,7 +60,7 @@ export class GameBoardLogic {
 
     setState(state) {
         if (!state || !state.occupiedCells || state.occupiedCells.length !== 2) {
-            console.error("Invalid state provided to GameBoardLogic.setState");
+            log.error("Invalid state provided to GameBoardLogic.setState");
             this.reset(); // Reset to a safe state
             return;
         }
@@ -67,7 +72,7 @@ export class GameBoardLogic {
         // Restore dimensions if they were part of the state
         this.gridWidth = state.gridWidth ?? this.gridWidth; 
         this.gridHeight = state.gridHeight ?? this.gridHeight;
-        console.log("GameBoardLogic state restored.");
+        log.debug("GameBoardLogic state restored.");
     }
 
     // --- Cell Placement and Validation ---
@@ -98,7 +103,7 @@ export class GameBoardLogic {
     // Returns true if successful, false otherwise
     placeCell(gridX, gridY, currentPlayer) {
         if (!this.isValidCoordinate(gridX, gridY)) {
-            console.warn(`Attempted to place cell at invalid coordinates: (${gridX}, ${gridY})`);
+            log.warn(`Attempted to place cell at invalid coordinates: (${gridX}, ${gridY})`);
             return false;
         }
 
@@ -107,19 +112,19 @@ export class GameBoardLogic {
 
         // Check if cell is occupied by opponent
         if (this.isCellOccupiedByPlayer(gridX, gridY, opponent)) {
-            console.log(`Cell (${gridX}, ${gridY}) is occupied by opponent.`);
+            log.debug(`Cell (${gridX}, ${gridY}) is occupied by opponent.`);
             return false; // Cannot place on opponent's cell
         }
         
         // Check if cell is already occupied by the current player (shouldn't happen with valid clicks)
         if (this.isCellOccupiedByPlayer(gridX, gridY, currentPlayer)) {
-            console.log(`Cell (${gridX}, ${gridY}) is already occupied by player ${currentPlayer}.`);
+            log.debug(`Cell (${gridX}, ${gridY}) is already occupied by player ${currentPlayer}.`);
             return false; 
         }
 
         // Cell is available or occupiable by extension
         this.occupiedCells[currentPlayer][posKey] = true; 
-        console.log(`Cell placed successfully by Player ${currentPlayer + 1} at (${gridX}, ${gridY})`);
+        log.debug(`Cell placed successfully by Player ${currentPlayer + 1} at (${gridX}, ${gridY})`);
         return true; // Successfully placed
     }
 
@@ -218,7 +223,7 @@ export class GameBoardLogic {
             case 'cell-extension':
                 return getExtensionScore(this, playerIndex);
             default:
-                console.warn(`Unknown scoring mechanism: ${mechanism}. Defaulting to 0.`);
+                log.warn(`Unknown scoring mechanism: ${mechanism}. Defaulting to 0.`);
                 return 0; 
         }
     }
