@@ -56,7 +56,7 @@ export function getScoringMechanismFromUI() {
 
 // Get the board size from the UI
 export function getBoardSizeFromUI() {
-    const boardSizeSelect = document.getElementById("board-size-mobile");
+    const boardSizeSelect = document.getElementById("board-size");
     // Default to 6 to match HTML default
     return boardSizeSelect ? parseInt(boardSizeSelect.value, 10) : 6;
 }
@@ -96,27 +96,6 @@ export function updateNavbarTitle(mechanism) {
 export function updateUndoButtons(historyLength) {
     const disabled = historyLength <= 1;
     d3.select("#undo").property("disabled", disabled);
-    d3.select("#undo-mobile").property("disabled", disabled);
-}
-
-export function syncDropdowns(elementId, value) {
-    const playerModeDropdown = document.getElementById("player-mode");
-    const playerModeMobile = document.getElementById("player-mode-mobile");
-    const scoringSelect = document.getElementById("scoring-mechanism");
-    const scoringSelectMobile = document.getElementById("scoring-mechanism-mobile");
-    const boardSizeSelect = document.getElementById("board-size");
-    const boardSizeMobile = document.getElementById("board-size-mobile");
-
-    if (elementId === 'player-mode' || elementId === 'player-mode-mobile') {
-        if (playerModeDropdown) playerModeDropdown.value = value;
-        if (playerModeMobile) playerModeMobile.value = value;
-    } else if (elementId === 'scoring-mechanism' || elementId === 'scoring-mechanism-mobile') {
-        if (scoringSelect) scoringSelect.value = value;
-        if (scoringSelectMobile) scoringSelectMobile.value = value;
-    } else if (elementId === 'board-size' || elementId === 'board-size-mobile') {
-        if (boardSizeSelect) boardSizeSelect.value = value;
-        if (boardSizeMobile) boardSizeMobile.value = value;
-    }
 }
 
 export function closeMobileMenu() {

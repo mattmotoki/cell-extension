@@ -28,7 +28,6 @@ import {
     displayWinnerMessage, 
     updateNavbarTitle, 
     updateUndoButtons,
-    syncDropdowns,
     closeMobileMenu,
     getBoardSizeFromUI
 } from './rendering/uiUtils.js';
@@ -268,24 +267,20 @@ function handleUndoClick() {
 
 function handlePlayerModeChange(event) {
     const newMode = event.target.value;
-    const elementId = event.target.id;
-    log.info(`UI: Player Mode changed to ${newMode} via ${elementId}`);
-    syncDropdowns(elementId, newMode); // Sync the other dropdown
+    log.info(`UI: Player Mode changed to ${newMode}`);
     playerMode = newMode;
     handleResetClick(); // Reset the game when mode changes
 }
 
 function handleScoringChange(event) {
     const newMechanism = event.target.value;
-    const elementId = event.target.id;
     // Basic check for disabled options (if any)
     if (event.target.options[event.target.selectedIndex].disabled) {
         alert("This scoring mechanism is not yet implemented.");
         event.target.value = scoringMechanism; // Revert UI
         return;
     }
-    log.info(`UI: Scoring Mechanism changed to ${newMechanism} via ${elementId}`);
-    syncDropdowns(elementId, newMechanism); // Sync the other dropdown
+    log.info(`UI: Scoring Mechanism changed to ${newMechanism}`);
     scoringMechanism = newMechanism;
     updateNavbarTitle(newMechanism);
     handleResetClick(); // Reset the game when scoring changes
@@ -293,9 +288,7 @@ function handleScoringChange(event) {
 
 function handleBoardSizeChange(event) {
     const newSize = parseInt(event.target.value, 10);
-    const elementId = event.target.id;
-    log.info(`UI: Board Size changed to ${newSize}x${newSize} via ${elementId}`);
-    syncDropdowns(elementId, newSize); // Sync the other dropdown
+    log.info(`UI: Board Size changed to ${newSize}x${newSize}`);
     handleResetClick(); // Reset the game with the new board size
 }
 
@@ -304,12 +297,8 @@ function setupEventListeners() {
     // Reset Button
     d3.select("#reset").on("click", handleResetClick);
 
-    // Undo Buttons
+    // Undo Button
     d3.select("#undo").on("click", handleUndoClick);
-    d3.select("#undo-mobile").on("click", () => {
-        handleUndoClick();
-        closeMobileMenu(); 
-    });
 
     // Settings Toggle (new UI element)
     const settingsToggle = document.getElementById("settings-toggle");
@@ -331,65 +320,25 @@ function setupEventListeners() {
         });
     }
 
-    // Player Mode Dropdowns
+    // Player Mode Dropdown
     const playerModeDropdown = document.getElementById("player-mode");
-    const playerModeMobile = document.getElementById("player-mode-mobile");
     if (playerModeDropdown) playerModeDropdown.addEventListener("change", handlePlayerModeChange);
-    if (playerModeMobile) playerModeMobile.addEventListener("change", handlePlayerModeChange);
     
-    // Scoring Mechanism Dropdowns
+    // Scoring Mechanism Dropdown
     const scoringSelect = document.getElementById("scoring-mechanism");
-    const scoringSelectMobile = document.getElementById("scoring-mechanism-mobile");
     if (scoringSelect) scoringSelect.addEventListener("change", handleScoringChange);
-    if (scoringSelectMobile) scoringSelectMobile.addEventListener("change", handleScoringChange);
     
     // Board Size Dropdown
-    const boardSizeSelect = document.getElementById("board-size-mobile");
+    const boardSizeSelect = document.getElementById("board-size");
     if (boardSizeSelect) boardSizeSelect.addEventListener("change", handleBoardSizeChange);
     
     // Add tooltips to scoring options (can remain here)
-    [scoringSelect, scoringSelectMobile].forEach(select => {
-        if (!select) return;
-        select.querySelectorAll("option").forEach(option => {
+    if (scoringSelect) {
+        scoringSelect.querySelectorAll("option").forEach(option => {
             const title = option.getAttribute("title");
             if (title) option.setAttribute("title", title);
         });
-    });
-    
-    // Mobile Menu Toggle
-    const hamburgerBtn = document.getElementById('hamburger-menu');
-    const mobileMenu = document.getElementById('mobile-menu');
-    if (hamburgerBtn && mobileMenu) {
-        hamburgerBtn.addEventListener('click', function(e) {
-            e.stopPropagation(); // Prevent document click handler
-            mobileMenu.classList.toggle('active');
-            hamburgerBtn.classList.toggle('active');
-        });
     }
-
-    // Mobile Menu Close Button
-    const closeBtn = document.getElementById('mobile-menu-close-btn');
-    if (closeBtn && mobileMenu && hamburgerBtn) {
-        closeBtn.addEventListener('click', closeMobileMenu);
-    }
-    
-    // Close Mobile Menu on Outside Click
-    document.addEventListener('click', function(e) {
-        if (mobileMenu && mobileMenu.classList.contains('active')) {
-            if (!mobileMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
-                closeMobileMenu();
-            }
-        }
-    });
-
-    // Close Mobile Menu on Resize
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) {
-            closeMobileMenu();
-            // Also close settings menu if open
-            if (settingsMenu) settingsMenu.style.display = "none";
-        }
-    });
 
     // Navbar Scroll Effect
     const navbar = document.querySelector('.navbar');
