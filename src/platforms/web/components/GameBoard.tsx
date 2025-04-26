@@ -1,3 +1,34 @@
+/**
+ * src/platforms/web/components/GameBoard.tsx - Game Board Visualization
+ * 
+ * React component that renders the interactive game board using D3.js for SVG manipulation.
+ * Provides visual representation of the game state and handles user interactions with the board.
+ * 
+ * Key features:
+ * - D3.js integration for SVG rendering and manipulation
+ * - Interactive cell placement through click handling
+ * - Visual representation of player cells and their connections
+ * - Dynamic rendering based on current game state
+ * - Responsive design that adapts to container size
+ * 
+ * Technical approach:
+ * - Uses React refs to integrate D3 with React
+ * - Separates static grid initialization from dynamic content updates
+ * - Connects to Redux store for game state access
+ * - Handles click events to dispatch move actions
+ * 
+ * Relationships:
+ * - Renders game state from Redux store
+ * - Dispatches placeMove actions when cells are clicked
+ * - Uses GameBoardLogic utilities for coordinate handling
+ * - Part of the App.tsx component hierarchy
+ * 
+ * Revision Log:
+ *  
+ * Note: This revision log should be updated whenever this file is modified. 
+ * Do not use dates in the revision log.
+ */
+
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import * as d3 from 'd3'; // Import d3
 import { useSelector, useDispatch } from 'react-redux'; // Import Redux hooks

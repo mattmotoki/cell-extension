@@ -1,9 +1,15 @@
 /**
- * Scoring mechanisms index
+ * src/core/scoring/index.ts - Scoring Mechanisms Module
  * 
- * This file exports all scoring mechanisms from a central location
+ * Exports the different scoring calculation functions:
+ * - getMultiplicationScore
+ * - getConnectionScore
+ * - getExtensionScore
+ * 
+ * Centralizes access to scoring implementations.
  */
 
+// Explicitly export all scoring mechanism functions
 export { getMultiplicationScore } from './multiplication';
 export { getConnectionScore } from './connection';
 export { getExtensionScore } from './extension'; 

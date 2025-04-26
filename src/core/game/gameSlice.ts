@@ -1,3 +1,37 @@
+/**
+ * src/core/game/gameSlice.ts - Redux Game State Management
+ * 
+ * Implements the Redux slice that manages the game's state using Redux Toolkit.
+ * This is the central state management module for the game, handling all game
+ * state transitions, move processing, history tracking, and score calculation.
+ * 
+ * Key responsibilities:
+ * - Defining the game state structure and initial state
+ * - Processing player and AI moves with validation
+ * - Handling game state transitions (playing, waiting, over)
+ * - Managing game history for undo functionality
+ * - Calculating and updating scores based on moves
+ * 
+ * State structure:
+ * - boardState: Current board configuration with occupied cells
+ * - scores: Current scores for both players
+ * - currentPlayer: Which player's turn it is (0 or 1)
+ * - progress: Game state (playing, waiting, over)
+ * - scoreHistory: History of scores for charting
+ * - history: Stack of previous game states for undo
+ * 
+ * Relationships:
+ * - Used by App.tsx to read game state and dispatch actions
+ * - Imports GameBoardLogic.ts for core game operations
+ * - Coordinates with aiLogic.ts for AI move processing
+ * - Referenced by UI components for rendering current state
+ * 
+ * Revision Log:
+ *  
+ * Note: This revision log should be updated whenever this file is modified. 
+ * Do not use dates in the revision log.
+ */
+
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { 
     BoardState, 
@@ -16,9 +50,9 @@ import {
     getAvailableCells,
     isGameOver
 } from './GameBoardLogic'; // Assuming GameBoardLogic is in the same directory
-import { getAIMove } from '../ai/aiLogic'; // Adjusted path
+// import { getAIMove } from '../ai/aiLogic'; // AI move calculation is handled in App.tsx
 
-// Helper to create history entry (similar to before)
+// Helper to create history entry
 function createHistoryEntry(gameState: GameState): HistoryEntry {
     return {
         boardState: JSON.parse(JSON.stringify(gameState.boardState)), // Deep copy
@@ -83,30 +117,19 @@ const gameSlice = createSlice({
             }
             
             console.log(`Reducer: Placing move for player ${playerMakingMove} at (${gridX}, ${gridY}) (Progress: ${state.progress})`);
-            console.log(`DEBUG: Current state before move - Player: ${state.currentPlayer}, Progress: ${state.progress}`);
             
             const newBoardState = placeCell(state.boardState, playerMakingMove, gridX, gridY);
 
             if (!newBoardState) {
                 console.warn(`Reducer: Invalid move attempted at (${gridX}, ${gridY}) for player ${playerMakingMove}`);
-                console.log(`DEBUG: Move validation failed, current occupiedCells:`, 
-                    JSON.stringify({
-                        player0: Object.keys(state.boardState.occupiedCells[0]),
-                        player1: Object.keys(state.boardState.occupiedCells[1])
-                    })
-                );
-                
                 // If AI move failed validation, reset progress to playing
                 if (state.progress === 'waiting') {
-                    console.log(`DEBUG: Resetting progress from 'waiting' to 'playing' due to invalid AI move`);
                     state.progress = 'playing';
                 }
                 return; // Exit reducer on invalid move
             }
 
             // --- Valid Move --- 
-            console.log(`DEBUG: Move validation passed, updating game state`);
-            
             // Save current state to history before updating
             const historyEntry = createHistoryEntry(state);
             state.history.push(historyEntry);
@@ -124,7 +147,6 @@ const gameSlice = createSlice({
 
             // Update current player
             state.currentPlayer = (playerMakingMove + 1) % 2 as PlayerIndex;
-            console.log(`DEBUG: Updated current player to ${state.currentPlayer}`);
 
             // Update game progress
             const gameOver = isGameOver(state.boardState);
@@ -161,24 +183,18 @@ const gameSlice = createSlice({
             const settings = action.payload;
             // Use getInitialState to derive the new state based on settings
             const newState = getInitialState(settings);
-            // We need to return the new state object entirely here
-            // Redux Toolkit allows direct mutation *or* returning a new state
+            // Return the new state object entirely here
             return newState;
         },
         setProgress: (state, action: PayloadAction<GameProgress>) => {
             const newProgress = action.payload;
-            console.log(`DEBUG: setProgress called - Current: ${state.progress}, New: ${newProgress}`);
-            
             // Prevent setting progress if game is over
             if (state.progress !== 'over') {
                 state.progress = newProgress;
-                console.log(`DEBUG: Progress updated to ${state.progress}`);
             } else {
                 console.log(`DEBUG: Progress update rejected - game is already over`);
             }
         },
-        // We might need an action to apply an AI move result if calculation is async
-        // applyAIMove: (state, action: PayloadAction<Coordinates>) => { ... }
     }
 });
 

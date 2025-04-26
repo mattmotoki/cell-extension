@@ -1,3 +1,35 @@
+/**
+ * src/platforms/web/components/ScoreDisplay.tsx - Player Score Information
+ * 
+ * React component that displays the current scores for both players
+ * and provides a detailed breakdown of how those scores are calculated.
+ * The display adapts to the current scoring mechanism, explaining the
+ * mathematical formula used to derive each player's score.
+ * 
+ * Key features:
+ * - Current score display for both players
+ * - Visual indication of the active player
+ * - Score calculation breakdown based on scoring mechanism
+ * - Visual styling that matches player colors
+ * 
+ * Technical approach:
+ * - Direct DOM manipulation via refs to create complex score display
+ * - Dynamic calculation of component sizes based on game state
+ * - Redux integration for accessing current game state
+ * - Complex DOM structure for multi-part score display
+ * 
+ * Relationships:
+ * - Retrieves score data and game state from Redux store
+ * - Updates when scores change or player turns alternate
+ * - Complements the ScoreChart component with current values
+ * - Positioned above the game board in the UI layout
+ * 
+ * Revision Log:
+ *  
+ * Note: This revision log should be updated whenever this file is modified. 
+ * Do not use dates in the revision log.
+ */
+
 import React, { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { PlayerIndex, BoardState, ScoringMechanismId } from '@core/types';

@@ -1,7 +1,32 @@
 /**
- * src/logic/ai/evaluateBoard.ts
+ * src/core/ai/evaluateBoard.ts - Board Position Evaluation for AI
  * 
- * Heuristic board evaluation function for AI.
+ * Implements the heuristic evaluation function used by the AI to assess board positions.
+ * This is a critical component for the minimax algorithm and AI decision making.
+ * 
+ * The evaluation function computes a score for a given board state from the perspective
+ * of a specified player. Higher scores indicate better positions for that player.
+ * The evaluation adapts to different scoring mechanisms:
+ * - Cell Multiplication: Favors fewer, larger connected components
+ * - Cell Connection: Values densely connected cell formations
+ * - Cell Extension: Prioritizes board control and expansion potential
+ * 
+ * Relationships:
+ * - Called by the minimax function in aiLogic.ts
+ * - Uses GameBoardLogic.ts functions to analyze board state
+ * - Adapts evaluation based on the active scoring mechanism
+ * - Returns a numeric score used to rank potential moves
+ * 
+ * Key Components:
+ * - Basic score difference calculation between player and opponent
+ * - Scoring mechanism-specific heuristics
+ * - Late game evaluation adjustment
+ * - Error handling to prevent AI calculation failures
+ * 
+ * Revision Log:
+ *  
+ * Note: This revision log should be updated whenever this file is modified. 
+ * Do not use dates in the revision log.
  */
 
 import { BoardState, PlayerIndex, ScoringMechanismId } from "../types";
@@ -30,8 +55,6 @@ export function evaluateBoard(
     scoringMechanism: ScoringMechanismId
 ): number {
     try {
-        console.log("DEBUG: evaluateBoard called");
-        
         const opponentIndex = (playerIndex + 1) % 2 as PlayerIndex;
         
         // Calculate scores for both players
@@ -40,12 +63,9 @@ export function evaluateBoard(
         
         try {
             playerScore = calculateScore(boardState, playerIndex, scoringMechanism);
-            console.log(`DEBUG: Player score calculated: ${playerScore}`);
-            
             opponentScore = calculateScore(boardState, opponentIndex, scoringMechanism);
-            console.log(`DEBUG: Opponent score calculated: ${opponentScore}`);
         } catch (scoreError) {
-            console.error("DEBUG: Error calculating scores:", scoreError);
+            console.error("Error calculating scores in evaluateBoard:", scoreError);
             return 0; // Return neutral evaluation on error
         }
         
@@ -55,10 +75,7 @@ export function evaluateBoard(
         try {
             // Get components once for efficiency
             const playerComponents = getConnectedComponents(boardState, playerIndex);
-            console.log(`DEBUG: Player components: ${playerComponents.length}`);
-            
             const opponentComponents = getConnectedComponents(boardState, opponentIndex);
-            console.log(`DEBUG: Opponent components: ${opponentComponents.length}`);
 
             // Additional positional heuristics based on scoring mechanism
             switch(scoringMechanism) {
@@ -77,19 +94,17 @@ export function evaluateBoard(
                     
                 case 'cell-connection':
                     // Count total connections for each player
-                    // Note: Original implementation double-counted connections. Let's fix that by dividing by 2.
                     let playerConnectionCount = 0;
                     for (const component of playerComponents) {
                         for (const cellKey of component) {
                             const [x, y] = parsePositionKey(cellKey);
-                            // Connections are to other cells *within the same component*
                             const neighbors = getAdjacentPlayerCells(boardState, playerIndex, x, y);
                             playerConnectionCount += neighbors.filter(neighbor => 
-                                component.includes(createPositionKey(neighbor.gridX, neighbor.gridY)) // Check if neighbor is in the same component
+                                component.includes(createPositionKey(neighbor.gridX, neighbor.gridY))
                             ).length;
                         }
                     }
-                    playerConnectionCount /= 2; // Each connection counted twice (once for each cell)
+                    playerConnectionCount /= 2; // Each connection counted twice
                     
                     let opponentConnectionCount = 0;
                      for (const component of opponentComponents) {
@@ -97,17 +112,17 @@ export function evaluateBoard(
                             const [x, y] = parsePositionKey(cellKey);
                              const neighbors = getAdjacentPlayerCells(boardState, opponentIndex, x, y);
                             opponentConnectionCount += neighbors.filter(neighbor => 
-                                component.includes(createPositionKey(neighbor.gridX, neighbor.gridY)) // Check if neighbor is in the same component
+                                component.includes(createPositionKey(neighbor.gridX, neighbor.gridY))
                             ).length;
                         }
                     }
                     opponentConnectionCount /= 2;
                     
-                    evaluation += (playerConnectionCount - opponentConnectionCount) * 0.4; // Increased weight slightly
+                    evaluation += (playerConnectionCount - opponentConnectionCount) * 0.4;
                     break;
                     
                 case 'cell-extension':
-                    // For extension scoring, look at board control and potential expansions
+                    // Look at board control and potential expansions
                     const availableCells = getAvailableCells(boardState);
                     let playerExpansionPotential = 0;
                     let opponentExpansionPotential = 0;
@@ -121,7 +136,7 @@ export function evaluateBoard(
                         if (playerAdjacentCount > 0) {
                             playerExpansionPotential += playerAdjacentCount;
                         }
-                         // Slightly penalize placing next to opponent cells (less important than own)
+                         // Slightly penalize placing next to opponent cells
                         if (opponentAdjacentCount > 0) {
                             opponentExpansionPotential += opponentAdjacentCount * 0.5; 
                         }
@@ -141,15 +156,14 @@ export function evaluateBoard(
                 evaluation *= (1 + (gameProgress - 0.7) * 2); // Scale bonus based on how far into late game
             }
             
-            console.log(`DEBUG: Final evaluation: ${evaluation}`);
             return evaluation;
         } catch (heuristicError) {
-            console.error("DEBUG: Error in heuristic calculation:", heuristicError);
+            console.error("Error in heuristic calculation in evaluateBoard:", heuristicError);
             // Return basic score difference if heuristics fail
             return evaluation;
         }
     } catch (error) {
-        console.error("DEBUG: Fatal error in evaluateBoard:", error);
+        console.error("Fatal error in evaluateBoard:", error);
         return 0; // Return neutral evaluation on fatal error
     }
 } 

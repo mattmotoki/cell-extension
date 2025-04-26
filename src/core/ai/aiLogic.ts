@@ -1,28 +1,31 @@
 /**
- * AIPlayer.js - AI Player Implementation for Cell Collection Game
+ * src/core/ai/aiLogic.ts - AI Move Decision Logic
  * 
- * This file implements the player base class and AI opponent for the game.
+ * Implements the artificial intelligence that decides the next move in the Cell Extension game.
+ * Contains multiple strategies based on difficulty level and game progress:
+ * - Easy difficulty: Territorial strategy (early game) and Greedy strategy (mid/late game)
+ * - Hard difficulty: Minimax algorithm with alpha-beta pruning
  * 
- * Key components:
- * - Player: Base class with core player functionality
- * - AIPlayer: AI opponent that evaluates and selects moves using minimax algorithm
- * - HumanPlayer: Simple representation of a human player
- * 
- * The AI uses different strategies based on:
- * - Current scoring mechanism (adapts evaluation for each scoring type)
- * - Game progress (tracks move count for strategy adjustment)
- * - Board state (evaluates potential moves by simulating their outcome)
+ * The AI adapts its evaluation criteria based on the scoring mechanism being used
+ * (multiplication, connection, or extension scoring).
  * 
  * Relationships:
- * - Imports evaluateBoard from './evaluateBoard.js'
- * - Used by Game.js to handle AI opponent moves
- * - Works with GameBoardLogic to evaluate positions and simulate moves
+ * - Called by App.tsx when it's the AI's turn
+ * - Depends on evaluateBoard.ts for position evaluation in minimax
+ * - Uses functions from GameBoardLogic.ts to simulate and validate moves
+ * - Returns coordinates for placeMove action in gameSlice.ts
+ * 
+ * Key Functions:
+ * - getAIMove: Main entry point that selects the appropriate strategy
+ * - getTerritorialMove: Prioritizes open spaces (early game strategy)
+ * - getGreedyMove: Maximizes immediate score (mid/late game strategy)
+ * - getMinimaxMove: Uses look-ahead to optimize long-term position (hard difficulty)
+ * - minimax: Recursive position evaluation algorithm with alpha-beta pruning
  * 
  * Revision Log:
- * - Added logger implementation for verbosity control
- * - Added enhanced debugging for diagnosing AI stalling issues
- * 
- * Note: This revision log should be updated whenever this file is modified.
+ *  
+ * Note: This revision log should be updated whenever this file is modified. 
+ * Do not use dates in the revision log.
  */
 
 import { 
@@ -46,26 +49,6 @@ import {
 } from '../game/GameBoardLogic';
 import { evaluateBoard } from './evaluateBoard';
 
-// Create a module-specific logger
-// const log = logger.createLogger('AIPlayer');
-
-// REMOVE Player class definition
-// export class Player {
-// ... (entire class removed) ...
-// }
-
-// REMOVE AIPlayer class definition (logic moved to functions)
-// export class AIPlayer extends Player {
-// ... (entire class removed) ...
-// }
-
-// REMOVE HumanPlayer class definition
-// export class HumanPlayer extends Player {
-// ... (entire class removed) ...
-// }
-
-// Keep the exported functions: getAIMove, getTerritorialMove, getGreedyMove, getMinimaxMove, minimax
-
 /**
  * Calculates the AI's next move based on the game state and settings.
  * @param gameState The current game state.
@@ -73,19 +56,17 @@ import { evaluateBoard } from './evaluateBoard';
  * @returns The coordinates of the chosen move, or null if no move is possible.
  */
 export function getAIMove(gameState: GameState, settings: GameSettings): Coordinates | null {
-    console.log("DEBUG: getAIMove called - START");
     const aiPlayerIndex = 1; // Assuming AI is always player 1
     const { boardState, scoringMechanism } = gameState;
     const { aiDifficulty } = settings;
     
     console.log(`AI START: Player ${aiPlayerIndex + 1}, Difficulty ${aiDifficulty}, ScoringMech: ${scoringMechanism}`);
-    console.log(`Current board state: ${boardState.gridWidth}x${boardState.gridHeight} with ${Object.keys(boardState.occupiedCells[0]).length} cells (P1) and ${Object.keys(boardState.occupiedCells[1]).length} cells (P2)`);
+    // console.log(`Current board state: ${boardState.gridWidth}x${boardState.gridHeight} with ${Object.keys(boardState.occupiedCells[0]).length} cells (P1) and ${Object.keys(boardState.occupiedCells[1]).length} cells (P2)`);
     
     try {
-        console.log("DEBUG: Getting available cells");
         const availableCells = getAvailableCells(boardState);
-        console.log(`DEBUG: Available cells count: ${availableCells.length}`);
-        console.log("DEBUG: Available cells:", JSON.stringify(availableCells));
+        // console.log(`DEBUG: Available cells count: ${availableCells.length}`);
+        // console.log("DEBUG: Available cells:", JSON.stringify(availableCells));
         
         // Simple move count based on history (excluding initial state)
         const moveCount = gameState.history.length -1; 
@@ -100,7 +81,6 @@ export function getAIMove(gameState: GameState, settings: GameSettings): Coordin
         }
 
         // Safety check - do a deep validation of available cells
-        console.log("DEBUG: Validating available cells");
         const validatedCells = availableCells.filter(cell => {
             if (cell.gridX === undefined || cell.gridY === undefined ||
                 isNaN(cell.gridX) || isNaN(cell.gridY)) {
@@ -117,8 +97,8 @@ export function getAIMove(gameState: GameState, settings: GameSettings): Coordin
             return true;
         });
         
-        console.log(`DEBUG: Validated cells count: ${validatedCells.length}`);
-        console.log("DEBUG: Validated cells:", JSON.stringify(validatedCells));
+        // console.log(`DEBUG: Validated cells count: ${validatedCells.length}`);
+        // console.log("DEBUG: Validated cells:", JSON.stringify(validatedCells));
         
         if (validatedCells.length === 0) {
             console.error("AI: All available cells failed validation! Returning null.");
@@ -128,23 +108,17 @@ export function getAIMove(gameState: GameState, settings: GameSettings): Coordin
         let bestMove: Coordinates | null = null;
 
         try {
-            console.log(`DEBUG: Selecting AI strategy (difficulty: ${aiDifficulty}, progress: ${gameProgress})`);
+            // console.log(`DEBUG: Selecting AI strategy (difficulty: ${aiDifficulty}, progress: ${gameProgress})`);
             if (aiDifficulty === 'easy') {
                 console.log("AI: Using easy difficulty strategy");
                 if (gameProgress < 0.25) {
-                    console.log("DEBUG: Calling getTerritorialMove");
                     bestMove = getTerritorialMove(boardState, validatedCells, aiPlayerIndex);
-                    console.log("DEBUG: getTerritorialMove returned:", bestMove);
                 } else {
-                    console.log("DEBUG: Calling getGreedyMove");
                     bestMove = getGreedyMove(boardState, validatedCells, aiPlayerIndex, scoringMechanism);
-                    console.log("DEBUG: getGreedyMove returned:", bestMove);
                 }
             } else { // Hard AI
                 console.log("AI: Using hard difficulty (minimax) strategy");
-                console.log("DEBUG: Calling getMinimaxMove");
                 bestMove = getMinimaxMove(boardState, validatedCells, aiPlayerIndex, scoringMechanism);
-                console.log("DEBUG: getMinimaxMove returned:", bestMove);
             }
             
             if (!bestMove) {
@@ -152,7 +126,6 @@ export function getAIMove(gameState: GameState, settings: GameSettings): Coordin
             }
         } catch (error) {
             console.error("AI calculation error:", error);
-            console.trace("AI calculation stack trace");
             // Continue to fallback
         }
 
@@ -165,7 +138,6 @@ export function getAIMove(gameState: GameState, settings: GameSettings): Coordin
         }
 
         // Final validation of selected move
-        console.log("DEBUG: Final validation of move:", bestMove);
         if (!bestMove || bestMove.gridX === undefined || bestMove.gridY === undefined || 
             isNaN(bestMove.gridX) || isNaN(bestMove.gridY)) {
             console.error(`AI final move is invalid: ${JSON.stringify(bestMove)}. Generating emergency random move.`);
@@ -173,7 +145,6 @@ export function getAIMove(gameState: GameState, settings: GameSettings): Coordin
             // Emergency fallback
             if (validatedCells.length > 0) {
                 bestMove = validatedCells[0];
-                console.log("DEBUG: Using emergency fallback - first valid cell:", bestMove);
             } else {
                 console.error("AI: Critical failure - no valid cells available despite earlier checks");
                 return null;
@@ -183,8 +154,7 @@ export function getAIMove(gameState: GameState, settings: GameSettings): Coordin
         console.log(`AI COMPLETE: Selected move at (${bestMove.gridX}, ${bestMove.gridY})`);
         return bestMove;
     } catch (outerError) {
-        console.error("DEBUG: Fatal error in top-level AI logic:", outerError);
-        console.trace("DEBUG: Stack trace for fatal AI error");
+        console.error("Fatal error in top-level AI logic:", outerError);
         return null;
     }
 }
@@ -192,7 +162,7 @@ export function getAIMove(gameState: GameState, settings: GameSettings): Coordin
 // --- Easy AI Strategies ---
 
 function getTerritorialMove(boardState: BoardState, availableCells: Coordinates[], aiPlayerIndex: PlayerIndex): Coordinates | null {
-    console.debug("AI (Easy): Using territorial strategy (valuing open spaces).");
+    // console.debug("AI (Easy): Using territorial strategy (valuing open spaces).");
     let bestMove: Coordinates | null = null;
     let maxValue = -Infinity;
     const opponentID = (aiPlayerIndex + 1) % 2 as PlayerIndex;
@@ -229,7 +199,7 @@ function getTerritorialMove(boardState: BoardState, availableCells: Coordinates[
         } 
     }
     
-    console.log(`AI (Easy) Territorial Move: (${bestMove?.gridX}, ${bestMove?.gridY}) with space value ${maxValue.toFixed(2)}.`);
+    // console.log(`AI (Easy) Territorial Move: (${bestMove?.gridX}, ${bestMove?.gridY}) with space value ${maxValue.toFixed(2)}.`);
     return bestMove; // Can be null if availableCells was empty initially (handled in getAIMove)
 }
 
@@ -239,7 +209,7 @@ function getGreedyMove(
     aiPlayerIndex: PlayerIndex, 
     scoringMechanism: ScoringMechanismId
 ): Coordinates | null {
-    console.debug("AI (Easy): Using greedy strategy (best immediate score).");
+    // console.debug("AI (Easy): Using greedy strategy (best immediate score).");
     let bestMove: Coordinates | null = null;
     let bestScoreIncrease = -Infinity;
 
@@ -263,7 +233,7 @@ function getGreedyMove(
         }
     }
 
-    console.log(`AI (Easy) Greedy Move: (${bestMove?.gridX}, ${bestMove?.gridY}), Score Increase: ${bestScoreIncrease}`);
+    // console.log(`AI (Easy) Greedy Move: (${bestMove?.gridX}, ${bestMove?.gridY}), Score Increase: ${bestScoreIncrease}`);
     return bestMove;
 }
 
@@ -277,7 +247,7 @@ function getMinimaxMove(
     aiPlayerIndex: PlayerIndex, 
     scoringMechanism: ScoringMechanismId
 ): Coordinates | null {
-    console.debug("AI (Hard): Using Minimax strategy.");
+    // console.debug("AI (Hard): Using Minimax strategy.");
     let bestScore = -Infinity;
     let bestMove: Coordinates | null = null;
     
@@ -299,7 +269,7 @@ function getMinimaxMove(
         }
     }
 
-    console.log(`AI (Hard) Minimax Move: (${bestMove?.gridX}, ${bestMove?.gridY}), Eval Score: ${bestScore}`);
+    // console.log(`AI (Hard) Minimax Move: (${bestMove?.gridX}, ${bestMove?.gridY}), Eval Score: ${bestScore}`);
     return bestMove;
 }
 

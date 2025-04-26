@@ -1,3 +1,10 @@
+/**
+ * src/core/settingsSlice.ts - Game Settings Redux Slice
+ * 
+ * Redux Toolkit slice managing game settings state.
+ * Defines structure and updates for options like difficulty, board size, etc.
+ */
+
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { GameSettings } from './types';
 

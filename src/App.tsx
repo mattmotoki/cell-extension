@@ -1,3 +1,33 @@
+/**
+ * src/App.tsx - Main Application Component
+ * 
+ * The top-level React component that orchestrates the Cell Extension game.
+ * Manages game state through Redux, coordinates user interactions, and triggers
+ * AI moves when appropriate. Serves as the central hub that integrates all 
+ * game components and manages game flow.
+ * 
+ * Key responsibilities:
+ * - Rendering the game's UI components (board, controls, settings panel)
+ * - Managing game state transitions (player turns, game over)
+ * - Triggering AI move calculation when it's the AI's turn
+ * - Handling user actions like reset, undo, and settings changes
+ * 
+ * Relationships:
+ * - Uses Redux store (gameSlice, settingsSlice) for state management
+ * - Imports UI components from platforms/web/components/
+ * - Calls getAIMove from core/ai/aiLogic.ts when it's the AI's turn
+ * - Dispatches game actions (placeMove, resetGame, etc.) to update state
+ * 
+ * Effect hooks:
+ * - AI turn detection and move calculation
+ * - Game over notification
+ * 
+ * Revision Log:
+ *  
+ * Note: This revision log should be updated whenever this file is modified. 
+ * Do not use dates in the revision log.
+ */
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import '../styles.css';
@@ -11,8 +41,8 @@ import { RootState, AppDispatch } from '@core/store';
 import { GameSettings, Coordinates, GameState } from '@core/types';
 import { placeMove, undoMove, resetGame, setProgress } from '@core/game/gameSlice';
 import { updateSetting } from '@core/settingsSlice';
-import { getAIMove } from '@core/ai/aiLogic';
-import { getAvailableCells } from '@core/game/GameBoardLogic';
+import { getAIMove } from '@core/ai';
+import { getAvailableCells } from '@core/game';
 
 function App() {
   const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false);
@@ -32,13 +62,13 @@ function App() {
     dispatch(updateSetting({ key, value }));
     const nextSettings = { ...settings, [key]: value };
     if (key === 'boardSize' || key === 'firstPlayer' || key === 'scoringMechanism' || key === 'aiDifficulty' || key === 'playerMode') {
-        console.log(`${String(key)} changed, dispatching resetGame...`);
+        // console.log(`${String(key)} changed, dispatching resetGame...`);
         dispatch(resetGame(nextSettings));
     }
   }, [dispatch, settings]);
 
   const handleResetClick = useCallback(() => {
-      console.log('Reset button clicked');
+      // console.log('Reset button clicked');
       dispatch(resetGame(settings));
       setIsSettingsPanelOpen(false);
   }, [dispatch, settings]);
@@ -52,12 +82,12 @@ function App() {
   // AI move calculation function - extracted to prevent re-creation on every render
   const calculateAIMove = useCallback((currentGameState: GameState, currentSettings: GameSettings) => {
     if (aiCalculationInProgress.current) {
-      console.log("[AI Effect] AI calculation already in progress, skipping");
+      // console.log("[AI Effect] AI calculation already in progress, skipping");
       return;
     }
     
     aiCalculationInProgress.current = true;
-    console.log("[AI Effect] Starting AI calculation process");
+    console.log("[AI Effect] Starting AI calculation...");
     
     // Set game to waiting state
     dispatch(setProgress('waiting'));
@@ -65,7 +95,7 @@ function App() {
     // Use setTimeout to avoid blocking the UI
     setTimeout(() => {
       try {
-        console.log("[AI Effect] Calculating AI move...");
+        // console.log("[AI Effect] Calculating AI move...");
         console.time("AI Move Calculation");
         const aiMove = getAIMove(currentGameState, currentSettings);
         console.timeEnd("AI Move Calculation");
@@ -73,7 +103,7 @@ function App() {
         
         // Process the AI move
         if (aiMove && typeof aiMove.gridX === 'number' && typeof aiMove.gridY === 'number') {
-          console.log(`[AI Effect] Valid move found at (${aiMove.gridX}, ${aiMove.gridY}), dispatching...`);
+          // console.log(`[AI Effect] Valid move found at (${aiMove.gridX}, ${aiMove.gridY}), dispatching...`);
           dispatch(placeMove({ coords: aiMove, settings: currentSettings }));
         } else {
           console.warn("[AI Effect] AI returned invalid move:", aiMove);
@@ -107,12 +137,12 @@ function App() {
                      gameState.currentPlayer === 1 && 
                      gameState.progress === 'playing';
                      
-    console.log("[AI Effect] Checking AI turn conditions:", {
-      playerMode: settings.playerMode,
-      currentPlayer: gameState.currentPlayer,
-      progress: gameState.progress,
-      isAITurn
-    });
+    // console.log("[AI Effect] Checking AI turn conditions:", {
+    //   playerMode: settings.playerMode,
+    //   currentPlayer: gameState.currentPlayer,
+    //   progress: gameState.progress,
+    //   isAITurn
+    // });
     
     if (isAITurn) {
       console.log("[AI Effect] AI's turn detected, triggering calculation");

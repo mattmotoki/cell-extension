@@ -1,4 +1,13 @@
 /**
+ * src/core/types.ts - Shared Type Definitions
+ * 
+ * Central repository of shared TypeScript types and interfaces.
+ * Provides a single source of truth for data structures used across the application.
+ * 
+ * Key types: PlayerIndex, Coordinates, BoardState, GameState, GameSettings, etc.
+ */
+
+/**
  * src/types.ts
  * 
  * Shared TypeScript types and interfaces for the Cell Production game.
@@ -37,7 +46,6 @@ export interface HistoryEntry {
   scores: [number, number];
   currentPlayer: PlayerIndex;
   progress: GameProgress; // Store progress to handle undo correctly during AI move
-  // Add score history if needed for undo, though recalculating might be simpler
 }
 
 // Represents the complete state of the game logic
@@ -50,10 +58,9 @@ export interface GameState {
   scoreHistory2: number[];
   scoringMechanism: ScoringMechanismId; // Use the type from GameBoardLogic.ts
   history: HistoryEntry[];
-  // Potentially add AI difficulty, player mode if logic depends on them
 }
 
-// Define settings types directly here or import from App/GameSettingsPanel if preferred
+// Define settings types
 type PlayerMode = 'ai' | 'user';
 type FirstPlayer = 'human' | 'ai';
 export type ScoringMechanismId = 'cell-multiplication' | 'cell-connection' | 'cell-extension';

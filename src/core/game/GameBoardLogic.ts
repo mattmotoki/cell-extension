@@ -1,7 +1,34 @@
 /**
- * src/logic/board/GameBoardLogic.ts
+ * src/core/game/GameBoardLogic.ts - Core Game Logic
  * 
- * Pure functions for managing the game board state and logic.
+ * Contains pure functions that implement the fundamental logic of the Cell Extension game.
+ * This module handles board state management, cell placement validation, connected component
+ * analysis, and score calculation. It provides the foundational operations used by both
+ * the UI components and the AI logic.
+ * 
+ * Key functionality:
+ * - Board state creation and manipulation
+ * - Cell placement validation and processing
+ * - Connected component identification and analysis
+ * - Scoring mechanism implementation
+ * - Game state querying (available cells, game over detection)
+ * 
+ * Design approach:
+ * - Pure functions that don't modify input data
+ * - Immutable data patterns for state updates
+ * - Type safety through TypeScript interfaces
+ * - Clear separation from UI and rendering concerns
+ * 
+ * Relationships:
+ * - Used by gameSlice.ts for game state updates
+ * - Used by aiLogic.ts for move simulation and validation
+ * - Imports scoring functions from ../scoring/
+ * - Referenced by UI components for board rendering
+ * 
+ * Revision Log:
+ *  
+ * Note: This revision log should be updated whenever this file is modified. 
+ * Do not use dates in the revision log.
  */
 
 import { 
