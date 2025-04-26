@@ -23,6 +23,7 @@
   "homepage": "https://github.com/mattmotoki/cell-extension#readme",
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.6",
+    "@vercel/analytics": "^1.5.0",
     "react-redux": "^9.1.2"
   },
   "devDependencies": {

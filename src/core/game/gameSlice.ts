@@ -42,15 +42,14 @@ import {
     GameSettings, 
     Coordinates,
     ScoringMechanismId
-} from '../types'; // Adjusted path
+} from '../types';
 import {
     createInitialBoardState,
     placeCell,
     calculateScore,
     getAvailableCells,
     isGameOver
-} from './GameBoardLogic'; // Assuming GameBoardLogic is in the same directory
-// import { getAIMove } from '../ai/aiLogic'; // AI move calculation is handled in App.tsx
+} from './GameBoardLogic';
 
 // Helper to create history entry
 function createHistoryEntry(gameState: GameState): HistoryEntry {
