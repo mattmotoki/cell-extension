@@ -13,7 +13,6 @@
     "test:watch": "jest --config tests/setup/jest.config.js --watch",
     "test:coverage": "jest --config tests/setup/jest.config.js --coverage",
     "dev:test": "concurrently \"npm run dev\" \"npm run test:watch\""
-
   },
   "repository": {
     "type": "git",
@@ -35,6 +34,7 @@
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^14.1.2",
     "@testing-library/user-event": "^14.5.1",
+    "@types/d3": "^7.4.3",
     "@types/jest": "^29.5.11",
     "@types/node": "^22.15.2",
     "@types/react": "^18.3.3",
