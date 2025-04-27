@@ -2,59 +2,110 @@ import { getAIMove } from '@core';
 import type { GameState, GameSettings } from '@core';
 
 describe('AI Engine', () => {
-  // Setup test game states and settings
+  // Setup test game states and settings - updated for new board structure
   const emptyBoardState: GameState = {
-    boardState: [
-      [null, null, null, null, null],
-      [null, null, null, null, null],
-      [null, null, null, null, null],
-      [null, null, null, null, null],
-      [null, null, null, null, null],
-    ],
-    moveHistory: [],
+    boardState: {
+      gridWidth: 6,
+      gridHeight: 6,
+      occupiedCells: [{}, {}]
+    },
     currentPlayer: 1, // AI is player 1
     scores: [0, 0],
     progress: 'playing',
+    history: [{
+      boardState: {
+        gridWidth: 6,
+        gridHeight: 6,
+        occupiedCells: [{}, {}]
+      },
+      currentPlayer: 0,
+      scores: [0, 0],
+      progress: 'pregame'
+    }],
+    scoreHistory1: [0],
+    scoreHistory2: [0],
+    scoringMechanism: 'cell-extension'
   };
 
   const partiallyFilledBoardState: GameState = {
-    boardState: [
-      [0, null, null, null, null],
-      [null, 0, null, null, null],
-      [null, null, 1, null, null],
-      [null, null, null, 0, null],
-      [null, null, null, null, 1],
-    ],
-    moveHistory: [
-      { gridX: 0, gridY: 0, player: 0 },
-      { gridX: 2, gridY: 2, player: 1 },
-      { gridX: 1, gridY: 1, player: 0 },
-      { gridX: 4, gridY: 4, player: 1 },
-      { gridX: 3, gridY: 3, player: 0 },
+    boardState: {
+      gridWidth: 6,
+      gridHeight: 6,
+      occupiedCells: [
+        { 
+          '0,0': { gridX: 0, gridY: 0 },
+          '1,1': { gridX: 1, gridY: 1 },
+          '3,3': { gridX: 3, gridY: 3 }
+        }, 
+        { 
+          '2,2': { gridX: 2, gridY: 2 },
+          '4,4': { gridX: 4, gridY: 4 }
+        }
+      ]
+    },
+    history: [
+      {
+        boardState: {
+          gridWidth: 6,
+          gridHeight: 6,
+          occupiedCells: [{}, {}]
+        },
+        currentPlayer: 0,
+        scores: [0, 0],
+        progress: 'pregame'
+      },
+      // Additional history entries would be here
     ],
     currentPlayer: 1, // AI is player 1
     scores: [3, 2],
     progress: 'playing',
+    scoreHistory1: [0, 1, 2, 3],
+    scoreHistory2: [0, 0, 1, 2],
+    scoringMechanism: 'cell-extension'
   };
 
-  const nearlyFullBoardState: GameState = {
-    boardState: [
-      [0, 1, 0, 1, 0],
-      [1, 0, 1, 0, 1],
-      [0, 1, 0, 1, 0],
-      [1, 0, 1, 0, null], // Only one empty cell
-      [0, 1, 0, 1, 0],
-    ],
-    moveHistory: [
-      // Not including full history for brevity
+  const singleEmptyCellBoardState: GameState = {
+    boardState: {
+      gridWidth: 3,
+      gridHeight: 3,
+      occupiedCells: [
+        { 
+          '0,0': { gridX: 0, gridY: 0 },
+          '0,2': { gridX: 0, gridY: 2 },
+          '2,0': { gridX: 2, gridY: 0 }
+        }, 
+        { 
+          '0,1': { gridX: 0, gridY: 1 },
+          '1,0': { gridX: 1, gridY: 0 },
+          '1,1': { gridX: 1, gridY: 1 },
+          '1,2': { gridX: 1, gridY: 2 },
+          '2,1': { gridX: 2, gridY: 1 }
+        }
+      ]
+    },
+    history: [
+      {
+        boardState: {
+          gridWidth: 3,
+          gridHeight: 3,
+          occupiedCells: [{}, {}]
+        },
+        currentPlayer: 0,
+        scores: [0, 0],
+        progress: 'pregame'
+      },
+      // Additional history entries would be here
     ],
     currentPlayer: 1, // AI is player 1
-    scores: [12, 12],
+    scores: [3, 5],
     progress: 'playing',
+    scoreHistory1: [0, 1, 2, 3],
+    scoreHistory2: [0, 1, 3, 5],
+    scoringMechanism: 'cell-extension'
   };
 
   const defaultSettings: GameSettings = {
-    boardSize: 5,
+    boardSize: 6,
     playerMode: 'ai',
     firstPlayer: 0,
     scoringMechanism: 'cell-extension',
@@ -64,90 +115,128 @@ describe('AI Engine', () => {
   it('should return a valid move on an empty board', () => {
     const move = getAIMove(emptyBoardState, defaultSettings);
     
-    // Verify that the move is within board bounds
+    // Verify that the move exists and is within board bounds
     expect(move).toBeDefined();
+    expect(move).not.toBeNull();
     expect(typeof move.gridX).toBe('number');
     expect(typeof move.gridY).toBe('number');
     expect(move.gridX).toBeGreaterThanOrEqual(0);
-    expect(move.gridX).toBeLessThan(5);
+    expect(move.gridX).toBeLessThan(6);
     expect(move.gridY).toBeGreaterThanOrEqual(0);
-    expect(move.gridY).toBeLessThan(5);
+    expect(move.gridY).toBeLessThan(6);
   });
 
   it('should return a valid move on a partially filled board', () => {
     const move = getAIMove(partiallyFilledBoardState, defaultSettings);
     
-    // Verify that the move is valid
+    // Verify that the move exists and is valid
     expect(move).toBeDefined();
+    expect(move).not.toBeNull();
     expect(typeof move.gridX).toBe('number');
     expect(typeof move.gridY).toBe('number');
     
-    // Verify that the move is on an empty cell
-    expect(partiallyFilledBoardState.boardState[move.gridY][move.gridX]).toBeNull();
+    // Verify the move is within board bounds
+    expect(move.gridX).toBeGreaterThanOrEqual(0);
+    expect(move.gridX).toBeLessThan(6);
+    expect(move.gridY).toBeGreaterThanOrEqual(0);
+    expect(move.gridY).toBeLessThan(6);
+    
+    // The cell should not already be occupied
+    const cellKey = `${move.gridX},${move.gridY}`;
+    const player0Cells = partiallyFilledBoardState.boardState.occupiedCells[0];
+    const player1Cells = partiallyFilledBoardState.boardState.occupiedCells[1];
+    
+    expect(player0Cells[cellKey]).toBeUndefined();
+    expect(player1Cells[cellKey]).toBeUndefined();
   });
 
-  it('should find the only available move on a nearly full board', () => {
-    const move = getAIMove(nearlyFullBoardState, defaultSettings);
+  it('should find the only available move when there is a single empty cell', () => {
+    const move = getAIMove(singleEmptyCellBoardState, defaultSettings);
     
-    // There's only one valid move at (3, 4)
-    expect(move).toEqual({ gridX: 4, gridY: 3 });
+    // There's only one valid move at (2,2)
+    expect(move).toBeDefined();
+    expect(move).not.toBeNull();
+    expect(move).toEqual({ gridX: 2, gridY: 2 });
   });
 
   it('should make different moves based on difficulty level', () => {
-    // Track moves made at different difficulty levels
-    const easyMove = getAIMove(partiallyFilledBoardState, { 
-      ...defaultSettings, 
-      aiDifficulty: 'easy' 
-    });
+    // This test may be flaky due to randomness in AI decisions
+    // We'll run it multiple times to increase chance of seeing different moves
+    const moves = [];
     
-    const mediumMove = getAIMove(partiallyFilledBoardState, { 
-      ...defaultSettings, 
-      aiDifficulty: 'medium' 
-    });
-    
-    const hardMove = getAIMove(partiallyFilledBoardState, { 
-      ...defaultSettings, 
-      aiDifficulty: 'hard' 
-    });
-    
-    // Note: This test might be flaky if the AI randomly chooses the same move for different difficulties
-    // In a real implementation, we might need to mock the random number generator
-    
-    // We expect the moves to be different for at least one difficulty
-    // This test checks that difficulty affects decision making
-    const allMovesEqual = 
-      easyMove.gridX === mediumMove.gridX && 
-      easyMove.gridY === mediumMove.gridY &&
-      mediumMove.gridX === hardMove.gridX && 
-      mediumMove.gridY === hardMove.gridY;
+    for (let i = 0; i < 5; i++) {
+      // Create a fresh copy of the board state for each run
+      const boardStateCopy = JSON.parse(JSON.stringify(partiallyFilledBoardState));
       
-    // If all moves are equal, it's likely the AI doesn't consider difficulty
-    // But since AI can be random, we might need to run this test multiple times
-    // or control randomness to make it reliable
+      // Get moves for different difficulty levels
+      const easyMove = getAIMove(boardStateCopy, { 
+        ...defaultSettings, 
+        aiDifficulty: 'easy' 
+      });
+      
+      const mediumMove = getAIMove(boardStateCopy, { 
+        ...defaultSettings, 
+        aiDifficulty: 'medium' 
+      });
+      
+      const hardMove = getAIMove(boardStateCopy, { 
+        ...defaultSettings, 
+        aiDifficulty: 'hard' 
+      });
+      
+      // Skip if any move is null
+      if (easyMove && mediumMove && hardMove) {
+        moves.push({
+          easy: `${easyMove.gridX},${easyMove.gridY}`,
+          medium: `${mediumMove.gridX},${mediumMove.gridY}`,
+          hard: `${hardMove.gridX},${hardMove.gridY}`
+        });
+      }
+    }
     
-    // Instead of asserting they must be different (which could cause flaky tests),
-    // we'll log the result for inspection
-    console.log('Easy move:', easyMove);
-    console.log('Medium move:', mediumMove);
-    console.log('Hard move:', hardMove);
-    console.log('All moves equal:', allMovesEqual);
+    // Log the moves for inspection
+    console.log('Difficulty test moves:', moves);
+    
+    // We can't assert for different moves, but we can check they're all valid
+    expect(moves.length).toBeGreaterThan(0);
   });
 
   it('should consider the scoring mechanism when making moves', () => {
-    // Test with different scoring mechanisms
-    const extensionMove = getAIMove(partiallyFilledBoardState, {
+    // This test is also potentially flaky due to AI randomness
+    // We'll verify the AI uses the specified scoring mechanism
+    
+    // We'll check that the AI properly reads the scoring mechanism setting
+    const boardStateCopy = JSON.parse(JSON.stringify(partiallyFilledBoardState));
+    
+    // Get a move with cell-extension scoring
+    const extensionMove = getAIMove(boardStateCopy, {
       ...defaultSettings,
       scoringMechanism: 'cell-extension',
     });
     
-    const captureMove = getAIMove(partiallyFilledBoardState, {
+    // Get a move with cell-capture scoring
+    const captureMove = getAIMove(boardStateCopy, {
       ...defaultSettings,
       scoringMechanism: 'cell-capture',
     });
     
-    // Similar to difficulty test, this might be flaky
-    // Log for inspection
-    console.log('Extension move:', extensionMove);
-    console.log('Capture move:', captureMove);
+    // Log the moves for inspection
+    if (extensionMove && captureMove) {
+      console.log('Extension move:', `${extensionMove.gridX},${extensionMove.gridY}`);
+      console.log('Capture move:', `${captureMove.gridX},${captureMove.gridY}`);
+    }
+    
+    // We can't assert they're different, but we can verify they're valid
+    // Both should be defined and within board bounds
+    expect(extensionMove).toBeDefined();
+    expect(captureMove).toBeDefined();
+    if (extensionMove) {
+      expect(extensionMove.gridX).toBeGreaterThanOrEqual(0);
+      expect(extensionMove.gridY).toBeGreaterThanOrEqual(0);
+    }
+    if (captureMove) {
+      expect(captureMove.gridX).toBeGreaterThanOrEqual(0);
+      expect(captureMove.gridY).toBeGreaterThanOrEqual(0);
+    }
   });
 }); 

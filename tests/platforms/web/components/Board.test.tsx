@@ -2,7 +2,7 @@ import React from 'react';
 import { screen, fireEvent } from '@testing-library/react';
 import GameBoard from '@web/components/GameBoard';
 import { placeMove } from '@core';
-import { renderWithProviders } from '../../../setup/testUtils';
+import { renderWithProviders, createTestBoardState, addCellToBoard } from '../../../setup/testUtils';
 
 // Mock the Redux dispatch
 jest.mock('react-redux', () => ({
@@ -11,28 +11,49 @@ jest.mock('react-redux', () => ({
 }));
 
 describe('GameBoard Component', () => {
-  // Set up mock state for testing
+  // Set up mock state for testing with the correct board structure
+  const emptyBoardState = createTestBoardState(5, 5);
+  let boardWithMoves = emptyBoardState;
+  
+  // Place player 0's move at (1,1)
+  boardWithMoves = addCellToBoard(boardWithMoves, 0, 1, 1);
+  // Place player 1's move at (2,2)
+  boardWithMoves = addCellToBoard(boardWithMoves, 1, 2, 2);
+
   const preloadedState = {
     game: {
-      boardState: [
-        [null, null, null, null, null],
-        [null, 0, null, null, null],
-        [null, null, 1, null, null],
-        [null, null, null, null, null],
-        [null, null, null, null, null],
-      ],
-      moveHistory: [
-        { gridX: 1, gridY: 1, player: 0 },
-        { gridX: 2, gridY: 2, player: 1 },
+      boardState: boardWithMoves,
+      history: [
+        {
+          boardState: emptyBoardState,
+          currentPlayer: 0,
+          scores: [0, 0],
+          progress: 'pregame'
+        },
+        {
+          boardState: addCellToBoard(emptyBoardState, 0, 1, 1), 
+          currentPlayer: 1,
+          scores: [1, 0],
+          progress: 'playing'
+        },
+        {
+          boardState: boardWithMoves,
+          currentPlayer: 0,
+          scores: [1, 1],
+          progress: 'playing'
+        }
       ],
       currentPlayer: 0,
       scores: [1, 1],
       progress: 'playing',
+      scoreHistory1: [0, 1, 1],
+      scoreHistory2: [0, 0, 1],
+      scoringMechanism: 'cell-extension'
     },
     settings: {
-      boardSize: 5,
-      playerMode: 'human',
-      firstPlayer: 0,
+      boardSize: '5',
+      playerMode: 'user',
+      firstPlayer: 'human',
       scoringMechanism: 'cell-extension',
       aiDifficulty: 'medium',
     }

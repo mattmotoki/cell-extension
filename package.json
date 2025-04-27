@@ -9,9 +9,9 @@
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "test": "jest --config tests/setup/jest.config.js",
+    "test:watch": "jest --config tests/setup/jest.config.js --watch",
+    "test:coverage": "jest --config tests/setup/jest.config.js --coverage",
     "dev:test": "concurrently \"npm run dev\" \"npm run test:watch\""
 
   },
@@ -70,6 +70,9 @@
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
     },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(d3|d3-array|d3-scale|d3-shape|d3-time|d3-time-format|d3-color|d3-interpolate|d3-format|d3-selection|d3-transition|d3-axis|d3-hierarchy|d3-path|d3-zoom)/)"
+    ],
     "collectCoverageFrom": [
       "src/**/*.{ts,tsx}",
       "!src/**/*.d.ts"

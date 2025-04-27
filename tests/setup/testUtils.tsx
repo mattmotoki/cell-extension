@@ -32,7 +32,7 @@ export function renderWithProviders(
   return { store, ...render(ui, { wrapper: Wrapper, ...renderOptions }) }
 }
 
-// Mock store helper
+// Mock store helper - uses actual reducers
 export function createMockStore(preloadedState: Partial<RootState> = {}) {
   return configureStore({
     reducer: {
@@ -43,19 +43,60 @@ export function createMockStore(preloadedState: Partial<RootState> = {}) {
   })
 }
 
-// Common test data
+// Common test data - matching the current implementation's structure
 export const defaultGameState = {
-  boardState: Array(5).fill(Array(5).fill(null)),
-  moveHistory: [],
+  boardState: {
+    gridWidth: 5,
+    gridHeight: 5,
+    occupiedCells: [{}, {}] // Empty cells for both players
+  },
+  history: [{
+    boardState: {
+      gridWidth: 5,
+      gridHeight: 5,
+      occupiedCells: [{}, {}]
+    },
+    currentPlayer: 0,
+    scores: [0, 0],
+    progress: 'pregame'
+  }],
   currentPlayer: 0,
   scores: [0, 0],
   progress: 'pregame',
+  scoreHistory1: [0],
+  scoreHistory2: [0],
+  scoringMechanism: 'cell-extension'
 }
 
 export const defaultSettings = {
-  boardSize: 5,
-  playerMode: 'human',
-  firstPlayer: 0,
+  boardSize: '5',
+  playerMode: 'user',
+  firstPlayer: 'human',
   scoringMechanism: 'cell-extension',
   aiDifficulty: 'medium',
+}
+
+// Helper to create a test board state with occupied cells
+export function createTestBoardState(width = 5, height = 5, occupiedCells = [{}, {}]) {
+  return {
+    gridWidth: width,
+    gridHeight: height,
+    occupiedCells
+  };
+}
+
+// Helper to add a cell to the board state for a specific player
+export function addCellToBoard(boardState, player, x, y) {
+  const occupiedCells = [
+    { ...boardState.occupiedCells[0] },
+    { ...boardState.occupiedCells[1] }
+  ];
+  
+  const key = `${x},${y}`;
+  occupiedCells[player][key] = { gridX: x, gridY: y };
+  
+  return {
+    ...boardState,
+    occupiedCells
+  };
 } 

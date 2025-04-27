@@ -1,22 +1,34 @@
 import React from 'react';
 import { screen } from '@testing-library/react';
 import ScoreDisplay from '@web/components/ScoreDisplay';
-import { renderWithProviders } from '../../../setup/testUtils';
+import { renderWithProviders, createTestBoardState } from '../../../setup/testUtils';
 
 describe('ScoreDisplay Component', () => {
-  // Setup some test states
+  // Setup some test states with correct board structure
+  const emptyBoardState = createTestBoardState(5, 5);
+  
   const equalScoreState = {
     game: {
-      boardState: Array(5).fill(Array(5).fill(null)),
-      moveHistory: [],
+      boardState: emptyBoardState, // We don't actually check board state in these tests
+      history: [
+        {
+          boardState: emptyBoardState,
+          currentPlayer: 0,
+          scores: [0, 0],
+          progress: 'pregame'
+        }
+      ],
       currentPlayer: 0,
       scores: [3, 3],
       progress: 'playing',
+      scoreHistory1: [0, 1, 2, 3],
+      scoreHistory2: [0, 1, 2, 3],
+      scoringMechanism: 'cell-extension'
     },
     settings: {
-      boardSize: 5,
-      playerMode: 'human',
-      firstPlayer: 0,
+      boardSize: '5',
+      playerMode: 'user',
+      firstPlayer: 'human',
       scoringMechanism: 'cell-extension',
       aiDifficulty: 'medium',
     }
@@ -24,16 +36,26 @@ describe('ScoreDisplay Component', () => {
 
   const player1WinningState = {
     game: {
-      boardState: Array(5).fill(Array(5).fill(null)),
-      moveHistory: [],
+      boardState: emptyBoardState,
+      history: [
+        {
+          boardState: emptyBoardState,
+          currentPlayer: 0,
+          scores: [0, 0],
+          progress: 'pregame'
+        }
+      ],
       currentPlayer: 1,
       scores: [5, 2],
       progress: 'playing',
+      scoreHistory1: [0, 1, 3, 5],
+      scoreHistory2: [0, 1, 2, 2],
+      scoringMechanism: 'cell-extension'
     },
     settings: {
-      boardSize: 5,
-      playerMode: 'human',
-      firstPlayer: 0,
+      boardSize: '5',
+      playerMode: 'user',
+      firstPlayer: 'human',
       scoringMechanism: 'cell-extension',
       aiDifficulty: 'medium',
     }
@@ -41,16 +63,26 @@ describe('ScoreDisplay Component', () => {
 
   const player2WinningState = {
     game: {
-      boardState: Array(5).fill(Array(5).fill(null)),
-      moveHistory: [],
+      boardState: emptyBoardState,
+      history: [
+        {
+          boardState: emptyBoardState,
+          currentPlayer: 0,
+          scores: [0, 0],
+          progress: 'pregame'
+        }
+      ],
       currentPlayer: 0,
       scores: [2, 7],
       progress: 'playing',
+      scoreHistory1: [0, 1, 2, 2],
+      scoreHistory2: [0, 1, 5, 7],
+      scoringMechanism: 'cell-extension'
     },
     settings: {
-      boardSize: 5,
-      playerMode: 'human',
-      firstPlayer: 0,
+      boardSize: '5',
+      playerMode: 'user',
+      firstPlayer: 'human',
       scoringMechanism: 'cell-extension',
       aiDifficulty: 'medium',
     }
