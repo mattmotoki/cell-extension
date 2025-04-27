@@ -1,4 +1,4 @@
-# Celaina
+# Cellmata
 
 Players take turns placing their cells on the board. If a player places a new cell adjacent to one or more of their existing cells, their existing cells expand to include the new one.
 

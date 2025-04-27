@@ -42,7 +42,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, isPanelOpen }) => {
     <nav className="navbar">
       <div className="navbar-logo">
         <img src="/favicons/favicon-32x32.png" alt="Cell Extension Logo" />
-        <h1 className="navbar-title">Celmath vs Celamat</h1>
+        <h1 className="navbar-title">Cellmata</h1>
       </div>
 
       {/* Add onClick handler and dynamic classes */}
