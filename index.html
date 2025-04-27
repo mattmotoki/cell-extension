@@ -3,12 +3,12 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Cell Production</title>
+        <title>Cellmata</title>
         <link rel="stylesheet" type="text/css" href="styles.css">
-        <link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-touch-icon.png">
-        <link rel="icon" type="image/png" sizes="32x32" href="favicons/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="favicons/favicon-16x16.png">
-        <link rel="manifest" href="favicons/site.webmanifest">
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png">
+        <link rel="manifest" href="/favicons/site.webmanifest">
         <script src="https://d3js.org/d3.v7.min.js"></script>
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-FP9GMH8PB6"></script>
         <script>
@@ -18,168 +18,8 @@
           gtag('config', 'G-FP9GMH8PB6');
         </script>        
     </head>
-<body>
-    <!-- Game container with 9/16 aspect ratio for portrait mode -->
-    <div class="game-container">
-        <!-- Navbar -->
-        <nav class="navbar">
-            <div class="navbar-logo">
-                <img src="favicons/favicon-32x32.png" alt="Cell Extension Logo">
-                <h1 class="navbar-title">Cell Production</h1>
-            </div>
-            
-            <!-- Game settings menu button -->
-            <div class="game-settings-menu" id="game-settings-menu">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        </nav>
-        
-        <!-- Game settings panel -->
-        <div class="game-settings-panel" id="game-settings-panel">
-            <ul class="game-settings-list">
-                <li class="game-settings-item">
-                    <span class="game-settings-item-label">Player Mode</span>
-                    <select id="player-mode">
-                        <option value="ai">AI Player</option>
-                        <option value="user">Two Player</option>
-                    </select>
-                </li>
-                <li class="game-settings-item">
-                    <span class="game-settings-item-label">First Player</span>
-                    <select id="first-player">
-                        <option value="human" selected>Human (Player 1)</option>
-                        <option value="ai">AI (Player 2)</option>
-                    </select>
-                </li>
-                <li class="game-settings-item">
-                    <span class="game-settings-item-label">Scoring Mechanism</span>
-                    <select id="scoring-mechanism" title="Select a scoring mechanism">
-                        <option value="cell-multiplication" selected title="Product of the size of the cells">Cell-Multiplication</option>                        
-                        <option value="cell-connection" title="Product of the number of directed edges (connections)">Cell-Connection</option>
-                        <option value="cell-extension" title="Product of the number of undirected edges (extensions)">Cell-Extension</option>
-                    </select>
-                </li>
-                <li class="game-settings-item">
-                    <span class="game-settings-item-label">AI Difficulty</span>
-                    <select id="ai-difficulty" title="Select AI Difficulty">
-                        <option value="easy" selected>Easy</option>
-                        <option value="hard">Hard</option>
-                    </select>
-                </li>
-                <li class="game-settings-item">
-                    <span class="game-settings-item-label">Board Size</span>
-                    <select id="board-size" title="Select a board size">
-                        <option value="4">4x4</option>
-                        <option value="6" selected>6x6</option>
-                        <option value="10">10x10</option>
-                        <option value="16">16x16</option>
-                    </select>
-                </li>
-            </ul>
-            <!-- Close button -->
-            <div class="game-settings-close">
-                <button id="game-settings-close-btn">Close Menu</button>
-            </div>
-        </div>
-        
-        <div id="game">
-            <!-- Board UI group for better spacing control -->
-            <div class="board-group">
-                <div id="scores-container">
-                    <div id="player-scores"></div>
-                    <div id="score-breakdown"></div>
-                </div>
-                <!-- Board container with SVG -->
-                <div id="board-container">
-                    <svg id="board"></svg>
-                </div>
-            </div>
-                        
-            <!-- Score chart -->
-            <div id="score-chart-container">
-                <svg id="score-chart"></svg>
-            </div>
-            
-            <!-- Game control buttons -->
-            <div id="game-controls">
-                <button id="undo" disabled>
-                    <span class="button-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" stroke="currentColor" stroke-width="0.5">
-                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2v1z"/>
-                            <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466z"/>
-                        </svg>
-                    </span>
-                    Undo
-                </button>
-                <button id="reset">
-                    <span class="button-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" stroke="currentColor" stroke-width="0.5">
-                            <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-                        </svg>
-                    </span> 
-                    Reset
-                </button>                
-            </div>
-        </div>
-    </div>
-    
-    <!-- Load the main application script -->
-    <script type="module" src="src/main.js"></script>
-    
-    <!-- Game settings menu toggle script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const gameSettingsMenu = document.getElementById('game-settings-menu');
-            const gameSettingsPanel = document.getElementById('game-settings-panel');
-            const closeMenuBtn = document.getElementById('game-settings-close-btn');
-            
-            // Track if settings have changed
-            let settingsChanged = false;
-            
-            // Listen for changes in all settings dropdowns
-            const settingsDropdowns = [
-                'player-mode',
-                'first-player',
-                'scoring-mechanism',
-                'ai-difficulty',
-                'board-size'
-            ];
-            
-            settingsDropdowns.forEach(id => {
-                const dropdown = document.getElementById(id);
-                if (dropdown) {
-                    dropdown.addEventListener('change', function() {
-                        // For first-player and ai-difficulty, we need to reset the game explicitly
-                        // Other dropdowns already have their own event handlers that reset the game
-                        if (id === 'first-player' || id === 'ai-difficulty') {
-                            settingsChanged = true;
-                        }
-                    });
-                }
-            });
-            
-            // Toggle menu when settings menu is clicked
-            gameSettingsMenu.addEventListener('click', function() {
-                gameSettingsMenu.classList.toggle('active');
-                gameSettingsPanel.classList.toggle('active');
-                settingsChanged = false; // Reset change tracker when opening menu
-            });
-            
-            // Close menu when close button is clicked
-            closeMenuBtn.addEventListener('click', function() {
-                gameSettingsMenu.classList.remove('active');
-                gameSettingsPanel.classList.remove('active');
-                
-                // If settings have been changed, trigger a reset
-                if (settingsChanged) {
-                    document.getElementById('reset').click();
-                    settingsChanged = false;
-                }
-            });
-        });
-    </script>
-</body>
+    <body>
+        <div id="root"></div>
+        <script type="module" src="/src/main.tsx"></script>
+    </body>
 </html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Cell Extension</title>
+        <link rel="stylesheet" type="text/css" href="styles.css">
+        <link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="favicons/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="favicons/favicon-16x16.png">
+        <link rel="manifest" href="favicons/site.webmanifest">
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-9PREHWYS4F"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-9PREHWYS4F');
+        </script>        
+    </head>
+<body>
+    <div id="game">
+        <div id="game-header">
+            <svg id="widget"></svg>        
+            <div id="score-display">gameState.Scores: Player 1: 0, Player 2: 0</div>        
+        </div>
+        <svg id="board"></svg>        
+        <svg id="score-chart"></svg>
+        <div id="game-controls">
+            <div id="player-mode">
+                <input type="radio" id="ai" name="player-mode" value="ai" checked>
+                <label for="ai">AI Player</label>
+                <input type="radio" id="user" name="player-mode" value="user">
+                <label for="user">Two Player</label>
+            </div>
+            <button id="toggle-connections">Toggle Connections</button>
+            <button id="reset">Reset Game</button>
+        </div>
+    </div>
+    <script type="module">
+
+        import {Widget} from "./js/widget.js";
+        import {Game} from "./js/game.js";
+        
+        // TODO: 
+        // * fix alert message happening too soon
+        // * bug: reset doesn't remove active transitions
+        
+        let gridSize = 600;
+        let cellSize = 100;
+        let playerColors = ["#00FF00", "#1E90FF"];
+        let currentPlayer = 0;
+        let scores = [0, 0];
+        let progress = "playing";
+
+        // create widget
+        let widget = new Widget("widget", 32, 8, 250);
+        setTimeout(widget.playRandomly.bind(widget), widget.waitTime);
+    
+        // create game
+        let game = new Game(gridSize, cellSize, playerColors, currentPlayer, scores, progress);
+
+        // game controls
+        d3.select("#reset").on("click", game.reset.bind(game));
+        d3.select("#player-mode").on("change", game.reset.bind(game));
+        d3.select("#toggle-connections").on("click", game.toggleConnections.bind(game));
+
+    </script>    
+</body>
+</html>
