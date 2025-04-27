@@ -35,7 +35,7 @@ const Footer: React.FC = () => {
   
   return (
     <footer>
-      <span>© {currentYear} Cell Extension Game</span>
+      <span>© {currentYear} Cellmata </span>
       <span>•</span>
       <span>Scoring: {scoringDescription}</span>
     </footer>

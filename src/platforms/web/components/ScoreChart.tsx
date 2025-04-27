@@ -11,12 +11,14 @@
  * - Player-specific line colors matching the game board
  * - Dynamic scaling based on maximum scores
  * - Responsive design that adapts to container size
+ * - Logarithmic y-axis scale for better visualization of score differences
  * 
  * Technical approach:
  * - D3.js integration for chart rendering
  * - React refs to manage D3 and DOM interactions
  * - Redux state to access score history data
  * - Dynamic axis scaling based on current scores
+ * - Log scale for y-axis to highlight relative score differences
  * 
  * Relationships:
  * - Retrieves score history data from Redux store
@@ -25,6 +27,8 @@
  * - Part of the overall game UI in App.tsx
  * 
  * Revision Log:
+ * - Changed y-axis to logarithmic scale for better visualization of score differences
+ * - Added handling for zero values in logarithmic scale
  * - Improved chart initialization to prevent resizing during updates
  * - Added responsive sizing while maintaining chart stability
  * - Made chart fully responsive using available width and height
@@ -41,6 +45,8 @@ import { PlayerIndex, RootState } from '@core';
 
 // Default chart margins as percentages of container dimensions
 const CHART_MARGIN_PERCENTAGES = { top: 5, right: 5, bottom: 10, left: 8 };
+// Minimum value for log scale (since log(0) is undefined)
+const MIN_LOG_VALUE = 1;
 
 const ScoreChart: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -126,18 +132,27 @@ const ScoreChart: React.FC = () => {
     const maxScore = Math.max(10, maxScoreP1, maxScoreP2);
     const numTurns = Math.max(0, scoreHistory1.length > 0 ? scoreHistory1.length - 1 : 0);
     
-    // Create scales
+    // Create scales - x is still linear, but y is now logarithmic
     const xScale = d3.scaleLinear().domain([0, Math.max(1, numTurns)]).range([0, innerWidth]);
-    const yScale = d3.scaleLinear().domain([0, maxScore]).range([innerHeight, 0]).nice();
+    // Use scaleLog for y-axis with a safe minimum value
+    const yScale = d3.scaleLog()
+      .domain([Math.max(MIN_LOG_VALUE, 1), Math.max(MIN_LOG_VALUE + 1, maxScore)])
+      .range([innerHeight, 0])
+      .nice();
     
-    // Create line generator
+    // Modify line generator to handle zero values (convert to MIN_LOG_VALUE)
     const lineGenerator = d3.line<number>()
       .x((d: number, i: number) => xScale(i))
-      .y((d: number) => yScale(d));
+      .y((d: number) => yScale(Math.max(MIN_LOG_VALUE, d)));
     
-    // Ensure we have consistent data rendering by using placeholder data for empty histories
-    const renderHistory1 = scoreHistory1.length === 0 ? [0, 0] : scoreHistory1;
-    const renderHistory2 = scoreHistory2.length === 0 ? [0, 0] : scoreHistory2;
+    // Process data to handle zero values (convert to MIN_LOG_VALUE for rendering)
+    const processScoreHistory = (history: number[]) => {
+      if (history.length === 0) return [MIN_LOG_VALUE, MIN_LOG_VALUE];
+      return history.map(score => Math.max(MIN_LOG_VALUE, score));
+    };
+    
+    const renderHistory1 = processScoreHistory(scoreHistory1);
+    const renderHistory2 = processScoreHistory(scoreHistory2);
     
     // Update player lines
     svg.select('.line-player1')
@@ -158,7 +173,25 @@ const ScoreChart: React.FC = () => {
     const xAxis = numTurns <= 1 
       ? d3.axisBottom(xScale).tickValues([0, 1]).tickFormat(d3.format('d'))
       : d3.axisBottom(xScale).ticks(Math.min(numTurns, 10)).tickFormat(d3.format('d'));
-    const yAxis = d3.axisLeft(yScale).ticks(5);
+    
+    // Get the actual domain max after applying .nice()
+    const yDomainMax = yScale.domain()[1] as number;
+    
+    // Generate power-of-2 tick values (2, 4, 8, 16, 32, ...) based on the actual scale domain
+    const generatePowerOfTwoTicks = (max: number) => {
+      const ticks = [];
+      let value = 2; // Start with 2
+      while (value <= max) {
+        ticks.push(value);
+        value *= 2; // Double for next power of 2
+      }
+      return ticks;
+    };
+    
+    // Create y-axis with power-of-2 tick values based on actual domain
+    const yAxis = d3.axisLeft(yScale)
+      .tickValues(generatePowerOfTwoTicks(yDomainMax))
+      .tickFormat((d) => d3.format('d')(d)); // Format as integers
     
     svg.select('.x-axis').call(xAxis as any);
     svg.select('.y-axis').call(yAxis as any);
