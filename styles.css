@@ -19,10 +19,11 @@
     
     /* Layout Variables - Using relative units */
     --navbar-height: 8vh;
-    --score-chart-height: 30vh;
+    --score-chart-height: 25vh;
     --game-controls-height: 6vh;
     --board-height: 50vh;
     --scores-ui-height: 6vh;
+    --footer-height: 5vh;
     
     /* Font sizes in viewport height units - directly relative to screen size */
     --font-size-large: 2.2vh;
@@ -53,15 +54,16 @@ body {
 
 /* Game container with fixed 9/16 aspect ratio */
 .game-container {
-    width: 100%;
-    max-width: min(100vh * 9/16, 100vw); /* 9:16 aspect ratio, never wider than viewport */
-    aspect-ratio: 9/16;
+    width: 100vw; /* Use full viewport width */
+    height: 100vh; /* Use full viewport height */
+    max-width: min(100vh * 9 / 16, 100vw); /* Cap width based on 9:16 aspect ratio, but don't exceed viewport */
     background-color: var(--bg-color);
     position: relative;
-    overflow: hidden;
+    
     display: flex;
     flex-direction: column;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    margin: auto;
 }
 
 /* Navbar styling - fixed at top */
@@ -124,8 +126,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start; /* Aligns content to the top */
-    padding: 1.5% 3%; /* Vertical and horizontal padding */
+    justify-content: center;
+    padding: 0 3%; /* Add some horizontal padding */
     box-sizing: border-box;
 }
 
@@ -187,17 +189,19 @@ body {
 #game-controls {
     display: flex;
     justify-content: space-between;
-    width: 100%; 
+    align-items: center; /* Center items vertically */
+    width: 100%;
     height: var(--game-controls-height);
-    padding: 5% 0%;
+    padding: 0; /* No padding on the container itself */
     gap: 0 15%;
+    box-sizing: border-box;
 }
 
 #game-controls button {
     flex: 1 1 auto;
     min-width: 0;
     font-size: var(--font-size-medium);
-    margin: 2% 5%;
+    margin: 0 5%; /* Keep horizontal margin */
 }
 
 /* Add score-display container if it's used in HTML */
@@ -401,5 +405,33 @@ button:active {
     background-position: right 0.2em center;
     background-size: 1.5em;
     padding-right: 1.8em;
+}
+
+/* Footer styling */
+footer {
+    width: 100%;
+    height: var(--footer-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5%;
+    background-color: var(--bg-color); /* Match background */
+    border-top: 1px solid var(--border-color);
+    box-sizing: border-box;
+    font-size: var(--font-size-xs);
+    color: var(--secondary-color);
+    margin-top: auto; /* Push footer to bottom if container has extra space */
+}
+
+footer span {
+    margin: 0 0.5em;
+}
+
+footer span:first-child {
+    margin-left: 0;
+}
+
+footer span:last-child {
+    margin-right: 0;
 }
 

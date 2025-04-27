@@ -37,6 +37,7 @@ import ScoreDisplay from '@web/components/ScoreDisplay';
 import GameBoard from '@web/components/GameBoard';
 import ScoreChart from '@web/components/ScoreChart';
 import GameControls from '@web/components/GameControls';
+import Footer from '@web/components/Footer';
 
 // Import necessary types, hooks, actions, and functions from the restructured @core module
 import {
@@ -212,6 +213,7 @@ function App() {
           isUndoDisabled={isUndoDisabled} // Pass undo disabled state from selector
         />
       </div>
+      <Footer />
     </div>
   );
 }
