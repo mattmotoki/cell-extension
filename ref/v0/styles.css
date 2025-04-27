@@ -1,0 +1,39 @@
+#game-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+#game {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+#game-controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+}        
+#score-display {
+    display: flex;
+    font-size: 30px;
+}
+svg {
+    margin: 20px;
+    border: 1px solid black;
+}
+.grid-cell {
+    fill: transparent;
+    stroke: lightgray;
+    stroke-width: 1px;
+    cursor: pointer;
+}
+.line {
+    fill: none;
+    stroke-width: 2px;
+}
+rect {
+    opacity: 1.0;
+}

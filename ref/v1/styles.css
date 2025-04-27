@@ -19,8 +19,8 @@
     
     /* Layout Variables - Using relative units */
     --navbar-height: 8vh;
-    --score-chart-height: 30vh;
-    --game-controls-height: 6vh;
+    --score-chart-height: 26vh;
+    --game-controls-height: 10vh;
     --board-height: 50vh;
     --scores-ui-height: 6vh;
     
@@ -32,7 +32,7 @@
 }
 
 html, body {
-    height: 100vh;
+    height: 100%;
     margin: 0;
     padding: 0;
     overflow: hidden;
@@ -95,6 +95,7 @@ body {
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     letter-spacing: 0.03em;
     font-size: 2.4vh;
+    margin: 0;
 }
 
 /* Main game area */
@@ -115,6 +116,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 0.2%; /* Minimal gap between score elements and board */
 }
 
 /* Scores container - groups player scores and breakdown */
@@ -135,6 +137,7 @@ body {
     justify-content: space-between;
     width: 100%;
     font-size: var(--font-size-medium);
+    
     box-sizing: border-box;
     font-weight: 500;
 }
@@ -144,6 +147,7 @@ body {
     justify-content: space-between;
     width: 100%;
     font-size: var(--font-size-small);
+    
     box-sizing: border-box;
 }
 
@@ -152,6 +156,7 @@ body {
     width: 100%; /* Full width */
     height: calc(100% - var(--scores-ui-height));
     aspect-ratio: 1;
+    margin: 0;
     position: relative;
     display: flex;
     justify-content: center;
@@ -163,7 +168,6 @@ body {
     width: 100%; /* Ensure SVG takes full width of its container */
     height: 100%; /* Ensure SVG takes full height of its container */
     display: block;
-    padding: 0% 5%; /* Add some horizontal padding */
 }
 
 /* Score chart area */
@@ -173,7 +177,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0%;
+    padding: 0 5%; /* Add some horizontal padding */
     box-sizing: border-box;
 }
 
@@ -189,15 +193,14 @@ body {
     justify-content: space-between;
     width: 100%; 
     height: var(--game-controls-height);
-    padding: 5% 0%;
-    gap: 0 15%;
+    gap: 10%;
 }
 
 #game-controls button {
     flex: 1 1 auto;
     min-width: 0;
     font-size: var(--font-size-medium);
-    margin: 2% 5%;
+    margin: 5% 5%;
 }
 
 /* Add score-display container if it's used in HTML */
@@ -206,6 +209,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 0.3%;
 }
 
 /* Ensure SVG elements display correctly */
