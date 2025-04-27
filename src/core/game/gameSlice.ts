@@ -22,8 +22,8 @@
  * 
  * Relationships:
  * - Used by App.tsx to read game state and dispatch actions
- * - Imports GameBoardLogic.ts for core game operations
- * - Coordinates with aiLogic.ts for AI move processing
+ * - Imports utils.ts for core game operations
+ * - Coordinates with AI logic for AI move processing
  * - Referenced by UI components for rendering current state
  * 
  * Revision Log:
@@ -41,20 +41,26 @@ import {
     HistoryEntry, 
     GameSettings, 
     Coordinates,
-    ScoringMechanismId
+    ScoringMechanism
 } from '../types';
 import {
     createInitialBoardState,
     placeCell,
     calculateScore,
-    getAvailableCells,
     isGameOver
-} from './GameBoardLogic';
+} from './utils';
 
 // Helper to create history entry
 function createHistoryEntry(gameState: GameState): HistoryEntry {
+    const deepCopiedBoardState: BoardState = {
+        ...gameState.boardState,
+        occupiedCells: [
+            { ...gameState.boardState.occupiedCells[0] }, 
+            { ...gameState.boardState.occupiedCells[1] }
+        ]
+    };
     return {
-        boardState: JSON.parse(JSON.stringify(gameState.boardState)), // Deep copy
+        boardState: deepCopiedBoardState,
         scores: [...gameState.scores],
         currentPlayer: gameState.currentPlayer,
         progress: gameState.progress, 
@@ -63,13 +69,15 @@ function createHistoryEntry(gameState: GameState): HistoryEntry {
 
 const getInitialState = (settings: GameSettings): GameState => {
     const boardSizeNum = parseInt(settings.boardSize, 10);
-    const initialBoardState = createInitialBoardState(boardSizeNum, boardSizeNum);
-    const initialPlayer = settings.firstPlayer === 'human' ? 0 : 1;
+    const validBoardSize = [4, 6, 10, 16].includes(boardSizeNum) ? boardSizeNum : 6;
+    
+    const initialBoardState = createInitialBoardState(validBoardSize, validBoardSize);
+    const initialPlayer: PlayerIndex = settings.firstPlayer === 'human' ? 0 : 1;
     const initialScores: [number, number] = [0, 0];
-    const initialProgress: GameProgress = 'playing';
+    const initialProgress: GameProgress = 'pregame';
 
     const initialHistoryEntry: HistoryEntry = {
-        boardState: JSON.parse(JSON.stringify(initialBoardState)),
+        boardState: initialBoardState,
         scores: [...initialScores],
         currentPlayer: initialPlayer,
         progress: initialProgress,
@@ -83,7 +91,7 @@ const getInitialState = (settings: GameSettings): GameState => {
         scoreHistory1: [initialScores[0]],
         scoreHistory2: [initialScores[1]],
         scoringMechanism: settings.scoringMechanism,
-        history: [initialHistoryEntry], // Start history with the initial state
+        history: [initialHistoryEntry],
     };
 };
 
@@ -106,37 +114,27 @@ const gameSlice = createSlice({
             const { coords, settings } = action.payload;
             const { gridX, gridY } = coords;
             
-            // Determine player making the move based on progress (handle AI)
-            const playerMakingMove = state.progress === 'waiting' ? 1 : state.currentPlayer;
+            const playerMakingMove = state.currentPlayer;
             
-            // Allow move if playing OR if waiting (AI is dispatching its calculated move)
-            if (state.progress !== 'playing' && state.progress !== 'waiting') { 
+            if (state.progress !== 'playing') { 
                 console.warn(`Cannot place move: game progress is ${state.progress}`);
-                return; // Exit reducer if move is not allowed
+                return;
             }
             
-            console.log(`Reducer: Placing move for player ${playerMakingMove} at (${gridX}, ${gridY}) (Progress: ${state.progress})`);
+            console.log(`Reducer: Placing move for player ${playerMakingMove} at (${gridX}, ${gridY})`);
             
             const newBoardState = placeCell(state.boardState, playerMakingMove, gridX, gridY);
 
             if (!newBoardState) {
                 console.warn(`Reducer: Invalid move attempted at (${gridX}, ${gridY}) for player ${playerMakingMove}`);
-                // If AI move failed validation, reset progress to playing
-                if (state.progress === 'waiting') {
-                    state.progress = 'playing';
-                }
-                return; // Exit reducer on invalid move
+                return; 
             }
 
-            // --- Valid Move --- 
-            // Save current state to history before updating
             const historyEntry = createHistoryEntry(state);
             state.history.push(historyEntry);
 
-            // Update board state
             state.boardState = newBoardState;
 
-            // Calculate and update scores
             const score1 = calculateScore(state.boardState, 0, state.scoringMechanism);
             const score2 = calculateScore(state.boardState, 1, state.scoringMechanism);
             state.scores = [score1, score2];
@@ -144,54 +142,47 @@ const gameSlice = createSlice({
             state.scoreHistory2.push(score2);
             console.log(`Reducer: New scores: ${state.scores[0]} - ${state.scores[1]}`);
 
-            // Update current player
             state.currentPlayer = (playerMakingMove + 1) % 2 as PlayerIndex;
 
-            // Update game progress
             const gameOver = isGameOver(state.boardState);
             state.progress = gameOver ? 'over' : 'playing';
             console.log(`Reducer: State after move: nextPlayer=${state.currentPlayer}, gameOver=${gameOver}, newProgress=${state.progress}`);
         },
         undoMove: (state) => {
-            if (state.history.length === 0) return; // Cannot undo initial state (or empty history)
+            if (state.history.length <= 1) { 
+                console.warn("Cannot undo: No moves in history.");
+                return; 
+            }
 
-            const previousHistoryEntry = state.history.pop(); // Remove last entry
+            const previousHistoryEntry = state.history.pop(); 
             
             if (previousHistoryEntry) {
-                // Restore state from the popped history entry
-                state.boardState = previousHistoryEntry.boardState; // Already deep copied
+                state.boardState = previousHistoryEntry.boardState;
                 state.scores = previousHistoryEntry.scores;
                 state.currentPlayer = previousHistoryEntry.currentPlayer;
-                state.progress = previousHistoryEntry.progress; // Restore progress
+                state.progress = previousHistoryEntry.progress; 
                 
-                // Recalculate score histories (simpler than storing in history)
-                state.scoreHistory1 = [0]; 
-                state.scoreHistory2 = [0];
-                state.history.forEach(entry => {
-                    state.scoreHistory1.push(entry.scores[0]);
-                    state.scoreHistory2.push(entry.scores[1]);
-                });
-                // Add score from the restored state
-                 state.scoreHistory1.push(state.scores[0]); 
-                 state.scoreHistory2.push(state.scores[1]);
+                state.scoreHistory1.pop();
+                state.scoreHistory2.pop();
+
+                 console.log(`Reducer: Undid move. Current player: ${state.currentPlayer}, Progress: ${state.progress}`);
             } else {
-                 console.warn("Undo called with empty history?");
+                 console.error("Undo failed: History was unexpectedly empty after length check.");
             }
         },
         resetGame: (state, action: PayloadAction<GameSettings>) => {
             const settings = action.payload;
-            // Use getInitialState to derive the new state based on settings
+            console.log("Reducer: Resetting game with settings:", settings);
             const newState = getInitialState(settings);
-            // Return the new state object entirely here
             return newState;
         },
         setProgress: (state, action: PayloadAction<GameProgress>) => {
             const newProgress = action.payload;
-            // Prevent setting progress if game is over
-            if (state.progress !== 'over') {
+            if (state.progress !== 'over' || newProgress === 'over') {
+                 console.log(`Reducer: Setting progress to ${newProgress}`);
                 state.progress = newProgress;
             } else {
-                console.log(`DEBUG: Progress update rejected - game is already over`);
+                console.warn(`Reducer: Progress update to ${newProgress} rejected - game is already over.`);
             }
         },
     }

@@ -6,16 +6,17 @@
  */
 
 import { configureStore } from '@reduxjs/toolkit';
-import gameReducer from './game/gameSlice'; // Assuming gameSlice is in core/game/
-import settingsReducer from './settingsSlice'; // Import settings reducer
+// Import the root reducer instead of individual reducers
+import rootReducer from './rootReducer';
 
 export const store = configureStore({
-    reducer: {
-        game: gameReducer,
-        settings: settingsReducer, // Add settings reducer
-    },
+    reducer: rootReducer, // Use the combined root reducer
+    // middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat( /* your middleware */ ),
+    // devTools: process.env.NODE_ENV !== 'production',
 });
 
-// Infer the `RootState` and `AppDispatch` types from the store itself
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch; 
+// AppDispatch type doesn't need RootState explicitly
+export type AppDispatch = typeof store.dispatch;
+
+// RootState type is now typically exported from rootReducer.ts
+// export type RootState = ReturnType<typeof store.getState>; // Keep if preferred 

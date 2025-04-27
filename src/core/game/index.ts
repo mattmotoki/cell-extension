@@ -1,40 +1,15 @@
 /**
- * src/core/game/index.ts - Game Logic Module Exports
+ * src/core/game/index.ts
  * 
- * Explicitly exports game logic functions and types from GameBoardLogic.
- * Ensures tree-shaking and clear documentation.
- * 
- * Serves as the public API for the game logic module.
+ * Public exports for the core game module.
  */
 
-// Explicitly export all functions from GameBoardLogic.ts
-export {
-  // Helper Functions
-  createPositionKey,
-  parsePositionKey,
-  isValidCoordinate,
-  isCellOccupiedByPlayer,
-  isCellOccupied,
-  
-  // Board Initialization & State
-  createInitialBoardState,
-  
-  // Cell Placement
-  placeCell,
-  
-  // Neighbor and Component Logic
-  getAdjacentPositions,
-  getAdjacentPlayerCells,
-  getConnectedComponents,
-  
-  // Availability and Scoring
-  getAvailableCells,
-  getTotalCellCount,
-  isGameOver,
-  
-  // Scoring
-  calculateScore
-} from './GameBoardLogic';
+// Export actions and reducer from the slice
+export { default as gameReducer } from './gameSlice';
+export * from './gameSlice'; // Export actions like placeMove, undoMove, etc.
 
-// Properly export types
-export type { ScoringMechanismId } from './GameBoardLogic'; 
+// Export selectors
+export * from './selectors';
+
+// Export utility functions
+export * from './utils';

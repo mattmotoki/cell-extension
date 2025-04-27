@@ -1,15 +1,15 @@
 /**
- * src/core/scoring/index.ts - Scoring Mechanisms Module
+ * src/core/scoring/index.ts
  * 
- * Exports the different scoring calculation functions:
- * - getMultiplicationScore
- * - getConnectionScore
- * - getExtensionScore
- * 
- * Centralizes access to scoring implementations.
+ * Public exports for the core scoring module.
  */
 
-// Explicitly export all scoring mechanism functions
-export { getMultiplicationScore } from './multiplication';
-export { getConnectionScore } from './connection';
-export { getExtensionScore } from './extension'; 
+// Export the scoring algorithm functions
+export * from './algorithms';
+
+// Export reducer and actions if the slice manages state
+export { default as scoringReducer } from './scoringSlice';
+export * from './scoringSlice'; // Export actions if any
+
+// Export selectors if the slice manages state
+export * from './selectors'; // Export selectors if any

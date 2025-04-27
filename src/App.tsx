@@ -13,10 +13,10 @@
  * - Handling user actions like reset, undo, and settings changes
  * 
  * Relationships:
- * - Uses Redux store (gameSlice, settingsSlice) for state management
- * - Imports UI components from platforms/web/components/
- * - Calls getAIMove from core/ai/aiLogic.ts when it's the AI's turn
- * - Dispatches game actions (placeMove, resetGame, etc.) to update state
+ * - Uses Redux store (now accessed via @core) for state management
+ * - Imports UI components from @web/components/
+ * - Calls getAIMove from @core/ai when it's the AI's turn
+ * - Dispatches game actions (placeMove, resetGame, etc.) from @core
  * 
  * Effect hooks:
  * - AI turn detection and move calculation
@@ -37,84 +37,99 @@ import ScoreDisplay from '@web/components/ScoreDisplay';
 import GameBoard from '@web/components/GameBoard';
 import ScoreChart from '@web/components/ScoreChart';
 import GameControls from '@web/components/GameControls';
-import { RootState, AppDispatch } from '@core/store';
-import { GameSettings, Coordinates, GameState } from '@core/types';
-import { placeMove, undoMove, resetGame, setProgress } from '@core/game/gameSlice';
-import { updateSetting } from '@core/settingsSlice';
-import { getAIMove } from '@core/ai';
-import { getAvailableCells } from '@core/game';
+
+// Import necessary types, hooks, actions, and functions from the restructured @core module
+import {
+  RootState,           // Root state type from the core
+  AppDispatch,         // Dispatch type from the core store
+  GameSettings,        // Settings type definition
+  Coordinates,         // Coordinate type definition
+  GameState,           // Game state type definition
+  placeMove,           // Game action from game slice
+  undoMove,            // Game action from game slice
+  resetGame,           // Game action from game slice
+  setProgress,         // Game action from game slice
+  updateSetting,       // Settings action from settings slice
+  getAIMove,           // AI move calculation function from AI engine
+  getAvailableCells,   // Game utility function 
+  selectCanUndo        // Game selector
+} from '@core'; // Use the main core index export
 
 function App() {
   const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false);
-  // Add a ref to track if AI calculation is in progress to prevent redundant calls
   const aiCalculationInProgress = useRef(false);
 
+  // Use the AppDispatch type from the core store
   const dispatch = useDispatch<AppDispatch>();
 
+  // Use RootState type for useSelector and select game/settings state
   const gameState = useSelector((state: RootState) => state.game);
   const settings = useSelector((state: RootState) => state.settings);
+  // Use the selector for undo state
+  const isUndoDisabled = !useSelector(selectCanUndo);
 
   const toggleSettingsPanel = useCallback(() => {
     setIsSettingsPanelOpen(prev => !prev);
   }, []);
 
   const handleSettingChange = useCallback(<K extends keyof GameSettings>(key: K, value: GameSettings[K]) => {
+    // Dispatch updateSetting action (imported from @core)
     dispatch(updateSetting({ key, value }));
     const nextSettings = { ...settings, [key]: value };
-    if (key === 'boardSize' || key === 'firstPlayer' || key === 'scoringMechanism' || key === 'aiDifficulty' || key === 'playerMode') {
-        // console.log(`${String(key)} changed, dispatching resetGame...`);
-        dispatch(resetGame(nextSettings));
+    // Reset game if relevant settings change
+    if (['boardSize', 'firstPlayer', 'scoringMechanism', 'aiDifficulty', 'playerMode'].includes(key as string)) {
+        dispatch(resetGame(nextSettings)); // Dispatch resetGame action (imported from @core)
     }
   }, [dispatch, settings]);
 
   const handleResetClick = useCallback(() => {
-      // console.log('Reset button clicked');
-      dispatch(resetGame(settings));
+      dispatch(resetGame(settings)); // Dispatch resetGame action
       setIsSettingsPanelOpen(false);
   }, [dispatch, settings]);
 
   const handleUndoClick = useCallback(() => {
-      dispatch(undoMove());
+      dispatch(undoMove()); // Dispatch undoMove action (imported from @core)
   }, [dispatch]);
 
-  const isUndoDisabled = gameState.history.length === 0 || (gameState.progress !== 'playing' && gameState.progress !== 'over');
+  // Removed manual isUndoDisabled calculation, now uses selector
 
-  // AI move calculation function - extracted to prevent re-creation on every render
+  // AI move calculation function
   const calculateAIMove = useCallback((currentGameState: GameState, currentSettings: GameSettings) => {
     if (aiCalculationInProgress.current) {
-      // console.log("[AI Effect] AI calculation already in progress, skipping");
       return;
     }
     
     aiCalculationInProgress.current = true;
     console.log("[AI Effect] Starting AI calculation...");
     
-    // Set game to waiting state
-    dispatch(setProgress('waiting'));
+    // Dispatch setProgress action (imported from @core)
+    dispatch(setProgress('waiting')); 
     
-    // Use setTimeout to avoid blocking the UI
     setTimeout(() => {
       try {
-        // console.log("[AI Effect] Calculating AI move...");
         console.time("AI Move Calculation");
+        // Call getAIMove (imported from @core/ai, re-exported via @core)
         const aiMove = getAIMove(currentGameState, currentSettings);
         console.timeEnd("AI Move Calculation");
         console.log("[AI Effect] AI Move calculation complete:", aiMove);
         
-        // Process the AI move
         if (aiMove && typeof aiMove.gridX === 'number' && typeof aiMove.gridY === 'number') {
-          // console.log(`[AI Effect] Valid move found at (${aiMove.gridX}, ${aiMove.gridY}), dispatching...`);
+          // Set the game state back to 'playing' before placing the move
+          console.log("[AI Effect] Setting game back to 'playing' state before placing AI move");
+          dispatch(setProgress('playing'));
+          
+          // Dispatch placeMove action (imported from @core/game, re-exported via @core)
           dispatch(placeMove({ coords: aiMove, settings: currentSettings }));
         } else {
           console.warn("[AI Effect] AI returned invalid move:", aiMove);
-          // Check if game should end
+          // Call getAvailableCells (imported from @core/game, re-exported via @core)
           const availableCells = getAvailableCells(currentGameState.boardState);
           if (availableCells.length === 0) {
             console.log("[AI Effect] No available cells, setting game to 'over'");
-            dispatch(setProgress('over'));
+            dispatch(setProgress('over')); // Dispatch setProgress action
           } else {
             console.log("[AI Effect] Setting game back to 'playing' state");
-            dispatch(setProgress('playing'));
+            dispatch(setProgress('playing')); // Dispatch setProgress action
           }
         }
       } catch (error) {
@@ -123,44 +138,54 @@ function App() {
           console.error("[AI Effect] Error details:", error.message);
           console.error("[AI Effect] Stack trace:", error.stack);
         }
+        // Ensure progress is reset if AI errors out
         dispatch(setProgress('playing'));
       } finally {
         aiCalculationInProgress.current = false;
       }
-    }, 500); // 500ms delay
-  }, [dispatch]);
+    }, 500); // Simulate AI thinking delay
+  // Pass gameState and settings as dependencies if they are used directly inside
+  // }, [dispatch, gameState, settings]); 
+  // Keep only dispatch if gameState/settings are passed as args
+  }, [dispatch]); 
 
   // AI turn detection effect
   useEffect(() => {
-    // Only trigger if it's the AI's turn and the game is in 'playing' state
     const isAITurn = settings.playerMode === 'ai' && 
                      gameState.currentPlayer === 1 && 
                      gameState.progress === 'playing';
                      
-    // console.log("[AI Effect] Checking AI turn conditions:", {
-    //   playerMode: settings.playerMode,
-    //   currentPlayer: gameState.currentPlayer,
-    //   progress: gameState.progress,
-    //   isAITurn
-    // });
-    
-    if (isAITurn) {
+    if (isAITurn && !aiCalculationInProgress.current) { // Prevent starting if already running
       console.log("[AI Effect] AI's turn detected, triggering calculation");
-      calculateAIMove(gameState as GameState, settings);
+      // Pass the *current* state and settings to the calculation function
+      // Avoid listing gameState/settings in dependency array if passed as args
+      calculateAIMove(gameState, settings);
     }
     
-    // No cleanup needed since we're managing the calculation state via ref
-  }, [gameState.currentPlayer, gameState.progress, gameState, settings, calculateAIMove]);
+  // Dependency array: only re-run if these specific values change
+  }, [gameState.currentPlayer, gameState.progress, settings.playerMode, calculateAIMove, gameState, settings]); 
 
+  // Game over effect
   useEffect(() => {
       if (gameState.progress === 'over') {
           setTimeout(() => {
-              const winner = gameState.scores[0] > gameState.scores[1] ? 'Player 1' : (gameState.scores[1] > gameState.scores[0] ? 'Player 2' : 'Draw');
-              alert(`Game Over! Winner: ${winner} (${gameState.scores[0]} - ${gameState.scores[1]})`);
-          }, 500);
+              const winnerText = gameState.scores[0] > gameState.scores[1] 
+                  ? 'Player 1 Wins!' 
+                  : (gameState.scores[1] > gameState.scores[0] ? 'Player 2 Wins!' : 'Draw!');
+              alert(`Game Over! ${winnerText} (${gameState.scores[0]} - ${gameState.scores[1]})`);
+          }, 500); // Delay alert slightly
       }
   }, [gameState.progress, gameState.scores]);
 
+  // Effect to transition from 'pregame' to 'playing' on component mount or game reset
+  useEffect(() => {
+      if (gameState.progress === 'pregame') {
+          console.log("[Game Init] Changing state from 'pregame' to 'playing'");
+          dispatch(setProgress('playing'));
+      }
+  }, [gameState.progress, dispatch]);
+
+  // Derive scoring description from settings
   const scoringDescription = settings.scoringMechanism.replace('cell-','').replace('-', ' ');
 
   return (
@@ -170,8 +195,8 @@ function App() {
         isPanelOpen={isSettingsPanelOpen}
       />
       <GameSettingsPanel
-        settings={settings}
-        onChange={handleSettingChange}
+        settings={settings} // Pass settings state
+        onChange={handleSettingChange} // Pass settings change handler
         isPanelOpen={isSettingsPanelOpen}
         onClose={toggleSettingsPanel}
       />
@@ -182,9 +207,9 @@ function App() {
         </div>
         <ScoreChart />
         <GameControls
-          onUndo={handleUndoClick}
-          onReset={handleResetClick}
-          isUndoDisabled={isUndoDisabled}
+          onUndo={handleUndoClick} // Pass undo handler
+          onReset={handleResetClick} // Pass reset handler
+          isUndoDisabled={isUndoDisabled} // Pass undo disabled state from selector
         />
       </div>
     </div>

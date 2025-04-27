@@ -1,5 +1,5 @@
 /**
- * src/core/game/GameBoardLogic.ts - Core Game Logic
+ * src/core/game/utils.ts - Core Game Logic Utilities
  * 
  * Contains pure functions that implement the fundamental logic of the Cell Extension game.
  * This module handles board state management, cell placement validation, connected component
@@ -21,8 +21,8 @@
  * 
  * Relationships:
  * - Used by gameSlice.ts for game state updates
- * - Used by aiLogic.ts for move simulation and validation
- * - Imports scoring functions from ../scoring/
+ * - Used by ai/engine.ts for move simulation and validation
+ * - Imports scoring functions from ../scoring/algorithms
  * - Referenced by UI components for board rendering
  * 
  * Revision Log:
@@ -35,11 +35,8 @@ import {
     getMultiplicationScore, 
     getConnectionScore, 
     getExtensionScore 
-} from "../scoring"; // Corrected path
-import { BoardState, Coordinates, OccupiedCells, PlayerIndex, Component } from "../types"; // Corrected path
-// Assuming logger might be adapted or removed for React context
-// import logger from '../../utils/logger.js';
-// const log = logger.createLogger('GameBoardLogic');
+} from "../scoring/algorithms"; // Updated path
+import { BoardState, Coordinates, OccupiedCells, PlayerIndex, Component, ScoringMechanism } from "../types"; // Use consolidated types
 
 // --- Helper Functions ---
 
@@ -57,19 +54,21 @@ export function isValidCoordinate(gridX: number, gridY: number, gridWidth: numbe
 
 export function isCellOccupiedByPlayer(occupiedCells: OccupiedCells, playerIndex: PlayerIndex, gridX: number, gridY: number): boolean {
     const posKey = createPositionKey(gridX, gridY);
-    return !!occupiedCells[playerIndex]?.[posKey];
+    // Ensure playerIndex is valid (0 or 1) before accessing
+    return playerIndex === 0 || playerIndex === 1 ? !!occupiedCells[playerIndex]?.[posKey] : false;
 }
 
 export function isCellOccupied(occupiedCells: OccupiedCells, gridX: number, gridY: number): boolean {
     const posKey = createPositionKey(gridX, gridY);
-    return !!occupiedCells[0]?.[posKey] || !!occupiedCells[1]?.[posKey];
+    // Check both player maps safely
+    return (!!occupiedCells[0]?.[posKey]) || (!!occupiedCells[1]?.[posKey]);
 }
 
 // --- Board Initialization & State ---
 
 export function createInitialBoardState(gridWidth: number, gridHeight: number): BoardState {
     return {
-        occupiedCells: [{}, {}],
+        occupiedCells: [{}, {}], // Initialize with empty maps for both players
         gridWidth: gridWidth,
         gridHeight: gridHeight,
     };
@@ -80,6 +79,7 @@ export function createInitialBoardState(gridWidth: number, gridHeight: number): 
 /**
  * Attempts to place a cell for the currentPlayer at gridX, gridY.
  * Returns the new BoardState if successful, otherwise null.
+ * IMPORTANT: This function creates a *new* BoardState object on success.
  */
 export function placeCell(boardState: BoardState, currentPlayer: PlayerIndex, gridX: number, gridY: number): BoardState | null {
     const { occupiedCells, gridWidth, gridHeight } = boardState;
@@ -89,23 +89,26 @@ export function placeCell(boardState: BoardState, currentPlayer: PlayerIndex, gr
         return null;
     }
 
+    // Ensure currentPlayer is valid (0 or 1)
+    if (currentPlayer !== 0 && currentPlayer !== 1) {
+        console.error(`Invalid currentPlayer index: ${currentPlayer}`);
+        return null;
+    }
+
     const opponent = (currentPlayer + 1) % 2 as PlayerIndex;
     const posKey = createPositionKey(gridX, gridY);
 
-    // Check if cell is occupied by opponent
-    if (isCellOccupiedByPlayer(occupiedCells, opponent, gridX, gridY)) {
-        console.debug(`Cell (${gridX}, ${gridY}) is occupied by opponent.`);
-        return null; // Cannot place on opponent's cell
-    }
-    
-    // Check if cell is already occupied by the current player (shouldn't happen with valid clicks)
-    if (isCellOccupiedByPlayer(occupiedCells, currentPlayer, gridX, gridY)) {
-        console.debug(`Cell (${gridX}, ${gridY}) is already occupied by player ${currentPlayer}.`);
+    // Check if cell is occupied by opponent or current player
+    if (isCellOccupied(occupiedCells, gridX, gridY)) {
+        console.debug(`Cell (${gridX}, ${gridY}) is already occupied.`);
         return null; 
     }
 
     // Create a deep copy of the occupied cells to avoid mutation
-    const newOccupiedCells = JSON.parse(JSON.stringify(occupiedCells)) as OccupiedCells;
+    const newOccupiedCells: OccupiedCells = [
+        { ...occupiedCells[0] }, 
+        { ...occupiedCells[1] }
+    ];
     newOccupiedCells[currentPlayer][posKey] = true; 
 
     console.debug(`Cell placed successfully by Player ${currentPlayer + 1} at (${gridX}, ${gridY})`);
@@ -131,11 +134,19 @@ export function getAdjacentPositions(gridX: number, gridY: number, gridWidth: nu
 // Gets adjacent cells occupied *by the specified player*
 export function getAdjacentPlayerCells(boardState: BoardState, playerIndex: PlayerIndex, gridX: number, gridY: number): Coordinates[] {
     const { occupiedCells, gridWidth, gridHeight } = boardState;
+    
+    // Validate playerIndex
+    if (playerIndex !== 0 && playerIndex !== 1) return []; 
+    
     const adjacentPositions = getAdjacentPositions(gridX, gridY, gridWidth, gridHeight);
     const neighbors: Coordinates[] = [];
+    const playerCellMap = occupiedCells[playerIndex];
+
+    if (!playerCellMap) return []; // Safety check
+
     for (let { gridX: adjX, gridY: adjY } of adjacentPositions) {
         const adjKey = createPositionKey(adjX, adjY);
-        if (occupiedCells[playerIndex]?.[adjKey]) {
+        if (playerCellMap[adjKey]) { // Check existence in the player's map
             neighbors.push({ gridX: adjX, gridY: adjY });
         }
     }
@@ -144,14 +155,19 @@ export function getAdjacentPlayerCells(boardState: BoardState, playerIndex: Play
 
 export function getConnectedComponents(boardState: BoardState, playerIndex: PlayerIndex): Component[] {
     const { occupiedCells } = boardState;
+    
+    // Validate playerIndex
+    if (playerIndex !== 0 && playerIndex !== 1) return [];
+    
     const components: Component[] = [];
     const visited: Record<string, boolean> = {};
     const playerCellsMap = occupiedCells[playerIndex];
 
-    if (!playerCellsMap) return []; // No cells for this player
+    if (!playerCellsMap || Object.keys(playerCellsMap).length === 0) {
+        return []; // No cells for this player or map is invalid
+    }
 
     const cells = Object.keys(playerCellsMap);
-    if (cells.length === 0) return [];
 
     for (let cellKey of cells) {
         if (visited[cellKey]) continue;
@@ -165,7 +181,8 @@ export function getConnectedComponents(boardState: BoardState, playerIndex: Play
             component.push(currentCellKey); // Add to current component
 
             const [currentX, currentY] = parsePositionKey(currentCellKey);
-            const neighbors = getAdjacentPlayerCells(boardState, playerIndex, currentX, currentY);
+            // Pass the current board state to get neighbors
+            const neighbors = getAdjacentPlayerCells(boardState, playerIndex, currentX, currentY); 
 
             for (let neighbor of neighbors) {
                  const neighborKey = createPositionKey(neighbor.gridX, neighbor.gridY);
@@ -176,7 +193,9 @@ export function getConnectedComponents(boardState: BoardState, playerIndex: Play
                  }
             }
         }
-        components.push(component); // Add the found component to the list
+        if (component.length > 0) { // Only add non-empty components
+             components.push(component); // Add the found component to the list
+        }
     }
     return components;
 }
@@ -205,12 +224,15 @@ export function isGameOver(boardState: BoardState): boolean {
     return getAvailableCells(boardState).length === 0;
 }
 
-// Type for scoring mechanism identifiers
-export type ScoringMechanismId = 'cell-multiplication' | 'cell-connection' | 'cell-extension';
-
 // Wrapper method for scoring mechanisms
 // It now takes boardState instead of the GameBoardLogic instance
-export function calculateScore(boardState: BoardState, playerIndex: PlayerIndex, mechanism: ScoringMechanismId): number {
+export function calculateScore(boardState: BoardState, playerIndex: PlayerIndex, mechanism: ScoringMechanism): number {
+    // Validate playerIndex
+     if (playerIndex !== 0 && playerIndex !== 1) {
+         console.error(`Invalid player index in calculateScore: ${playerIndex}`);
+         return 0;
+     }
+     
     switch(mechanism) {
         case 'cell-multiplication':
             return getMultiplicationScore(boardState, playerIndex);
@@ -219,7 +241,9 @@ export function calculateScore(boardState: BoardState, playerIndex: PlayerIndex,
         case 'cell-extension':
             return getExtensionScore(boardState, playerIndex);
         default:
+            // Exhaustiveness check (useful with enums/unions)
+            const exhaustiveCheck: never = mechanism; 
             console.warn(`Unknown scoring mechanism: ${mechanism}. Defaulting to 0.`);
             return 0; 
     }
-}
+} 

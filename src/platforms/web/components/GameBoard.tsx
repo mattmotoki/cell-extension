@@ -32,10 +32,18 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import * as d3 from 'd3'; // Import d3
 import { useSelector, useDispatch } from 'react-redux'; // Import Redux hooks
-import { BoardState, PlayerIndex, Coordinates, GameSettings } from '@core/types'; // Use path alias
-import { createPositionKey, parsePositionKey } from '@core/game/GameBoardLogic'; // Use path alias
-import { placeMove } from '@core/game/gameSlice'; // Use path alias
-import { RootState, AppDispatch } from '@core/store'; // Use path alias
+// Import all necessary core items from the main @core index
+import {
+    RootState,
+    AppDispatch,
+    BoardState,
+    PlayerIndex,
+    Coordinates,
+    GameSettings,
+    createPositionKey, // Utility function
+    parsePositionKey,  // Utility function
+    placeMove          // Action creator
+} from '@core';
 
 // Remove props that are now selected from Redux state
 // interface GameBoardProps {
@@ -49,29 +57,32 @@ import { RootState, AppDispatch } from '@core/store'; // Use path alias
 const GameBoard: React.FC = () => { // No props needed directly
   const svgRef = useRef<SVGSVGElement>(null);
   
-  // Select necessary state from Redux
+  // Select necessary state from Redux using RootState
   const boardState = useSelector((state: RootState) => state.game.boardState);
   const currentPlayer = useSelector((state: RootState) => state.game.currentPlayer);
   const gameProgress = useSelector((state: RootState) => state.game.progress);
-  const settings = useSelector((state: RootState) => state.settings); // Assuming settings are also in Redux (need to add)
-  const playerColors = ["#00FF00", "#1E90FF"]; // Hardcoded for now, move to settings/config later
+  const settings = useSelector((state: RootState) => state.settings);
+  const playerColors = ["#00FF00", "#1E90FF"]; // TODO: Move to config/theme
   
+  // Use AppDispatch type
   const dispatch = useDispatch<AppDispatch>();
 
-  const { occupiedCells, gridWidth, gridHeight } = boardState;
+  // Destructure boardState safely
+  const { occupiedCells, gridWidth, gridHeight } = boardState || { occupiedCells: [{}, {}], gridWidth: 6, gridHeight: 6 }; // Provide default if boardState is null/undefined initially
   const [isGridInitialized, setIsGridInitialized] = useState(false);
   
-  // Calculate dimensions based on grid size
-  const gridDimension = 100; // Logical size
-  const cellDimension = gridDimension / gridWidth;
+  // Calculate dimensions - handle potential division by zero if gridWidth is 0
+  const gridDimension = 100; // Logical size for viewBox
+  const cellDimension = gridWidth > 0 ? gridDimension / gridWidth : 0;
   const cellPadding = 0.05; // 5% padding (from original implementation)
   const cellRadius = cellDimension * 0.15; // Rounded corners radius
 
-  // Use dispatch to handle cell clicks
+  // Use dispatch to handle cell clicks - use placeMove from @core
   const handleCellClick = useCallback((coords: Coordinates) => {
      if (gameProgress === 'playing') {
+        // Allow click if it's a two-player game OR if it's player 0's turn in AI mode
         if (settings.playerMode === 'user' || currentPlayer === 0) {
-             dispatch(placeMove({ coords, settings })); // Dispatch action
+             dispatch(placeMove({ coords, settings })); // Dispatch action from @core
         } else {
             console.log("Not human player's turn (in AI mode).");
         }

@@ -32,9 +32,15 @@
 
 import React, { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { PlayerIndex, BoardState, ScoringMechanismId } from '@core/types';
-import { getConnectedComponents, parsePositionKey, createPositionKey } from '@core/game/GameBoardLogic';
-import { RootState } from '@core/store';
+import {
+    RootState,
+    PlayerIndex,
+    BoardState,
+    ScoringMechanism,
+    getConnectedComponents,
+    parsePositionKey,
+    createPositionKey
+} from '@core';
 import * as d3 from 'd3';
 
 const ScoreDisplay: React.FC = () => {
@@ -48,7 +54,9 @@ const ScoreDisplay: React.FC = () => {
   const breakdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    updateScoreDisplay();
+    if (boardState) {
+        updateScoreDisplay();
+    }
   }, [scores, currentPlayer, boardState, scoringMechanism]);
 
   const getAdjacentPositions = (gridX: number, gridY: number): [number, number][] => {
@@ -60,21 +68,19 @@ const ScoreDisplay: React.FC = () => {
     ];
   };
 
-  const calculateComponentSize = (component: string[], scoringMech: ScoringMechanismId): number => {
+  const calculateComponentSize = (component: string[], scoringMech: ScoringMechanism): number => {
+    if (!component || component.length === 0) return 0;
     if (component.length === 1) return 1;
     
     switch(scoringMech) {
       case 'cell-multiplication':
         return component.length;
           
-      case 'cell-connection':
+      case 'cell-connection': {
         let connectionCount = 0;
-        
         for (let cellKey of component) {
           const [gridX, gridY] = parsePositionKey(cellKey);
-          
           const adjacentPositions = getAdjacentPositions(gridX, gridY);
-          
           for (let [adjX, adjY] of adjacentPositions) {
             const adjKey = createPositionKey(adjX, adjY);
             if (component.includes(adjKey)) {
@@ -82,56 +88,51 @@ const ScoreDisplay: React.FC = () => {
             }
           }
         }
-        
-        return connectionCount / 2;
+        const actualConnections = connectionCount / 2;
+        return actualConnections > 0 ? actualConnections : 1;
+      }
           
-      case 'cell-extension':
-        let extensionSum = 0;
+      case 'cell-extension': {
+        let extensionCount = 0;
         const processedEdges = new Set<string>();
-        
         for (let cellKey of component) {
           const [gridX, gridY] = parsePositionKey(cellKey);
-          
           const adjacentPositions = getAdjacentPositions(gridX, gridY);
-          
           for (let [adjX, adjY] of adjacentPositions) {
             const adjKey = createPositionKey(adjX, adjY);
-            
             if (component.includes(adjKey)) {
-              const edge = cellKey < adjKey 
-                ? `${cellKey}-${adjKey}` 
-                : `${adjKey}-${cellKey}`;
-              
-              if (!processedEdges.has(edge)) {
-                extensionSum++;
-                processedEdges.add(edge);
+              const edgeKey = cellKey < adjKey ? `${cellKey}-${adjKey}` : `${adjKey}-${cellKey}`;
+              if (!processedEdges.has(edgeKey)) {
+                extensionCount++;
+                processedEdges.add(edgeKey);
               }
             }
           }
         }
-        
-        return extensionSum > 0 ? extensionSum : 1;
+        return extensionCount > 0 ? extensionCount : 1;
+      }
           
       default:
+        console.warn("calculateComponentSize: Unknown scoring mechanism", scoringMech);
         return component.length;
     }
   };
 
-  const calculateBreakdownText = (score: number, components: string[][], scoringMech: ScoringMechanismId): string => {
+  const calculateBreakdownText = (score: number, components: string[][], scoringMech: ScoringMechanism): string => {
     if (score === 0 || !components || components.length === 0) {
       return `${score} = 0`;
     }
     
-    const componentSizes = components.map(component => {
-      return calculateComponentSize(component, scoringMech);
-    });
+    const componentValues = components.map(component => 
+        calculateComponentSize(component, scoringMech)
+    );
     
-    const sizesText = componentSizes.sort((a, b) => b - a).join('×');
-    return `${score} = ${sizesText}`;
+    const valuesText = componentValues.sort((a, b) => b - a).join(' × ');
+    return `${score} = ${valuesText}`;
   };
 
   const updateScoreDisplay = () => {
-    if (!scoresRef.current || !breakdownRef.current) return;
+    if (!scoresRef.current || !breakdownRef.current || !boardState) return;
 
     const componentsP1 = getConnectedComponents(boardState, 0);
     const componentsP2 = getConnectedComponents(boardState, 1);

@@ -1,12 +1,15 @@
 /**
- * src/core/ai/index.ts - AI Module Exports
+ * src/core/ai/index.ts
  * 
- * Explicitly exports AI logic components (getAIMove, evaluateBoard).
- * Provides a clean interface to AI functionality, encapsulating implementation details.
+ * Public exports for the core AI module.
  */
 
-// Export main AI function used by the application
-export { getAIMove } from './aiLogic';
+// Export reducer and actions from the slice
+export { default as aiReducer } from './aiSlice';
+export * from './aiSlice'; // Export actions like setAIThinking
 
-// Export board evaluation function (used internally by minimax but may be useful elsewhere)
-export { evaluateBoard } from './evaluateBoard';
+// Export AI engine functions (move calculation, evaluation)
+export * from './engine';
+
+// Export AI selectors
+export * from './selectors';

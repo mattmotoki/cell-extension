@@ -1,60 +1,22 @@
 /**
- * src/core/index.ts - Core Module Exports
+ * src/core/index.ts
  * 
- * Main entry point for the core game logic and state management.
- * Re-exports essential components from subdirectories for a clean API.
- * 
- * Key exports:
- * - Game logic functions, AI functionality, Scoring mechanisms
- * - Shared type definitions, Redux store, and settings actions
- * 
- * Provides a clean module boundary between core logic and UI.
+ * Main entry point for the core logic and state management.
+ * Re-exports essential components from submodules for a clean API.
  */
 
 // Re-export core types
 export * from './types';
 
-// Re-export game logic - exclude ScoringMechanismId to avoid collision
-export {
-  // Helper Functions
-  createPositionKey,
-  parsePositionKey,
-  isValidCoordinate,
-  isCellOccupiedByPlayer,
-  isCellOccupied,
-  
-  // Board Initialization & State
-  createInitialBoardState,
-  
-  // Cell Placement
-  placeCell,
-  
-  // Neighbor and Component Logic
-  getAdjacentPositions,
-  getAdjacentPlayerCells,
-  getConnectedComponents,
-  
-  // Availability and Scoring
-  getAvailableCells,
-  getTotalCellCount,
-  isGameOver,
-  
-  // Scoring
-  calculateScore
-} from './game';
+// Re-export main store configuration and types
+export * from './store'; // Exports store instance and AppDispatch
+export type { RootState } from './rootReducer'; // Export RootState type
 
-// Re-export AI functionality
-export * from './ai';
+// Re-export public APIs of submodules
+export * from './game'; // Includes gameSlice, actions, selectors, utils
+export * from './ai'; // Includes aiSlice, actions, selectors, engine functions
+export * from './scoring'; // Includes scoring algorithms, potentially slice/selectors
 
-// Re-export scoring mechanisms
-export * from './scoring';
-
-// Re-export Redux store
-export { store } from './store';
-export type { RootState, AppDispatch } from './store';
-
-// Re-export settings actions
-export { 
-  updateSetting,
-  setAllSettings
-} from './settingsSlice'; 
+// Re-export settings slice and actions
+export { default as settingsReducer } from './settingsSlice';
+export * from './settingsSlice'; // Exports updateSetting, setAllSettings

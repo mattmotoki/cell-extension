@@ -19,6 +19,7 @@
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
+      "@core": ["src/core"],
       "@core/*": ["src/core/*"],
       "@web/*": ["src/platforms/web/*"],
       "@shared/*": ["src/shared/*"]
