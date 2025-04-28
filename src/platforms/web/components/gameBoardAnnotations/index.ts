@@ -8,7 +8,9 @@ export {
   drawLabels,
   createEdgeKey,
   parseEdgeKey,
-  orderCellsLeftToRight
+  orderCellsLeftToRight,
+  drawCell,
+  drawExtension
 } from './utils';
 export { default as GridLines } from './GridLines'; 
 export { default as Cells } from './Cells'; 

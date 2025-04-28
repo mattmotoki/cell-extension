@@ -14,6 +14,7 @@
  * - Replaced console.log calls with custom logger utility
  * - Moved connection line drawing to shared utility
  * - Moved grid lines rendering and cell rendering to separate components
+ * - Added extension rectangles to visualize cell extensions
  * 
  */
 
@@ -43,7 +44,8 @@ import {
   GridLines,
   Cells,
   orderCellsLeftToRight,
-  getAdjacentPositions
+  getAdjacentPositions,
+  drawExtension
 } from './gameBoardAnnotations';
 
 // Create module-specific logger
@@ -70,7 +72,7 @@ const GameBoard: React.FC = () => { // No props needed directly
   // Calculate dimensions - handle potential division by zero if gridWidth is 0
   const gridDimension = 100; // Logical size for viewBox
   const cellDimension = gridWidth > 0 ? gridDimension / gridWidth : 0;
-  const cellPadding = 0.05; 
+  const cellPadding = 0.0; 
   const cellRadius = cellDimension * 0.15; // Rounded corners radius
 
   // Use dispatch to handle cell clicks - use placeMove from @core
@@ -232,6 +234,53 @@ const GameBoard: React.FC = () => { // No props needed directly
       ...components1.map(comp => ({ player: 0 as PlayerIndex, cells: comp })),
       ...components2.map(comp => ({ player: 1 as PlayerIndex, cells: comp }))
     ];
+    
+    // First, draw extension rectangles for all components regardless of scoring mechanism
+    // Create a separate group for extensions to ensure proper layering
+    const extensionsGroup = svg.select('#scoring-visuals-group').append('g').attr('id', 'extensions-group');
+    
+    allComponents.forEach(({ player, cells }) => {
+      if (cells.length <= 1) return; // Skip isolated cells
+      
+      // Create a set for quick lookups
+      const cellsSet = new Set(cells);
+      
+      // Find connected cells (those with at least one adjacent cell in the same component)
+      const connectedCells: string[] = [];
+      
+      cells.forEach(cellKey => {
+        const [gridX, gridY] = parsePositionKey(cellKey);
+        let hasConnection = false;
+        
+        // Check if this cell has any adjacent cells in the same component
+        const adjacentPositions = getAdjacentPositions(gridX, gridY);
+        for (const [adjX, adjY] of adjacentPositions) {
+          if (adjX >= 0 && adjX < gridWidth && adjY >= 0 && adjY < gridHeight) {
+            const adjKey = createPositionKey(adjX, adjY);
+            if (cellsSet.has(adjKey)) {
+              hasConnection = true;
+              connectedCells.push(cellKey);
+              break;
+            }
+          }
+        }
+      });
+      
+      // Draw extension rectangles for connected cells
+      if (connectedCells.length > 1) {
+        drawExtension({
+          cellDimension,
+          group: extensionsGroup,
+          cells: connectedCells,
+          gridWidth, 
+          gridHeight,
+          player,
+          playerColors,
+          cellPadding,
+          cellRadius
+        });
+      }
+    });
 
     // Use the appropriate subcomponent based on the scoring mechanism
     if (scoringMechanism === 'cell-multiplication') {

@@ -9,6 +9,7 @@
  * - Managing edge keys for connections between cells
  * - Ordering edges using various traversal strategies
  * - Drawing connection lines, markers, and other visual elements
+ * - Drawing cells and cell extensions
  * 
  * The traversal algorithm is particularly important for consistent edge numbering
  * in the ExtensionAnnotation component, where edges are numbered based on their
@@ -257,6 +258,33 @@ export interface LabelOptions extends Omit<BaseConnectionOptions, 'cells'> {
 }
 
 /**
+ * Interface for drawing cell options
+ */
+export interface CellOptions {
+  gridX: number;
+  gridY: number;
+  cellDimension: number;
+  cellPadding: number;
+  cellRadius: number;
+  group: d3.Selection<any, unknown, null, undefined>;
+  player: PlayerIndex;
+  playerColors?: string[]; // Array of player colors
+  color?: string; // Optional override color
+}
+
+/**
+ * Interface for drawing extension rectangles between adjacent cells
+ */
+export interface ExtensionOptions extends BaseConnectionOptions {
+  cells: string[];
+  lineWidth?: number;
+  color?: string;
+  cellPadding: number;
+  cellRadius: number;
+  useDepthFirstOrder?: boolean;
+}
+
+/**
  * Draws connection lines between adjacent cells for a component
  * Returns an array of processed edges, either in lexicographical or depth-first order
  */
@@ -450,4 +478,121 @@ export const drawLabels = (options: LabelOptions): void => {
       .attr('stroke', 'none') // No stroke needed with markers
       .text(String(label));
   });
+};
+
+/**
+ * Draws a single cell at the specified grid coordinates.
+ * This is the common cell rendering function used to ensure consistent appearance.
+ */
+export const drawCell = (options: CellOptions): void => {
+  const {
+    gridX,
+    gridY,
+    cellDimension,
+    cellPadding,
+    cellRadius,
+    group,
+    player,
+    playerColors = ['#ff0000', '#0000ff'], // Default colors if not provided
+    color
+  } = options;
+
+  const cellColor = color || playerColors[player] || '#888888';
+  const padding = cellDimension * cellPadding;
+
+  // Draw the cell rect
+  group.append('rect')
+    .attr('class', `player-cell player-${player}`)
+    .attr('x', gridX * cellDimension + (padding / 2))
+    .attr('y', gridY * cellDimension + (padding / 2))
+    .attr('width', cellDimension - padding)
+    .attr('height', cellDimension - padding)
+    .attr('rx', cellRadius) // Rounded corners
+    .attr('ry', cellRadius) // Rounded corners
+    .attr('fill', cellColor)
+    .attr('stroke', 'none'); // No border
+};
+
+/**
+ * Draws extension rectangles between adjacent cells to visualize territory expansion.
+ * This creates a visual overlay that connects two cells with a rectangle.
+ * Returns an array of processed edges in the requested order.
+ */
+export const drawExtension = (options: ExtensionOptions): string[] => {
+  const {
+    cellDimension,
+    group,
+    color, // Default to player color from the playerColors array
+    cells,
+    gridWidth,
+    gridHeight,
+    player,
+    playerColors = ['#ff0000', '#0000ff'], // Default colors if not provided
+    useDepthFirstOrder = false,
+    cellPadding,
+    cellRadius
+  } = options;
+
+  const processedEdges = new Set<string>();
+  const cellsSet = new Set(cells);
+  const rectColor = color || playerColors[player] || '#888888';
+  const padding = cellDimension * cellPadding;
+
+  cells.forEach(cellKey => {
+    const [gridX, gridY] = parsePositionKey(cellKey);
+    
+    // Check neighbors of the same component
+    const adjacentPositions = getAdjacentPositions(gridX, gridY);
+    adjacentPositions.forEach(([adjX, adjY]) => {
+      if (adjX >= 0 && adjX < gridWidth && adjY >= 0 && adjY < gridHeight) {
+        const adjKey = createPositionKey(adjX, adjY);
+        const edgeKey = createEdgeKey(cellKey, adjKey);
+        
+        // Skip if already processed or not in the component
+        if (processedEdges.has(edgeKey) || !cellsSet.has(adjKey)) {
+          return;
+        }
+        
+        processedEdges.add(edgeKey);
+        
+        // Calculate dimensions and position for the extension rectangle
+        let x, y, width, height;
+        
+        if (gridX === adjX) {
+          // Vertical extension (y-axis)
+          x = gridX * cellDimension + (padding / 2);
+          y = Math.min(gridY, adjY) * cellDimension + (padding / 2);
+          width = cellDimension - padding;
+          height = 2 * cellDimension - padding;
+        } else {
+          // Horizontal extension (x-axis)
+          x = Math.min(gridX, adjX) * cellDimension + (padding / 2);
+          y = gridY * cellDimension + (padding / 2);
+          width = 2 * cellDimension - padding;
+          height = cellDimension - padding;
+        }
+        
+        // Draw extension rectangle - using the same style as regular cells
+        group.append('rect')
+          .attr('class', `extension-rect player-${player}`)
+          .attr('x', x)
+          .attr('y', y)
+          .attr('width', width)
+          .attr('height', height)
+          .attr('rx', cellRadius) // Rounded corners
+          .attr('ry', cellRadius) // Rounded corners
+          .attr('fill', rectColor)
+          .attr('stroke', 'none'); // No border
+      }
+    });
+  });
+
+  // Return edges in the requested order
+  if (useDepthFirstOrder) {
+    // Generate edges in traversal order, starting from leftmost node
+    return orderEdgesDepthFirst(cells, gridWidth, gridHeight, processedEdges);
+  } else {
+    // Convert Set to lexicographically sorted Array (original behavior)
+    return Array.from(processedEdges).sort();
+  }
 }; 

@@ -11,6 +11,7 @@
  * - Adds white cell markers to highlight cells in the component (except isolated cells)
  * - Adds gray edge markers with text labels showing the sequence number
  * - Labels isolated cells with "1" directly on the cell
+ * - Draws rectangle overlays between connected cells to visualize extensions
  * - The total number of edges represents the extension score for the component
  * 
  * Related files:
@@ -22,7 +23,14 @@
 import React from 'react';
 import * as d3 from 'd3';
 import { PlayerIndex, parsePositionKey, createPositionKey } from '@core';
-import { getAdjacentPositions, drawConnectionLines, parseEdgeKey, drawMarkers, drawLabels } from './utils';
+import { 
+  getAdjacentPositions, 
+  drawConnectionLines, 
+  parseEdgeKey, 
+  drawMarkers, 
+  drawLabels,
+  drawExtension 
+} from './utils';
 
 interface ExtensionAnnotationProps {
   components: Array<{ player: PlayerIndex, cells: string[] }>;
@@ -79,6 +87,8 @@ export const ExtensionAnnotation: React.FC<ExtensionAnnotationProps> = ({
         isolatedCells.push(cellKey);
       }
     });
+    
+    // Note: Extension rectangles are now drawn in the GameBoard component for all scoring mechanisms
     
     // Draw connection lines between cells in this component, returning edges in depth-first order
     const processedEdges = drawConnectionLines({

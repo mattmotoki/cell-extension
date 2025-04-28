@@ -8,6 +8,7 @@
 import React from 'react';
 import * as d3 from 'd3';
 import { PlayerIndex, parsePositionKey } from '@core';
+import { drawCell } from './utils';
 
 interface CellData {
   key: string;
@@ -48,20 +49,19 @@ export const Cells: React.FC<CellsProps> = ({
     })
   ];
 
-  // Render player cells with rounded corners and proper styling
-  group.selectAll<SVGRectElement, CellData>('.player-cell')
-    .data(allOccupied, (d: CellData) => d.key)
-    .enter()
-    .append('rect')
-    .attr('class', (d: CellData) => `player-cell player-${d.player}`)
-    .attr('x', (d: CellData) => d.gridX * cellDimension + (cellDimension * cellPadding / 2))
-    .attr('y', (d: CellData) => d.gridY * cellDimension + (cellDimension * cellPadding / 2))
-    .attr('width', cellDimension * (1 - cellPadding))
-    .attr('height', cellDimension * (1 - cellPadding))
-    .attr('rx', cellRadius) // Rounded corners
-    .attr('ry', cellRadius) // Rounded corners
-    .attr('fill', (d: CellData) => playerColors[d.player])
-    .attr('stroke', 'none'); // Remove border
+  // Render player cells using the drawCell utility function for consistency
+  allOccupied.forEach(cell => {
+    drawCell({
+      gridX: cell.gridX,
+      gridY: cell.gridY,
+      cellDimension,
+      cellPadding,
+      cellRadius,
+      group,
+      player: cell.player,
+      playerColors
+    });
+  });
     
   return null; 
 };
