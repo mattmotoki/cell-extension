@@ -30,7 +30,7 @@ export const MultiplicationAnnotation: React.FC<MultiplicationAnnotationProps> =
       if (!processedComponents.has(componentKey)) {
         processedComponents.add(componentKey);
         
-        // Draw connection lines 
+        // Draw connection lines - now returns a sorted array of edges
         const processedEdges = drawConnectionLines({
           cellDimension,
           group: scoringVisualsGroup,

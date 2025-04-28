@@ -1,3 +1,25 @@
+/**
+ * utils.ts
+ * 
+ * Utility functions for game board annotations that handle connections, edge management,
+ * and visualization of game components.
+ * 
+ * This file provides the core functionality for:
+ * - Getting adjacent positions on a grid
+ * - Managing edge keys for connections between cells
+ * - Ordering edges using various traversal strategies
+ * - Drawing connection lines, markers, and other visual elements
+ * 
+ * The traversal algorithm is particularly important for consistent edge numbering
+ * in the ExtensionAnnotation component, where edges are numbered based on their
+ * discovery order starting from the leftmost node.
+ * 
+ * Related files:
+ * - ExtensionAnnotation.tsx: Uses these utilities to visualize extension scoring
+ * - ConnectionAnnotation.tsx: Uses these utilities to visualize connection scoring
+ * - MultiplicationAnnotation.tsx: Uses these utilities to visualize multiplication scoring
+ */
+
 import * as d3 from 'd3';
 import { PlayerIndex, parsePositionKey, createPositionKey } from '@core';
 
@@ -32,6 +54,139 @@ export const parseEdgeKey = (edgeKey: string): [string, string] => {
 };
 
 /**
+ * Orders edges based on a depth-first traversal starting from the leftmost node.
+ * Prioritizes nodes with smaller y-values, then smaller x-values during traversal.
+ * 
+ * This produces a consistent top-to-bottom, left-to-right traversal pattern that
+ * makes the edge numbering more intuitive and readable.
+ */
+export const orderEdgesDepthFirst = (
+  cells: string[], 
+  gridWidth: number, 
+  gridHeight: number,
+  processedEdges: Set<string>
+): string[] => {
+  if (cells.length <= 1) return [];
+  
+  const cellsSet = new Set(cells);
+  
+  // Step 1: Find the leftmost node (smallest x, breaking ties with smallest y)
+  let rootNode = cells[0];
+  let [minX, minY] = parsePositionKey(rootNode);
+  
+  cells.forEach(cellKey => {
+    const [x, y] = parsePositionKey(cellKey);
+    
+    // Check if this is the leftmost node or a node with same x but smaller y
+    if (x < minX || (x === minX && y < minY)) {
+      minX = x;
+      minY = y;
+      rootNode = cellKey;
+    }
+  });
+  
+  // Step 2: Build adjacency map with all neighbors connected by an edge
+  const adjacencyMap = new Map<string, string[]>();
+  
+  cells.forEach(cellKey => {
+    const [gridX, gridY] = parsePositionKey(cellKey);
+    const neighbors: string[] = [];
+    
+    getAdjacentPositions(gridX, gridY).forEach(([adjX, adjY]) => {
+      if (adjX >= 0 && adjX < gridWidth && adjY >= 0 && adjY < gridHeight) {
+        const adjKey = createPositionKey(adjX, adjY);
+        if (cellsSet.has(adjKey)) {
+          // Only add if there's an edge between them
+          const edgeKey = createEdgeKey(cellKey, adjKey);
+          if (processedEdges.has(edgeKey)) {
+            neighbors.push(adjKey);
+          }
+        }
+      }
+    });
+    
+    adjacencyMap.set(cellKey, neighbors);
+  });
+  
+  // Step 3: Create a set of all valid edges
+  const allEdges = new Set<string>();
+  cells.forEach(cellKey => {
+    const neighbors = adjacencyMap.get(cellKey) || [];
+    neighbors.forEach(neighbor => {
+      const edgeKey = createEdgeKey(cellKey, neighbor);
+      if (processedEdges.has(edgeKey)) {
+        allEdges.add(edgeKey);
+      }
+    });
+  });
+  
+  // Step 4: Perform DFS with custom ordering of neighbors
+  const visited = new Set<string>();
+  const orderedEdges: string[] = [];
+  const usedEdges = new Set<string>();
+  
+  // Helper to mark an edge as used and add it to the result
+  const processEdge = (from: string, to: string): void => {
+    const edgeKey = createEdgeKey(from, to);
+    if (!usedEdges.has(edgeKey) && processedEdges.has(edgeKey)) {
+      usedEdges.add(edgeKey);
+      orderedEdges.push(edgeKey);
+    }
+  };
+  
+  // Custom DFS that prioritizes nodes with smaller y-values, then smaller x-values
+  const dfs = (node: string): void => {
+    visited.add(node);
+    
+    const neighbors = adjacencyMap.get(node) || [];
+    if (neighbors.length === 0) return;
+    
+    // Get coordinates for all neighbors
+    const neighborsWithCoords = neighbors.map(n => {
+      const [x, y] = parsePositionKey(n);
+      return { node: n, x, y };
+    });
+    
+    // Sort neighbors by y-value (ascending), then by x-value (ascending)
+    const sortedNeighbors = neighborsWithCoords.sort((a, b) => {
+      // First priority: y-value (ascending)
+      if (a.y !== b.y) return a.y - b.y;
+      // Second priority: x-value (ascending)
+      return a.x - b.x;
+    });
+    
+    // Process each neighbor in order
+    for (const { node: neighbor } of sortedNeighbors) {
+      processEdge(node, neighbor);
+      
+      if (!visited.has(neighbor)) {
+        dfs(neighbor);
+      }
+    }
+  };
+  
+  // Start DFS from the leftmost node
+  dfs(rootNode);
+  
+  // Handle disconnected parts (shouldn't happen with connected components)
+  for (const cell of cells) {
+    if (!visited.has(cell)) {
+      dfs(cell);
+    }
+  }
+  
+  // Add any remaining unprocessed edges
+  const edgesList = Array.from(allEdges);
+  edgesList.forEach(edge => {
+    if (!usedEdges.has(edge)) {
+      orderedEdges.push(edge);
+    }
+  });
+  
+  return orderedEdges;
+};
+
+/**
  * Base interface for connection drawing options
  */
 export interface BaseConnectionOptions {
@@ -50,6 +205,7 @@ export interface ConnectionLineOptions extends BaseConnectionOptions {
   lineWidth?: number;
   color?: string;
   opacity?: number;
+  useDepthFirstOrder?: boolean;
 }
 
 /**
@@ -70,9 +226,9 @@ export interface ConnectionDrawingOptions extends ConnectionLineOptions {
 
 /**
  * Draws connection lines between adjacent cells for a component
- * Returns a Set of processed edges
+ * Returns an array of processed edges, either in lexicographical or depth-first order
  */
-export const drawConnectionLines = (options: ConnectionLineOptions): Set<string> => {
+export const drawConnectionLines = (options: ConnectionLineOptions): string[] => {
   const {
     cellDimension,
     group,
@@ -82,7 +238,8 @@ export const drawConnectionLines = (options: ConnectionLineOptions): Set<string>
     cells,
     gridWidth,
     gridHeight,
-    player
+    player,
+    useDepthFirstOrder = false
   } = options;
 
   const processedEdges = new Set<string>();
@@ -127,7 +284,14 @@ export const drawConnectionLines = (options: ConnectionLineOptions): Set<string>
     });
   });
 
-  return processedEdges;
+  // Return edges in the requested order
+  if (useDepthFirstOrder) {
+    // Generate edges in traversal order, starting from leftmost node
+    return orderEdgesDepthFirst(cells, gridWidth, gridHeight, processedEdges);
+  } else {
+    // Convert Set to lexicographically sorted Array (original behavior)
+    return Array.from(processedEdges).sort();
+  }
 };
 
 /**
@@ -165,9 +329,9 @@ export const drawConnectionMarkers = (options: ConnectionMarkerOptions): void =>
 
 /**
  * For backwards compatibility - draws both connection lines and markers
- * Returns a Set of processed edges
+ * Returns an array of processed edges in requested order
  */
-export const drawComponentConnections = (options: ConnectionDrawingOptions): Set<string> => {
+export const drawComponentConnections = (options: ConnectionDrawingOptions): string[] => {
   const {
     drawMarkers = true,
     ...lineOptions

@@ -1,3 +1,23 @@
+/**
+ * ExtensionAnnotation.tsx
+ * 
+ * This component visualizes the extension scoring mechanism on the game board.
+ * It displays a sequential number for each edge in a connected component by placing
+ * text annotations at the center of each edge. The edges are numbered from 1 to N
+ * in depth-first order, following the connected structure of the component.
+ * 
+ * Key features:
+ * - Numbers each edge sequentially (1, 2, 3, etc.) using depth-first traversal order
+ * - Places text annotations at the center of each edge
+ * - The total number of edges is the extension score for the component
+ * - Depth-first ordering provides a more intuitive visualization of the component structure
+ * 
+ * Related files:
+ * - utils.ts: Contains helper functions for drawing connections and edges
+ * - GameBoard.tsx: Main game board component that uses this annotation
+ * - algorithms.ts: Contains the extension scoring algorithm implementation
+ */
+
 import React from 'react';
 import * as d3 from 'd3';
 import { PlayerIndex, parsePositionKey, createPositionKey } from '@core';
@@ -29,7 +49,7 @@ export const ExtensionAnnotation: React.FC<ExtensionAnnotationProps> = ({
   components.forEach(({ player, cells }) => {
     if (cells.length <= 1) return;
     
-    // Draw connection lines
+    // Draw connection lines - using depth-first order for edges
     const processedEdges = drawConnectionLines({
       cellDimension,
       group: scoringVisualsGroup,
@@ -38,7 +58,8 @@ export const ExtensionAnnotation: React.FC<ExtensionAnnotationProps> = ({
       gridHeight,
       player,
       lineWidth: cellDimension * 0.005, // Thin lines
-      color: '#888888'
+      color: '#888888',
+      useDepthFirstOrder: true // Enable depth-first ordering
     });
     
     // Draw connection markers for each cell
@@ -52,22 +73,21 @@ export const ExtensionAnnotation: React.FC<ExtensionAnnotationProps> = ({
       markerRadius: cellDimension * 0.05
     });
     
-    // Get the total edge count for this component
-    let edgeCount = 0;
-    
-    // Add text annotations at the center of each edge
-    processedEdges.forEach(edgeKey => {
+    // Add text annotations at the center of each edge with sequential numbering
+    processedEdges.forEach((edgeKey, index) => {
       // Use the parseEdgeKey helper function
       const [cell1, cell2] = parseEdgeKey(edgeKey);
       const [x1, y1] = parsePositionKey(cell1);
       const [x2, y2] = parsePositionKey(cell2);
-      edgeCount += 1;
       
       // Calculate the center of the edge
       const centerX = cellDimension*(x1 + x2 + 1) / 2;
       const centerY = cellDimension*(y1 + y2 + 1) / 2;
       
-      // Add the edge count as text annotation
+      // Display the edge's sequential number (1-based index) in depth-first order
+      const edgeNumber = index + 1;
+      
+      // Add the edge's sequential number as text annotation
       scoringVisualsGroup.append('text')
         .attr('class', `score-indicator player-${player}`)
         .attr('x', centerX)
@@ -79,7 +99,7 @@ export const ExtensionAnnotation: React.FC<ExtensionAnnotationProps> = ({
         .attr('font-size', cellDimension * 0.2) // Smaller font size
         .attr('stroke', 'rgba(0,0,0,0.3)')
         .attr('stroke-width', 0.3)
-        .text(edgeCount.toString());
+        .text(edgeNumber.toString());
     });
   });
 
