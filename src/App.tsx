@@ -28,7 +28,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import '../styles.css';
 import Navbar from '@web/components/Navbar';
 import GameSettingsPanel from '@web/components/GameSettingsPanel';
 import ScoreDisplay from '@web/components/ScoreDisplay';

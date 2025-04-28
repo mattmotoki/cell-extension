@@ -1,3 +1,11 @@
+/**
+ * src/platforms/web/styles/global.css
+ * 
+ * Web platform specific global CSS styles.
+ * Uses theme tokens from src/shared/styles/theme for values where possible,
+ * but implements platform-specific rendering.
+ */
+
  /* Modern UI styling with mobile responsiveness - Portrait focus */
 :root {
     --primary-color: #6c84ff;
@@ -433,5 +441,4 @@ footer span:first-child {
 
 footer span:last-child {
     margin-right: 0;
-}
-
+} 
