@@ -77,20 +77,18 @@ function App() {
     const nextSettings = { ...settings, [key]: value };
     // Reset game if relevant settings change
     if (['boardSize', 'firstPlayer', 'scoringMechanism', 'aiDifficulty', 'playerMode'].includes(key as string)) {
-        dispatch(resetGame(nextSettings)); // Dispatch resetGame action (imported from @core)
+        dispatch(resetGame(nextSettings)); 
     }
   }, [dispatch, settings]);
 
   const handleResetClick = useCallback(() => {
-      dispatch(resetGame(settings)); // Dispatch resetGame action
+      dispatch(resetGame(settings)); 
       setIsSettingsPanelOpen(false);
   }, [dispatch, settings]);
 
   const handleUndoClick = useCallback(() => {
-      dispatch(undoMove()); // Dispatch undoMove action (imported from @core)
+      dispatch(undoMove());
   }, [dispatch]);
-
-  // Removed manual isUndoDisabled calculation, now uses selector
 
   // AI move calculation function
   const calculateAIMove = useCallback((currentGameState: GameState, currentSettings: GameSettings) => {
@@ -183,9 +181,6 @@ function App() {
           dispatch(setProgress('playing'));
       }
   }, [gameState.progress, dispatch]);
-
-  // Derive scoring description from settings
-  const scoringDescription = settings.scoringMechanism.replace('cell-','').replace('-', ' ');
 
   return (
     <div className={`game-container ${gameState.progress === 'waiting' ? 'waiting' : ''}`}>

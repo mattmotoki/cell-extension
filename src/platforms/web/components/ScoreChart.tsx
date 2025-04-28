@@ -3,15 +3,22 @@
  * 
  * React component that visualizes the score history of both players as a line chart
  * using D3.js. Features player-specific line colors, dynamic scaling with a logarithmic 
- * y-axis scale, and responsive design that adapts to container size, helping players
- * understand the impact of their moves and the game's progression.
+ * y-axis scale, and responsive design that adapts to container size changes in real-time.
+ * The chart helps players understand the impact of their moves and the game's progression 
+ * over time.
+ * 
+ * Technical features:
+ * - Uses ResizeObserver to dynamically respond to any container size changes
+ * - Reacts to CSS variable updates (like --score-chart-height) without page refresh
+ * - Implements logarithmic y-axis scale for better visualization of score differences
+ * - Uses percentage-based margins that scale with container size
+ * - Maintains chart stability during updates with calculated dimensions
  * 
  * Relationships:
  * - Complements the ScoreDisplay component by showing historical progression
  * 
  * Revision Log:
  * - Changed y-axis to logarithmic scale for better visualization of score differences
- * - Added handling for zero values in logarithmic scale
  * - Improved chart initialization to prevent resizing during updates
  * - Added responsive sizing while maintaining chart stability
  * - Made chart fully responsive using available width and height
@@ -25,7 +32,7 @@ import { useSelector } from 'react-redux';
 import { PlayerIndex, RootState } from '@core';
 
 // Default chart margins as percentages of container dimensions
-const CHART_MARGIN_PERCENTAGES = { top: 5, right: 5, bottom: 10, left: 8 };
+const CHART_MARGIN_PERCENTAGES = { top: 5, right: 7, bottom: 15, left: 10 };
 // Minimum value for log scale (since log(0) is undefined)
 const MIN_LOG_VALUE = 1;
 
@@ -39,22 +46,29 @@ const ScoreChart: React.FC = () => {
   const scoreHistory2 = useSelector((state: RootState) => state.game.scoreHistory2);
   const playerColors = ["#00FF00", "#1E90FF"];
 
-  // Update dimensions when container size changes
+  // Update dimensions when container size changes using ResizeObserver for robustness
   useEffect(() => {
-    const updateDimensions = () => {
-      if (containerRef.current) {
-        const { clientWidth, clientHeight } = containerRef.current;
-        setDimensions({ width: clientWidth, height: clientHeight });
+    if (!containerRef.current) return;
+
+    // Set initial size
+    setDimensions({
+      width: containerRef.current.clientWidth,
+      height: containerRef.current.clientHeight,
+    });
+
+    // Observe size changes (works even when they are triggered by CSS variable updates)
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setDimensions({ width, height });
       }
-    };
+    });
 
-    // Initialize dimensions on mount
-    updateDimensions();
+    resizeObserver.observe(containerRef.current);
 
-    // Add window resize listener
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
-  }, [dimensions.width, dimensions.height]);
+    // Cleanup on unmount
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // Update chart when dimensions or data change
   useEffect(() => {
@@ -180,7 +194,7 @@ const ScoreChart: React.FC = () => {
   }, [dimensions, scoreHistory1, scoreHistory2, playerColors]);
 
   return (
-    <div id="score-chart-container" ref={containerRef} style={{ width: '100%', height: '100%' }}>
+    <div id="score-chart-container" ref={containerRef}>
       <svg id="score-chart" ref={svgRef}></svg>
     </div>
   );

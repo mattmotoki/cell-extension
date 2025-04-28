@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { Analytics } from "@vercel/analytics/react"
 import { store } from './core/store';
 import App from './App'
-import '../styles.css' // Import the global styles
+import '../styles.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
