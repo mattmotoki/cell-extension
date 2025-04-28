@@ -1,3 +1,19 @@
+/**
+ * ConnectionAnnotation.tsx
+ * 
+ * This component visualizes the connection scoring mechanism on the game board.
+ * It displays the number of connections each cell has with adjacent cells of the same player.
+ * 
+ * Key features:
+ * - Calculates individual connection counts for each cell
+ * - Displays the connection count as a text annotation on each cell
+ * - Follows the rule that isolated cells have a connection count of 1
+ *  
+ * Related files:
+ * - utils.ts: Contains helper functions for drawing connections
+ * - GameBoard.tsx: Main game board component that uses this annotation
+ */
+
 import React from 'react';
 import * as d3 from 'd3';
 import { PlayerIndex, parsePositionKey, createPositionKey } from '@core';
@@ -23,13 +39,12 @@ export const ConnectionAnnotation: React.FC<ConnectionAnnotationProps> = ({
 
   // For connection scoring, highlight the connections
   components.forEach(({ player, cells }) => {
-    if (cells.length <= 1) return;
+    if (cells.length === 0) return;
     
-    // Count connections between cells
-    let connectionCount = 0;
+    // Create a set of cells for quick lookups
     const cellsSet = new Set(cells);
     
-    // Draw connections using shared utility
+    // Draw connections using shared utility - always set drawMarkers to false
     const processedEdges = drawComponentConnections({
       cellDimension,
       group: scoringVisualsGroup,
@@ -38,10 +53,9 @@ export const ConnectionAnnotation: React.FC<ConnectionAnnotationProps> = ({
       gridHeight,
       player,
       lineWidth: cellDimension * 0.005, // Thin lines
-      drawMarkers: false // Don't draw markers, we'll handle them specially
+      drawMarkers: false, // Don't draw circle markers
+      color: '#888888' // Gray color for all connections
     });
-    
-    connectionCount = processedEdges.size;
     
     // Add additional thicker highlight lines for connections that are part of the score
     processedEdges.forEach(edgeKey => {
@@ -66,47 +80,60 @@ export const ConnectionAnnotation: React.FC<ConnectionAnnotationProps> = ({
         .attr('stroke-opacity', 0.8); // Slightly transparent
     });
     
-    // Only display score if there are cells to show it on
-    if (connectionCount > 0 && cells.length > 0) {
-      // Find a good cell to display the score (preferably one not part of many connections)
-      const cellConnectionCount = new Map<string, number>();
+    // Calculate individual connection counts for each cell
+    const cellConnectionCount = new Map<string, number>();
+    
+    // Process each cell in the component
+    cells.forEach(cellKey => {
+      const [gridX, gridY] = parsePositionKey(cellKey);
       
-      // Count how many connections each cell is part of
-      processedEdges.forEach(edgeKey => {
-        const [cell1, cell2] = edgeKey.split('-');
-        cellConnectionCount.set(cell1, (cellConnectionCount.get(cell1) || 0) + 1);
-        cellConnectionCount.set(cell2, (cellConnectionCount.get(cell2) || 0) + 1);
+      // Count connections to adjacent cells of the same player
+      let count = 0;
+      
+      // Get adjacent positions
+      const adjacentPositions = getAdjacentPositions(gridX, gridY);
+      
+      // Check each adjacent position
+      adjacentPositions.forEach(([adjX, adjY]) => {
+        if (adjX >= 0 && adjX < gridWidth && adjY >= 0 && adjY < gridHeight) {
+          const adjKey = createPositionKey(adjX, adjY);
+          
+          // If the adjacent cell is in the same component, add a connection
+          if (cellsSet.has(adjKey)) {
+            count++;
+          }
+        }
       });
       
-      // Sort cells by connection count (ascending)
-      const sortedCells = [...cellConnectionCount.entries()]
-        .sort((a, b) => a[1] - b[1])
-        .map(([cellKey]) => cellKey);
+      // For isolated cells with no connections, set count to 1
+      count = count === 0 ? 1 : count;
       
-      if (sortedCells.length > 0) {
-        // Use the cell with fewest connections to show the score
-        const cellKey = sortedCells[0];
-        const [gridX, gridY] = parsePositionKey(cellKey);
-        cellsWithText.add(cellKey); // Mark this cell as having text
-        
-        const centerX = gridX * cellDimension + cellDimension / 2;
-        const centerY = gridY * cellDimension + cellDimension / 2;
-        
-        // Add label showing connection count
-        scoringVisualsGroup.append('text')
-          .attr('class', `score-indicator player-${player}`)
-          .attr('x', centerX)
-          .attr('y', centerY)
-          .attr('text-anchor', 'middle')
-          .attr('dominant-baseline', 'middle')
-          .attr('fill', '#ffffff')
-          .attr('font-weight', 'bold')
-          .attr('font-size', cellDimension * 0.25) // Smaller font size
-          .attr('stroke', 'rgba(0,0,0,0.3)')
-          .attr('stroke-width', 0.3)
-          .text(connectionCount.toString());
-      }
-    }
+      // Store the count for this cell
+      cellConnectionCount.set(cellKey, count);
+    });
+    
+    // Add text annotations to each cell showing its individual connection count
+    cellConnectionCount.forEach((connectionCount, cellKey) => {
+      const [gridX, gridY] = parsePositionKey(cellKey);
+      cellsWithText.add(cellKey); // Mark this cell as having text
+      
+      const centerX = gridX * cellDimension + cellDimension / 2;
+      const centerY = gridY * cellDimension + cellDimension / 2;
+      
+      // Add label showing connection count
+      scoringVisualsGroup.append('text')
+        .attr('class', `score-indicator player-${player}`)
+        .attr('x', centerX)
+        .attr('y', centerY)
+        .attr('text-anchor', 'middle')
+        .attr('dominant-baseline', 'middle')
+        .attr('fill', '#ffffff')
+        .attr('font-weight', 'bold')
+        .attr('font-size', cellDimension * 0.25) // Smaller font size
+        .attr('stroke', 'rgba(0,0,0,0.3)')
+        .attr('stroke-width', 0.3)
+        .text(connectionCount.toString());
+    });
   });
 
   return cellsWithText;
