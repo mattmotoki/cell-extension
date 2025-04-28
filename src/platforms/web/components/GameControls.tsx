@@ -1,25 +1,12 @@
 /**
  * src/platforms/web/components/GameControls.tsx - Game Control Buttons
  * 
- * React component for game control actions (reset and undo).
- * Provides a simple interface for players to control game flow by
- * starting a new game or reverting previous moves.
- * 
- * Key features:
- * - Reset button to start a new game with current settings
- * - Undo button to revert to previous game state
- * - Visual feedback for disabled states
- * - Responsive design that integrates with the game container
- * 
- * Technical approach:
- * - Functional component with props for callbacks
- * - Controlled disabling of undo button when appropriate
- * - Semantic button elements with appropriate styling
+ * React component providing game control actions (reset and undo). Offers buttons 
+ * with visual feedback for disabled states that allow players to start a new game 
+ * or revert previous moves.
  * 
  * Relationships:
  * - Receives callback handlers from App.tsx
- * - Uses Redux indirectly through parent component callbacks
- * - Part of the game container layout
  * 
  * Revision Log:
  *  

@@ -1,30 +1,13 @@
 /**
  * src/platforms/web/components/ScoreChart.tsx - Score History Visualization
  * 
- * React component that visualizes the score history of both players as a line chart.
- * Uses D3.js to create a dynamic line chart showing how scores change throughout the game,
- * providing a visual representation of the game's progression and helping players
- * understand the impact of their moves.
- * 
- * Key features:
- * - Line chart visualization of score history
- * - Player-specific line colors matching the game board
- * - Dynamic scaling based on maximum scores
- * - Responsive design that adapts to container size
- * - Logarithmic y-axis scale for better visualization of score differences
- * 
- * Technical approach:
- * - D3.js integration for chart rendering
- * - React refs to manage D3 and DOM interactions
- * - Redux state to access score history data
- * - Dynamic axis scaling based on current scores
- * - Log scale for y-axis to highlight relative score differences
+ * React component that visualizes the score history of both players as a line chart
+ * using D3.js. Features player-specific line colors, dynamic scaling with a logarithmic 
+ * y-axis scale, and responsive design that adapts to container size, helping players
+ * understand the impact of their moves and the game's progression.
  * 
  * Relationships:
- * - Retrieves score history data from Redux store
- * - Updates in response to score changes
- * - Visually complements the ScoreDisplay component
- * - Part of the overall game UI in App.tsx
+ * - Complements the ScoreDisplay component by showing historical progression
  * 
  * Revision Log:
  * - Changed y-axis to logarithmic scale for better visualization of score differences

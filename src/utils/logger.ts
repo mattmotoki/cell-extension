@@ -1,5 +1,5 @@
 /**
- * logger.js - Logging Utility for Cell Collection Game
+ * logger.ts - Logging Utility for Cell Collection Game
  * 
  * This file provides a logging utility with configurable verbosity levels
  * to control the amount of information displayed in the console.
@@ -17,19 +17,20 @@
  * Revision Log:
  * - Initial implementation
  * - Fixed browser compatibility issue with process.env
+ * - Converted to TypeScript
  * 
  * Note: This revision log should be updated whenever this file is modified.
  */
 
 // Define log levels with numeric values for comparison
-export const LogLevel = {
-    NONE: 0,   // No logging
-    ERROR: 1,  // Only errors
-    WARN: 2,   // Errors and warnings
-    INFO: 3,   // Errors, warnings, and important info
-    DEBUG: 4,  // Detailed information (default for most existing logs)
-    TRACE: 5   // Verbose tracing information
-};
+export enum LogLevel {
+    NONE = 0,   // No logging
+    ERROR = 1,  // Only errors
+    WARN = 2,   // Errors and warnings
+    INFO = 3,   // Errors, warnings, and important info
+    DEBUG = 4,  // Detailed information (default for most existing logs)
+    TRACE = 5   // Verbose tracing information
+}
 
 // Determine if we're in production mode
 // Safely check for environment without relying on process.env
@@ -58,17 +59,17 @@ const isProduction = (function() {
 })();
 
 // Current log level, defaulting to INFO in production, DEBUG in development
-let currentLogLevel = isProduction ? LogLevel.INFO : LogLevel.DEBUG;
+let currentLogLevel: LogLevel = isProduction ? LogLevel.INFO : LogLevel.DEBUG;
 
 // Include timestamps in logs (default: true)
-let includeTimestamp = true;
+let includeTimestamp: boolean = true;
 
 /**
  * Set the global log level
  * @param {LogLevel} level - The log level to set
  */
-export function setLogLevel(level) {
-    if (level in LogLevel) {
+export function setLogLevel(level: LogLevel): void {
+    if (Object.values(LogLevel).includes(level)) {
         currentLogLevel = level;
         info('Logger', `Log level set to ${getLogLevelName(level)}`);
     } else {
@@ -80,7 +81,7 @@ export function setLogLevel(level) {
  * Get the current log level
  * @returns {LogLevel} The current log level
  */
-export function getLogLevel() {
+export function getLogLevel(): LogLevel {
     return currentLogLevel;
 }
 
@@ -89,15 +90,15 @@ export function getLogLevel() {
  * @param {LogLevel} level - The log level
  * @returns {string} The name of the log level
  */
-export function getLogLevelName(level) {
-    return Object.keys(LogLevel).find(key => LogLevel[key] === level) || 'UNKNOWN';
+export function getLogLevelName(level: LogLevel): string {
+    return LogLevel[level] || 'UNKNOWN';
 }
 
 /**
  * Set whether to include timestamps in logs
  * @param {boolean} include - Whether to include timestamps
  */
-export function setIncludeTimestamp(include) {
+export function setIncludeTimestamp(include: boolean): void {
     includeTimestamp = include;
 }
 
@@ -108,8 +109,8 @@ export function setIncludeTimestamp(include) {
  * @param {Array} args - The log message arguments
  * @returns {Array} Formatted log arguments
  */
-function formatLogArgs(level, module, args) {
-    const prefix = [];
+function formatLogArgs(level: string, module: string, args: any[]): any[] {
+    const prefix: string[] = [];
     
     // Add timestamp if enabled
     if (includeTimestamp) {
@@ -135,7 +136,7 @@ function formatLogArgs(level, module, args) {
  * @param {string} module - The module name
  * @param {...any} args - The log message arguments
  */
-export function error(module, ...args) {
+export function error(module: string, ...args: any[]): void {
     if (currentLogLevel >= LogLevel.ERROR) {
         console.error(...formatLogArgs('ERROR', module, args));
     }
@@ -146,7 +147,7 @@ export function error(module, ...args) {
  * @param {string} module - The module name
  * @param {...any} args - The log message arguments
  */
-export function warn(module, ...args) {
+export function warn(module: string, ...args: any[]): void {
     if (currentLogLevel >= LogLevel.WARN) {
         console.warn(...formatLogArgs('WARN', module, args));
     }
@@ -157,7 +158,7 @@ export function warn(module, ...args) {
  * @param {string} module - The module name
  * @param {...any} args - The log message arguments
  */
-export function info(module, ...args) {
+export function info(module: string, ...args: any[]): void {
     if (currentLogLevel >= LogLevel.INFO) {
         console.info(...formatLogArgs('INFO', module, args));
     }
@@ -168,7 +169,7 @@ export function info(module, ...args) {
  * @param {string} module - The module name
  * @param {...any} args - The log message arguments
  */
-export function debug(module, ...args) {
+export function debug(module: string, ...args: any[]): void {
     if (currentLogLevel >= LogLevel.DEBUG) {
         console.log(...formatLogArgs('DEBUG', module, args));
     }
@@ -179,10 +180,21 @@ export function debug(module, ...args) {
  * @param {string} module - The module name
  * @param {...any} args - The log message arguments
  */
-export function trace(module, ...args) {
+export function trace(module: string, ...args: any[]): void {
     if (currentLogLevel >= LogLevel.TRACE) {
         console.log(...formatLogArgs('TRACE', module, args));
     }
+}
+
+/**
+ * Logger interface for module-specific logging
+ */
+export interface Logger {
+    error: (...args: any[]) => void;
+    warn: (...args: any[]) => void;
+    info: (...args: any[]) => void;
+    debug: (...args: any[]) => void;
+    trace: (...args: any[]) => void;
 }
 
 /**
@@ -190,13 +202,13 @@ export function trace(module, ...args) {
  * @param {string} module - The module name
  * @returns {Object} An object with logging methods
  */
-export function createLogger(module) {
+export function createLogger(module: string): Logger {
     return {
-        error: (...args) => error(module, ...args),
-        warn: (...args) => warn(module, ...args),
-        info: (...args) => info(module, ...args),
-        debug: (...args) => debug(module, ...args),
-        trace: (...args) => trace(module, ...args),
+        error: (...args: any[]) => error(module, ...args),
+        warn: (...args: any[]) => warn(module, ...args),
+        info: (...args: any[]) => info(module, ...args),
+        debug: (...args: any[]) => debug(module, ...args),
+        trace: (...args: any[]) => trace(module, ...args),
     };
 }
 

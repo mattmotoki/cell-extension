@@ -3,11 +3,13 @@
  * 
  * React component that renders the interactive game board using D3.js for SVG manipulation.
  * Provides visual representation of the game state and handles user interactions with the board.
-  * 
+ * 
  * Relationships:
+ * - Utilizes gameBoardAnnotations for scoring visualizations
  * 
  * Revision Log:
  * - Refactored scoring mechanism visualizations into separate subcomponents
+ * - Replaced console.log calls with custom logger utility
  * 
  */
 
@@ -28,6 +30,9 @@ import {
     placeMove          // Action creator
 } from '@core';
 
+// Import custom logger
+import { createLogger } from '../../../utils/logger';
+
 // Import scoring mechanism subcomponents
 import {
   MultiplicationAnnotation,
@@ -35,6 +40,8 @@ import {
   ExtensionAnnotation
 } from './gameBoardAnnotations';
 
+// Create module-specific logger
+const logger = createLogger('GameBoard');
 
 // const GameBoard: React.FC<GameBoardProps> = ({ boardState, currentPlayer, onCellClick, playerColors }) => {
 const GameBoard: React.FC = () => { // No props needed directly
@@ -68,10 +75,10 @@ const GameBoard: React.FC = () => { // No props needed directly
         if (settings.playerMode === 'user' || currentPlayer === 0) {
              dispatch(placeMove({ coords, settings })); // Dispatch action from @core
         } else {
-            console.log("Not human player's turn (in AI mode).");
+            logger.debug("Not human player's turn (in AI mode).");
         }
     } else {
-        console.log("Cannot place move, game state is:", gameProgress);
+        logger.debug("Cannot place move, game state is:", gameProgress);
     }
   }, [gameProgress, currentPlayer, settings, dispatch]);
 

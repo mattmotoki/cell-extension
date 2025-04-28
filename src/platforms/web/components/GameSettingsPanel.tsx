@@ -1,27 +1,14 @@
 /**
  * src/platforms/web/components/GameSettingsPanel.tsx - Game Configuration Panel
  * 
- * React component that provides an interface for adjusting game settings.
- * This slide-out panel allows players to configure various aspects of the
- * game including board size, scoring mechanism, AI difficulty, and player mode.
- * 
- * Key features:
- * - Slide-out panel with toggle visibility
- * - Control inputs for all customizable game settings
- * - Real-time setting changes with immediate game reset
- * - Responsive layout for different screen sizes
- * 
- * Technical approach:
- * - Functional component with controlled inputs
- * - Settings receive and propagate changes to Redux store
- * - CSS transitions for smooth panel animation
- * - Dropdown selects and radio groups for various settings
+ * React component that provides a slide-out interface for adjusting game settings.
+ * Allows players to configure board size, scoring mechanism, AI difficulty, and player mode
+ * with real-time setting changes that immediately reset the game. Features smooth CSS
+ * transitions and a responsive layout for different screen sizes.
  * 
  * Relationships:
- * - Receives current settings and callbacks from App.tsx
  * - Dispatches setting updates to settingsSlice.ts
  * - Interacts with resetGame action when settings change
- * - Connected to Redux through parent component
  * 
  * Revision Log:
  *  
