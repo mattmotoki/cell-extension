@@ -9,6 +9,11 @@ export default defineConfig({
     react(), 
     tsconfigPaths()
   ],
+  resolve: {
+    alias: {
+      'react-native': 'react-native-web',
+    },
+  },
   build: {
     rollupOptions: {
       input: {

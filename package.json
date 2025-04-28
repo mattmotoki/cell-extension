@@ -30,17 +30,21 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.6",
     "@vercel/analytics": "^1.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-native": "^0.79.1",
+    "react-native-web": "^0.20.0",
     "react-redux": "^9.1.2"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.1.5",
-    "@testing-library/react": "^14.1.2",
-    "@testing-library/user-event": "^14.5.1",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/d3": "^7.4.3",
     "@types/jest": "^29.5.11",
     "@types/node": "^22.15.2",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",
     "@vitejs/plugin-react": "^4.3.1",
@@ -54,7 +58,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "ts-jest": "^29.1.1",
     "typescript": "^5.4.5",
-    "vite": "^5.3.1",
+    "vite": "^6.3.3",
     "vite-tsconfig-paths": "^5.1.4"
   },
   "jest": {
