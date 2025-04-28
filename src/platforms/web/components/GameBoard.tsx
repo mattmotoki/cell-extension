@@ -3,30 +3,12 @@
  * 
  * React component that renders the interactive game board using D3.js for SVG manipulation.
  * Provides visual representation of the game state and handles user interactions with the board.
- * 
- * Key features:
- * - D3.js integration for SVG rendering and manipulation
- * - Interactive cell placement through click handling
- * - Visual representation of player cells and their connections
- * - Dynamic rendering based on current game state
- * - Responsive design that adapts to container size
- * 
- * Technical approach:
- * - Uses React refs to integrate D3 with React
- * - Separates static grid initialization from dynamic content updates
- * - Connects to Redux store for game state access
- * - Handles click events to dispatch move actions
- * 
+  * 
  * Relationships:
- * - Renders game state from Redux store
- * - Dispatches placeMove actions when cells are clicked
- * - Uses GameBoardLogic utilities for coordinate handling
- * - Part of the App.tsx component hierarchy
  * 
  * Revision Log:
- *  
- * Note: This revision log should be updated whenever this file is modified. 
- * Do not use dates in the revision log.
+ * - Refactored scoring mechanism visualizations into separate subcomponents
+ * 
  */
 
 import React, { useRef, useEffect, useCallback, useState } from 'react';
@@ -40,18 +22,19 @@ import {
     PlayerIndex,
     Coordinates,
     GameSettings,
+    ScoringMechanism,
     createPositionKey, // Utility function
     parsePositionKey,  // Utility function
     placeMove          // Action creator
 } from '@core';
 
-// Remove props that are now selected from Redux state
-// interface GameBoardProps {
-//   boardState: BoardState;
-//   currentPlayer: PlayerIndex;
-//   onCellClick: (coords: Coordinates) => void;
-//   playerColors: string[];
-// }
+// Import scoring mechanism subcomponents
+import {
+  MultiplicationAnnotation,
+  ConnectionAnnotation,
+  ExtensionAnnotation
+} from './gameBoardAnnotations';
+
 
 // const GameBoard: React.FC<GameBoardProps> = ({ boardState, currentPlayer, onCellClick, playerColors }) => {
 const GameBoard: React.FC = () => { // No props needed directly
@@ -62,6 +45,7 @@ const GameBoard: React.FC = () => { // No props needed directly
   const currentPlayer = useSelector((state: RootState) => state.game.currentPlayer);
   const gameProgress = useSelector((state: RootState) => state.game.progress);
   const settings = useSelector((state: RootState) => state.settings);
+  const scoringMechanism = useSelector((state: RootState) => state.settings.scoringMechanism);
   const playerColors = ["#00FF00", "#1E90FF"]; // TODO: Move to config/theme
   
   // Use AppDispatch type
@@ -74,7 +58,7 @@ const GameBoard: React.FC = () => { // No props needed directly
   // Calculate dimensions - handle potential division by zero if gridWidth is 0
   const gridDimension = 100; // Logical size for viewBox
   const cellDimension = gridWidth > 0 ? gridDimension / gridWidth : 0;
-  const cellPadding = 0.05; // 5% padding (from original implementation)
+  const cellPadding = 0.05; 
   const cellRadius = cellDimension * 0.15; // Rounded corners radius
 
   // Use dispatch to handle cell clicks - use placeMove from @core
@@ -132,10 +116,14 @@ const GameBoard: React.FC = () => { // No props needed directly
     if (!svg.select('#lines-group').empty()) {
       svg.select('#lines-group').remove();
     }
+    if (!svg.select('#scoring-visuals-group').empty()) {
+      svg.select('#scoring-visuals-group').remove();
+    }
     
     const gridGroup = svg.append('g').attr('id', 'grid-group');
     svg.append('g').attr('id', 'cells-group');
     svg.append('g').attr('id', 'lines-group');
+    svg.append('g').attr('id', 'scoring-visuals-group');
 
     // --- Render Grid Lines Only (subtle) ---
     // Vertical lines
@@ -175,6 +163,49 @@ const GameBoard: React.FC = () => { // No props needed directly
     };
   }, [gridWidth, gridHeight, gridDimension, cellDimension, handleSvgClick]);
 
+  // Helper function to get adjacent positions
+  const getAdjacentPositions = (gridX: number, gridY: number): [number, number][] => {
+    return [
+      [gridX + 1, gridY],
+      [gridX - 1, gridY],
+      [gridX, gridY + 1],
+      [gridX, gridY - 1]
+    ];
+  };
+
+  // Helper function to identify connected components for a player
+  const getConnectedComponents = (playerIndex: PlayerIndex, cells: Record<string, boolean>): string[][] => {
+    const visited = new Set<string>();
+    const components: string[][] = [];
+    
+    const dfs = (posKey: string, component: string[]) => {
+      visited.add(posKey);
+      component.push(posKey);
+      
+      const [gridX, gridY] = parsePositionKey(posKey);
+      const adjacentPositions = getAdjacentPositions(gridX, gridY);
+      
+      adjacentPositions.forEach(([adjX, adjY]) => {
+        if (adjX >= 0 && adjX < gridWidth && adjY >= 0 && adjY < gridHeight) {
+          const adjKey = createPositionKey(adjX, adjY);
+          if (cells[adjKey] && !visited.has(adjKey)) {
+            dfs(adjKey, component);
+          }
+        }
+      });
+    };
+    
+    Object.keys(cells).forEach(posKey => {
+      if (!visited.has(posKey)) {
+        const component: string[] = [];
+        dfs(posKey, component);
+        components.push(component);
+      }
+    });
+    
+    return components;
+  };
+
   // Effect for updating dynamic elements (cells and connections)
   useEffect(() => {
     if (!svgRef.current || !isGridInitialized) return;
@@ -182,10 +213,12 @@ const GameBoard: React.FC = () => { // No props needed directly
     const svg = d3.select(svgRef.current);
     const cellsGroup = svg.select('#cells-group');
     const linesGroup = svg.select('#lines-group');
+    const scoringVisualsGroup = svg.select('#scoring-visuals-group');
     
-    // Clear only the dynamic elements (cells and lines)
+    // Clear only the dynamic elements (cells, lines, and scoring visuals)
     cellsGroup.selectAll('*').remove();
     linesGroup.selectAll('*').remove();
+    scoringVisualsGroup.selectAll('*').remove();
         
     // --- Render Occupied Cells ---
     interface CellData {
@@ -218,11 +251,7 @@ const GameBoard: React.FC = () => { // No props needed directly
         .attr('rx', cellRadius) // Rounded corners like original
         .attr('ry', cellRadius) // Rounded corners like original
         .attr('fill', (d: CellData) => playerColors[d.player])
-        .attr('stroke', (d: CellData) => {
-          const darkColor = d3.color(playerColors[d.player])?.darker(0.5);
-          return darkColor ? darkColor.toString() : '#555'; // Provide fallback color
-        })
-        .attr('stroke-width', 0.8);
+        .attr('stroke', 'none'); // Remove border
 
     // Draw connection lines between adjacent cells from the same player
     const processedEdges = new Set<string>(); // Track processed edges
@@ -231,10 +260,7 @@ const GameBoard: React.FC = () => { // No props needed directly
       const { gridX, gridY, player } = cell;
       
       // Define potential neighbors (adjacent cells)
-      const potentialNeighbors = [
-        [gridX + 1, gridY], [gridX - 1, gridY],
-        [gridX, gridY + 1], [gridX, gridY - 1]
-      ];
+      const potentialNeighbors = getAdjacentPositions(gridX, gridY);
       
       // Get cell center coordinates
       const cellCenterX = gridX * cellDimension + cellDimension / 2;
@@ -257,52 +283,112 @@ const GameBoard: React.FC = () => { // No props needed directly
           const adjCenterX = adjX * cellDimension + cellDimension / 2;
           const adjCenterY = adjY * cellDimension + cellDimension / 2;
           
-          // Draw line connecting centers of cells
+          // Draw line connecting centers of cells - MAKE THINNER
           linesGroup.append('line')
             .attr('class', `connection-line player-${player}`)
             .attr('x1', cellCenterX)
             .attr('y1', cellCenterY)
             .attr('x2', adjCenterX)
             .attr('y2', adjCenterY)
-            .attr('stroke', (d) => {
-              const darkColor = d3.color(playerColors[player])?.darker(0.3);
-              return darkColor ? darkColor.toString() : '#555';
-            })
-            .attr('stroke-width', cellDimension * 0.1) // Proportional line thickness
-            .attr('stroke-opacity', 0.6); // Semi-transparent like original
+            .attr('stroke', '#888888') // Gray color for all connections
+            .attr('stroke-width', cellDimension * 0.005) // Thinner connection lines (reduced from 0.01)
+            .attr('stroke-opacity', 1.0); // Fully opaque
           
           // Add connection markers (small circles) at endpoints
           linesGroup.append('circle')
             .attr('class', 'connection-marker')
             .attr('cx', cellCenterX)
             .attr('cy', cellCenterY)
-            .attr('r', cellDimension * 0.1)
+            .attr('r', cellDimension * 0.05) // Slightly smaller circles
             .attr('fill', '#ffffff')
-            .attr('stroke', (d) => {
-              const darkColor = d3.color(playerColors[player])?.darker(0.5);
-              return darkColor ? darkColor.toString() : '#555';
-            })
+            .attr('stroke', '#888888') // Gray stroke
             .attr('stroke-width', 0.5);
           
           linesGroup.append('circle')
             .attr('class', 'connection-marker')
             .attr('cx', adjCenterX)
             .attr('cy', adjCenterY)
-            .attr('r', cellDimension * 0.1)
+            .attr('r', cellDimension * 0.05) // Slightly smaller circles
             .attr('fill', '#ffffff')
-            .attr('stroke', (d) => {
-              const darkColor = d3.color(playerColors[player])?.darker(0.5);
-              return darkColor ? darkColor.toString() : '#555';
-            })
+            .attr('stroke', '#888888') // Gray stroke
             .attr('stroke-width', 0.5);
         }
       });
     });
 
+    // --- Add scoring mechanism-specific visual aids using subcomponents ---
+    // Get connected components for each player
+    const components1 = getConnectedComponents(0, occupiedCells[0]);
+    const components2 = getConnectedComponents(1, occupiedCells[1]);
+    const allComponents = [
+      ...components1.map(comp => ({ player: 0 as PlayerIndex, cells: comp })),
+      ...components2.map(comp => ({ player: 1 as PlayerIndex, cells: comp }))
+    ];
+
+    // Use the appropriate subcomponent based on the scoring mechanism
+    let cellsWithText = new Set<string>();
+    
+    if (scoringMechanism === 'cell-multiplication') {
+      // Use MultiplicationAnnotation component
+      const annotationProps = {
+        components: allComponents,
+        cellDimension,
+        scoringVisualsGroup
+      };
+      const annotationComponent = MultiplicationAnnotation(annotationProps);
+      cellsWithText = annotationComponent as Set<string>;
+    } 
+    else if (scoringMechanism === 'cell-connection') {
+      // Use ConnectionAnnotation component
+      const annotationProps = {
+        components: allComponents,
+        cellDimension,
+        scoringVisualsGroup,
+        gridWidth,
+        gridHeight
+      };
+      const annotationComponent = ConnectionAnnotation(annotationProps);
+      cellsWithText = annotationComponent as Set<string>;
+    }
+    else if (scoringMechanism === 'cell-extension') {
+      // Use ExtensionAnnotation component
+      const annotationProps = {
+        components: allComponents,
+        cellDimension,
+        scoringVisualsGroup,
+        gridWidth,
+        gridHeight,
+        cellPadding,
+        cellRadius
+      };
+      const annotationComponent = ExtensionAnnotation(annotationProps);
+      cellsWithText = annotationComponent as Set<string>;
+    }
+
+    // Remove circles at positions that have text indicators
+    if (cellsWithText.size > 0) {
+      // Remove circles at positions that will have text
+      linesGroup.selectAll('circle.connection-marker').each(function() {
+        const circle = d3.select(this);
+        const cx = parseFloat(circle.attr('cx'));
+        const cy = parseFloat(circle.attr('cy'));
+        
+        // Determine which cell this circle is in
+        const gridX = Math.floor(cx / cellDimension);
+        const gridY = Math.floor(cy / cellDimension);
+        const cellKey = createPositionKey(gridX, gridY);
+        
+        // If this cell will have text, remove the circle
+        if (cellsWithText.has(cellKey)) {
+          circle.remove();
+        }
+      });
+    }
+
     // Re-add click listener (in case it got removed)
     svg.on('click', handleSvgClick);
     
-  }, [boardState, playerColors, currentPlayer, cellDimension, cellPadding, cellRadius, handleSvgClick, isGridInitialized, gridWidth, gridHeight]);
+  }, [boardState, playerColors, currentPlayer, cellDimension, cellPadding, cellRadius, handleSvgClick, isGridInitialized, gridWidth, gridHeight, scoringMechanism]);
 
   // Cleanup on unmount
   useEffect(() => {

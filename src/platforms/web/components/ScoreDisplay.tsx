@@ -26,8 +26,6 @@
  * 
  * Revision Log:
  *  
- * Note: This revision log should be updated whenever this file is modified. 
- * Do not use dates in the revision log.
  */
 
 import React, { useEffect, useRef } from 'react';

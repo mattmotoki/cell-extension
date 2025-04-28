@@ -34,8 +34,6 @@
  * - Made chart fully responsive using available width and height
  * - Changed from fixed pixel margins to percentage-based margins
  *  
- * Note: This revision log should be updated whenever this file is modified. 
- * Do not use dates in the revision log.
  */
 
 import React, { useRef, useEffect, useState } from 'react';
