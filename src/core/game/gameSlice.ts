@@ -28,8 +28,6 @@
  * 
  * Revision Log:
  *  
- * Note: This revision log should be updated whenever this file is modified. 
- * Do not use dates in the revision log.
  */
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';

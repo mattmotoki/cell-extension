@@ -2,28 +2,14 @@
  * src/platforms/web/components/Navbar.tsx - Game Navigation Bar
  * 
  * React component that serves as the top navigation bar for the Cell Extension game.
- * Provides the game title and a button to toggle the settings panel.
- * 
- * Key features:
- * - Game title display
- * - Settings toggle button
- * - Responsive design that adapts to different screen sizes
- * - Visual feedback for active states
- * 
- * Technical approach:
- * - Simple functional component with minimal state
- * - Uses props for controlling settings panel visibility
- * - Clean semantic HTML with accessibility considerations
+ * Displays the game title and provides a responsive toggle button for the settings panel,
+ * with visual feedback for active states and accessibility considerations.
  * 
  * Relationships:
- * - Parent component is App.tsx
  * - Controls visibility of GameSettingsPanel
- * - Forms part of the overall app layout structure
  * 
  * Revision Log:
  *  
- * Note: This revision log should be updated whenever this file is modified. 
- * Do not use dates in the revision log.
  */
 
 import React from 'react';
