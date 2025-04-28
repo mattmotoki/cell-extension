@@ -1,7 +1,7 @@
 import React from 'react';
 import * as d3 from 'd3';
 import { PlayerIndex, parsePositionKey, createPositionKey } from '@core';
-import { getAdjacentPositions, drawComponentConnections } from './utils';
+import { getAdjacentPositions, drawConnectionLines, drawConnectionMarkers, parseEdgeKey } from './utils';
 
 interface ExtensionAnnotationProps {
   components: Array<{ player: PlayerIndex, cells: string[] }>;
@@ -25,12 +25,12 @@ export const ExtensionAnnotation: React.FC<ExtensionAnnotationProps> = ({
   // Keep track of cells that will have text annotations
   const cellsWithText = new Set<string>();
 
-  // For extension scoring, count perimeter cells without highlighting them
+  // For extension scoring, we'll count the edges in a connected component
   components.forEach(({ player, cells }) => {
     if (cells.length <= 1) return;
     
-    // Draw connections using shared utility
-    drawComponentConnections({
+    // Draw connection lines
+    const processedEdges = drawConnectionLines({
       cellDimension,
       group: scoringVisualsGroup,
       cells,
@@ -38,49 +38,36 @@ export const ExtensionAnnotation: React.FC<ExtensionAnnotationProps> = ({
       gridHeight,
       player,
       lineWidth: cellDimension * 0.005, // Thin lines
-      drawMarkers: true,
+      color: '#888888'
+    });
+    
+    // Draw connection markers for each cell
+    drawConnectionMarkers({
+      cellDimension,
+      group: scoringVisualsGroup,
+      cells,
+      gridWidth,
+      gridHeight,
+      player,
       markerRadius: cellDimension * 0.05
     });
     
-    // Find cells on the perimeter (having fewer than 4 neighbors) without highlighting them
-    const cellKeys = new Set(cells);
-    let perimeterCells = [];
+    // Get the total edge count for this component
+    let edgeCount = 0;
     
-    // Find cells on the perimeter (having fewer than 4 neighbors)
-    for (const cellKey of cells) {
-      const [gridX, gridY] = parsePositionKey(cellKey);
-      const adjacentPositions = getAdjacentPositions(gridX, gridY);
+    // Add text annotations at the center of each edge
+    processedEdges.forEach(edgeKey => {
+      // Use the parseEdgeKey helper function
+      const [cell1, cell2] = parseEdgeKey(edgeKey);
+      const [x1, y1] = parsePositionKey(cell1);
+      const [x2, y2] = parsePositionKey(cell2);
+      edgeCount += 1;
       
-      // Count how many neighbors this cell has within the component
-      const neighCount = adjacentPositions.filter(([adjX, adjY]) => {
-        if (adjX >= 0 && adjX < gridWidth && adjY >= 0 && adjY < gridHeight) {
-          const adjKey = createPositionKey(adjX, adjY);
-          return cellKeys.has(adjKey);
-        }
-        return false;
-      }).length;
+      // Calculate the center of the edge
+      const centerX = cellDimension*(x1 + x2 + 1) / 2;
+      const centerY = cellDimension*(y1 + y2 + 1) / 2;
       
-      // If it has fewer than 4 neighbors, it's on the perimeter
-      if (neighCount < 4) {
-        perimeterCells.push(cellKey);
-      }
-    }
-    
-    // We don't add perimeter highlights anymore
-    
-    // Display score on a non-perimeter cell if available
-    const nonPerimeterCells = cells.filter(cell => !perimeterCells.includes(cell));
-    
-    if (perimeterCells.length > 0) {
-      // Choose a cell to display the score on (non-perimeter cell if available, otherwise the first cell)
-      const cellToUseForScore = nonPerimeterCells.length > 0 ? nonPerimeterCells[0] : cells[0];
-      const [gridX, gridY] = parsePositionKey(cellToUseForScore);
-      const cellKey = createPositionKey(gridX, gridY);
-      cellsWithText.add(cellKey); // Mark this cell as having text
-      
-      const centerX = gridX * cellDimension + cellDimension / 2;
-      const centerY = gridY * cellDimension + cellDimension / 2;
-      
+      // Add the edge count as text annotation
       scoringVisualsGroup.append('text')
         .attr('class', `score-indicator player-${player}`)
         .attr('x', centerX)
@@ -89,11 +76,11 @@ export const ExtensionAnnotation: React.FC<ExtensionAnnotationProps> = ({
         .attr('dominant-baseline', 'middle')
         .attr('fill', '#ffffff')
         .attr('font-weight', 'bold')
-        .attr('font-size', cellDimension * 0.25) // Smaller font size
+        .attr('font-size', cellDimension * 0.2) // Smaller font size
         .attr('stroke', 'rgba(0,0,0,0.3)')
         .attr('stroke-width', 0.3)
-        .text(perimeterCells.length.toString());
-    }
+        .text(edgeCount.toString());
+    });
   });
 
   return cellsWithText;

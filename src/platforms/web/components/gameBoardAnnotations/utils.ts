@@ -14,16 +14,29 @@ export const getAdjacentPositions = (gridX: number, gridY: number): [number, num
 };
 
 /**
- * Interface for drawing connection lines
+ * Creates a consistent edge key from two cell keys
+ * Uses the format '{cell1}<->{cell2}' where cell1 and cell2 are ordered lexicographically
  */
-export interface ConnectionDrawingOptions {
+export const createEdgeKey = (cell1: string, cell2: string): string => {
+  return cell1 < cell2 ? `${cell1}<->${cell2}` : `${cell2}<->${cell1}`;
+};
+
+/**
+ * Parses an edge key into its constituent cell keys
+ * @param edgeKey Edge key in the format '{cell1}<->{cell2}'
+ * @returns An array containing the two cell keys
+ */
+export const parseEdgeKey = (edgeKey: string): [string, string] => {
+  const [cell1, cell2] = edgeKey.split('<->');
+  return [cell1, cell2];
+};
+
+/**
+ * Base interface for connection drawing options
+ */
+export interface BaseConnectionOptions {
   cellDimension: number;
   group: d3.Selection<any, unknown, null, undefined>;
-  lineWidth?: number;
-  color?: string;
-  opacity?: number;
-  drawMarkers?: boolean;
-  markerRadius?: number;
   cells: string[];
   gridWidth: number;
   gridHeight: number;
@@ -31,18 +44,41 @@ export interface ConnectionDrawingOptions {
 }
 
 /**
+ * Interface for drawing connection lines
+ */
+export interface ConnectionLineOptions extends BaseConnectionOptions {
+  lineWidth?: number;
+  color?: string;
+  opacity?: number;
+}
+
+/**
+ * Interface for drawing connection markers
+ */
+export interface ConnectionMarkerOptions extends BaseConnectionOptions {
+  markerRadius?: number;
+  color?: string;
+}
+
+/**
+ * For backwards compatibility
+ */
+export interface ConnectionDrawingOptions extends ConnectionLineOptions {
+  drawMarkers?: boolean;
+  markerRadius?: number;
+}
+
+/**
  * Draws connection lines between adjacent cells for a component
  * Returns a Set of processed edges
  */
-export const drawComponentConnections = (options: ConnectionDrawingOptions): Set<string> => {
+export const drawConnectionLines = (options: ConnectionLineOptions): Set<string> => {
   const {
     cellDimension,
     group,
     lineWidth = cellDimension * 0.005, // Default thin line
     color = '#888888', // Default gray color
     opacity = 1.0,
-    drawMarkers = true,
-    markerRadius = cellDimension * 0.05,
     cells,
     gridWidth,
     gridHeight,
@@ -64,7 +100,8 @@ export const drawComponentConnections = (options: ConnectionDrawingOptions): Set
     adjacentPositions.forEach(([adjX, adjY]) => {
       if (adjX >= 0 && adjX < gridWidth && adjY >= 0 && adjY < gridHeight) {
         const adjKey = createPositionKey(adjX, adjY);
-        const edgeKey = cellKey < adjKey ? `${cellKey}-${adjKey}` : `${adjKey}-${cellKey}`;
+        // Use the new createEdgeKey function to create a consistent edge key
+        const edgeKey = createEdgeKey(cellKey, adjKey);
         
         // Skip if already processed or not in the component
         if (processedEdges.has(edgeKey) || !cellsSet.has(adjKey)) {
@@ -86,30 +123,63 @@ export const drawComponentConnections = (options: ConnectionDrawingOptions): Set
           .attr('stroke', color)
           .attr('stroke-width', lineWidth)
           .attr('stroke-opacity', opacity);
-        
-        // Add connection markers (small circles) at endpoints if requested
-        if (drawMarkers) {
-          group.append('circle')
-            .attr('class', 'connection-marker')
-            .attr('cx', cellCenterX)
-            .attr('cy', cellCenterY)
-            .attr('r', markerRadius)
-            .attr('fill', '#ffffff')
-            .attr('stroke', color)
-            .attr('stroke-width', 0.1);
-          
-          group.append('circle')
-            .attr('class', 'connection-marker')
-            .attr('cx', adjCenterX)
-            .attr('cy', adjCenterY)
-            .attr('r', markerRadius)
-            .attr('fill', '#ffffff')
-            .attr('stroke', color)
-            .attr('stroke-width', 0.1);
-        }
       }
     });
   });
 
+  return processedEdges;
+};
+
+/**
+ * Draws connection markers at the center of each cell
+ */
+export const drawConnectionMarkers = (options: ConnectionMarkerOptions): void => {
+  const {
+    cellDimension,
+    group,
+    markerRadius = cellDimension * 0.05,
+    color = '#888888', // Default gray color
+    cells,
+    player
+  } = options;
+
+  // Process each cell directly
+  cells.forEach(cellKey => {
+    const [gridX, gridY] = parsePositionKey(cellKey);
+    
+    // Calculate cell center
+    const centerX = gridX * cellDimension + cellDimension / 2;
+    const centerY = gridY * cellDimension + cellDimension / 2;
+    
+    // Draw a single marker at the cell center
+    group.append('circle')
+      .attr('class', 'connection-marker')
+      .attr('cx', centerX)
+      .attr('cy', centerY)
+      .attr('r', markerRadius)
+      .attr('fill', '#ffffff')
+      .attr('stroke', color)
+      .attr('stroke-width', 0.1);
+  });
+};
+
+/**
+ * For backwards compatibility - draws both connection lines and markers
+ * Returns a Set of processed edges
+ */
+export const drawComponentConnections = (options: ConnectionDrawingOptions): Set<string> => {
+  const {
+    drawMarkers = true,
+    ...lineOptions
+  } = options;
+
+  // First draw the connection lines
+  const processedEdges = drawConnectionLines(lineOptions);
+  
+  // Then draw the markers if requested
+  if (drawMarkers) {
+    drawConnectionMarkers(options);
+  }
+  
   return processedEdges;
 }; 

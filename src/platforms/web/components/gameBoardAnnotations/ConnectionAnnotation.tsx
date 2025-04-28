@@ -17,7 +17,7 @@
 import React from 'react';
 import * as d3 from 'd3';
 import { PlayerIndex, parsePositionKey, createPositionKey } from '@core';
-import { getAdjacentPositions, drawComponentConnections } from './utils';
+import { getAdjacentPositions, drawConnectionLines, parseEdgeKey } from './utils';
 
 interface ConnectionAnnotationProps {
   components: Array<{ player: PlayerIndex, cells: string[] }>;
@@ -44,29 +44,29 @@ export const ConnectionAnnotation: React.FC<ConnectionAnnotationProps> = ({
     // Create a set of cells for quick lookups
     const cellsSet = new Set(cells);
     
-    // Draw connections using shared utility - always set drawMarkers to false
-    const processedEdges = drawComponentConnections({
+    // Draw connection lines using the new separate function - no markers needed
+    const processedEdges = drawConnectionLines({
       cellDimension,
       group: scoringVisualsGroup,
       cells,
       gridWidth,
       gridHeight,
       player,
-      lineWidth: cellDimension * 0.005, // Thin lines
-      drawMarkers: false, // Don't draw circle markers
-      color: '#888888' // Gray color for all connections
+      lineWidth: cellDimension * 0.005,
+      color: '#888888'
     });
     
     // Add additional thicker highlight lines for connections that are part of the score
     processedEdges.forEach(edgeKey => {
-      const [cell1, cell2] = edgeKey.split('-');
+      // Use the parseEdgeKey helper function
+      const [cell1, cell2] = parseEdgeKey(edgeKey);
       const [x1, y1] = parsePositionKey(cell1);
       const [x2, y2] = parsePositionKey(cell2);
       
-      const cell1CenterX = x1 * cellDimension + cellDimension / 2;
-      const cell1CenterY = y1 * cellDimension + cellDimension / 2;
-      const cell2CenterX = x2 * cellDimension + cellDimension / 2;
-      const cell2CenterY = y2 * cellDimension + cellDimension / 2;
+      const cell1CenterX = cellDimension * (x1 + 1/2);
+      const cell1CenterY = cellDimension * (y1 + 1/2);
+      const cell2CenterX = cellDimension * (x2 + 1/2);
+      const cell2CenterY = cellDimension * (y2 + 1/2);
       
       // Highlight this connection with a thinner line for scoring
       scoringVisualsGroup.append('line')
@@ -129,7 +129,7 @@ export const ConnectionAnnotation: React.FC<ConnectionAnnotationProps> = ({
         .attr('dominant-baseline', 'middle')
         .attr('fill', '#ffffff')
         .attr('font-weight', 'bold')
-        .attr('font-size', cellDimension * 0.25) // Smaller font size
+        .attr('font-size', cellDimension * 0.2) // Smaller font size
         .attr('stroke', 'rgba(0,0,0,0.3)')
         .attr('stroke-width', 0.3)
         .text(connectionCount.toString());

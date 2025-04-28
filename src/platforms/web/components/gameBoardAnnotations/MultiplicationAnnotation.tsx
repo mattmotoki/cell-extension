@@ -1,7 +1,7 @@
 import React from 'react';
 import * as d3 from 'd3';
 import { PlayerIndex, parsePositionKey, createPositionKey } from '@core';
-import { drawComponentConnections } from './utils';
+import { drawConnectionLines, drawConnectionMarkers } from './utils';
 
 interface MultiplicationAnnotationProps {
   components: Array<{ player: PlayerIndex, cells: string[] }>;
@@ -30,8 +30,8 @@ export const MultiplicationAnnotation: React.FC<MultiplicationAnnotationProps> =
       if (!processedComponents.has(componentKey)) {
         processedComponents.add(componentKey);
         
-        // Draw connections between cells
-        drawComponentConnections({
+        // Draw connection lines 
+        const processedEdges = drawConnectionLines({
           cellDimension,
           group: scoringVisualsGroup,
           cells,
@@ -39,7 +39,17 @@ export const MultiplicationAnnotation: React.FC<MultiplicationAnnotationProps> =
           gridHeight,
           player,
           lineWidth: cellDimension * 0.005, // Thin lines
-          drawMarkers: true,
+          color: '#888888'
+        });
+        
+        // Draw the connection markers - no need to pass processedEdges
+        drawConnectionMarkers({
+          cellDimension,
+          group: scoringVisualsGroup,
+          cells,
+          gridWidth,
+          gridHeight,
+          player,
           markerRadius: cellDimension * 0.05
         });
         
@@ -50,8 +60,8 @@ export const MultiplicationAnnotation: React.FC<MultiplicationAnnotationProps> =
         // Add size indicator text in the center of the first cell
         scoringVisualsGroup.append('text')
           .attr('class', `score-indicator player-${player}`)
-          .attr('x', firstX * cellDimension + cellDimension / 2)
-          .attr('y', firstY * cellDimension + cellDimension / 2 + cellDimension * 0.05)
+          .attr('x', cellDimension * (firstX + 1/2))
+          .attr('y', cellDimension * (firstY + 1/2))
           .attr('text-anchor', 'middle')
           .attr('dominant-baseline', 'middle')
           .attr('fill', '#ffffff')
