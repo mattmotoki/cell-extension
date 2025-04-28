@@ -13,6 +13,7 @@ import layout from './components/layout';
 import inputs from './components/inputs';
 import navbar from './components/navbar';
 import footer from './components/footer';
+import gameControls from './components/gameControls';
 
 // Theme interface defining all available theme properties
 export interface ThemeInterface {
@@ -30,6 +31,8 @@ export interface ThemeInterface {
     warning: string;
     error: string;
     divider: string;
+    light: string; // White color for light text/elements
+    dark: string;  // Dark color for dark text/elements
   };
   spacing: {
     xs: number;
@@ -78,6 +81,8 @@ export const lightTheme: ThemeInterface = {
     warning: '#FFB81C',
     error: '#E63946',
     divider: '#E0E0E0',
+    light: '#f8f9fa', // From colors.light
+    dark: '#121212',  // From colors.dark
   },
   spacing: {
     xs: 4,
@@ -124,6 +129,8 @@ export const darkTheme: ThemeInterface = {
     textSecondary: '#8293a7',
     textInverse: '#222222',
     divider: '#444444',
+    light: '#f8f9fa', // Keep light as white in both themes
+    dark: '#121212',  // Keep dark as black in both themes
   },
 };
 
@@ -153,6 +160,7 @@ const theme = {
   inputs,
   navbar,
   footer,
+  gameControls,
 };
 
 // Primary theme export
@@ -167,6 +175,7 @@ export {
   inputs,
   navbar,
   footer,
+  gameControls,
   ThemeContext
 };
 
