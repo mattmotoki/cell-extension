@@ -54,6 +54,24 @@ export const parseEdgeKey = (edgeKey: string): [string, string] => {
 };
 
 /**
+ * Orders cells by position (left to right, top to bottom)
+ * This is the standard ordering used in multiplication scoring
+ * 
+ * @param cells Array of cell position keys
+ * @returns A new array with cells ordered left to right, top to bottom
+ */
+export const orderCellsLeftToRight = (cells: string[]): string[] => {
+  return [...cells].sort((a, b) => {
+    const [x1, y1] = parsePositionKey(a);
+    const [x2, y2] = parsePositionKey(b);
+    // First priority: x-coordinate (ascending)
+    if (x1 !== x2) return x1 - x2;
+    // Second priority: y-coordinate (ascending)
+    return y1 - y2;
+  });
+};
+
+/**
  * Orders edges based on a depth-first traversal starting from the leftmost node.
  * Prioritizes nodes with smaller y-values, then smaller x-values during traversal.
  * 
@@ -192,7 +210,6 @@ export const orderEdgesDepthFirst = (
 export interface BaseConnectionOptions {
   cellDimension: number;
   group: d3.Selection<any, unknown, null, undefined>;
-  cells: string[];
   gridWidth: number;
   gridHeight: number;
   player: PlayerIndex;
@@ -203,6 +220,7 @@ export interface BaseConnectionOptions {
  * Interface for drawing connection lines
  */
 export interface ConnectionLineOptions extends BaseConnectionOptions {
+  cells: string[];
   lineWidth?: number;
   color?: string;
   opacity?: number;
@@ -210,9 +228,11 @@ export interface ConnectionLineOptions extends BaseConnectionOptions {
 }
 
 /**
- * Interface for drawing connection markers
+ * Interface for drawing markers
  */
-export interface ConnectionMarkerOptions extends BaseConnectionOptions {
+export interface MarkerOptions extends Omit<BaseConnectionOptions, 'cells'> {
+  cells?: string[]; // Optional cell keys for backward compatibility
+  positions?: Array<{x: number, y: number}>; // Optional array of specific marker positions
   markerRadius?: number;
   color?: string;
   fillColor?: string;
@@ -221,15 +241,19 @@ export interface ConnectionMarkerOptions extends BaseConnectionOptions {
 }
 
 /**
- * For backwards compatibility
+ * Interface for drawing text labels with background markers
  */
-export interface ConnectionDrawingOptions extends ConnectionLineOptions {
-  drawMarkers?: boolean;
-  markerRadius?: number;
-  markerColor?: string;
-  markerFillColor?: string;
-  markerStrokeWidth?: number;
-  markerOpacity?: number;
+export interface LabelOptions extends Omit<BaseConnectionOptions, 'cells'> {
+  positions: Array<{x: number, y: number}>; // Array of positions for labels
+  labels: Array<string | number>; // Array of labels corresponding to positions
+  markerRadius?: number; // Radius for the background markers
+  color?: string; // Stroke color (optional)
+  fillColor?: string; // Fill color for markers
+  opacity?: number; // Opacity for markers
+  strokeWidth?: number; // Stroke width for markers
+  fontSize?: number; // Font size for labels
+  fontColor?: string; // Text color
+  fontWeight?: string; // Font weight
 }
 
 /**
@@ -303,10 +327,11 @@ export const drawConnectionLines = (options: ConnectionLineOptions): string[] =>
 };
 
 /**
- * Draws marker circles at the center of each cell in a component.
+ * Draws marker circles at specified positions or at the center of each cell.
+ * If positions are provided, they will be used directly instead of cell centers.
  * Customizable options for marker size, color, and appearance.
  */
-export const drawConnectionMarkers = (options: ConnectionMarkerOptions): void => {
+export const drawMarkers = (options: MarkerOptions): void => {
   const {
     cellDimension,
     group,
@@ -314,68 +339,115 @@ export const drawConnectionMarkers = (options: ConnectionMarkerOptions): void =>
     color, // Explicit color overrides player color
     fillColor, // Explicit fill color
     strokeWidth = 0.1,
-    opacity = 1.0,
+    opacity = 1.0, // Default to fully opaque
     cells,
     player,
-    playerColors = ['#ff0000', '#0000ff'] // Default colors if not provided
+    playerColors = ['#ff0000', '#0000ff'], // Default colors if not provided
+    positions // Optional specific positions
   } = options;
 
   // Use provided color or player color from array
   const markerStroke = color || playerColors[player] || '#888888';
   const markerFill = fillColor || markerStroke;
 
-  // Process each cell directly
-  cells.forEach(cellKey => {
-    const [gridX, gridY] = parsePositionKey(cellKey);
-    
-    // Calculate cell center
-    const centerX = gridX * cellDimension + cellDimension / 2;
-    const centerY = gridY * cellDimension + cellDimension / 2;
-    
-    // Draw a single marker at the cell center
-    group.append('circle')
-      .attr('class', `connection-marker player-${player}`)
-      .attr('cx', centerX)
-      .attr('cy', centerY)
-      .attr('r', markerRadius)
-      .attr('fill', markerFill)
-      .attr('fill-opacity', opacity)
-      .attr('stroke', markerStroke)
-      .attr('stroke-width', strokeWidth);
-  });
+  // If positions are provided, use them directly
+  if (positions && positions.length > 0) {
+    positions.forEach(({x, y}) => {
+      // Draw a marker at the specified position
+      group.append('circle')
+        .attr('class', `connection-marker player-${player}`)
+        .attr('cx', x)
+        .attr('cy', y)
+        .attr('r', markerRadius)
+        .attr('fill', markerFill)
+        .attr('fill-opacity', opacity)
+        .attr('stroke', markerStroke)
+        .attr('stroke-width', strokeWidth);
+    });
+  } 
+  // Otherwise use cell centers (backward compatibility)
+  else if (cells && cells.length > 0) {
+    cells.forEach(cellKey => {
+      const [gridX, gridY] = parsePositionKey(cellKey);
+      
+      // Calculate cell center
+      const centerX = gridX * cellDimension + cellDimension / 2;
+      const centerY = gridY * cellDimension + cellDimension / 2;
+      
+      // Draw a single marker at the cell center
+      group.append('circle')
+        .attr('class', `connection-marker player-${player}`)
+        .attr('cx', centerX)
+        .attr('cy', centerY)
+        .attr('r', markerRadius)
+        .attr('fill', markerFill)
+        .attr('fill-opacity', opacity)
+        .attr('stroke', markerStroke)
+        .attr('stroke-width', strokeWidth);
+    });
+  }
 };
 
 /**
- * For backwards compatibility - draws both connection lines and markers
- * Returns an array of processed edges in requested order
+ * Draws text labels with background markers at specified positions.
+ * The function draws markers using player colors by default and adds text labels on top.
+ * 
+ * @param options The configuration options for markers and labels
  */
-export const drawComponentConnections = (options: ConnectionDrawingOptions): string[] => {
+export const drawLabels = (options: LabelOptions): void => {
   const {
-    drawMarkers = true,
-    markerRadius,
-    markerColor,
-    markerFillColor,
-    markerStrokeWidth,
-    markerOpacity,
-    playerColors,
-    ...lineOptions
+    cellDimension,
+    group,
+    markerRadius = cellDimension * 0.15, // Default radius for text annotations
+    positions,
+    labels,
+    player,
+    playerColors = ['#ff0000', '#0000ff'],
+    color, 
+    fillColor = playerColors[player] || '#888888', // Default to player color
+    opacity = 1.0, 
+    strokeWidth = 0,
+    fontSize = cellDimension * 0.15,
+    fontColor = '#ffffff', // White text by default
+    fontWeight = 'bold',
+    gridWidth,
+    gridHeight
   } = options;
 
-  // First draw the connection lines
-  const processedEdges = drawConnectionLines(lineOptions);
+  // Map positions with corresponding labels
+  const labelPositions = positions.map((pos, index) => ({
+    ...pos,
+    label: index < labels.length ? labels[index] : ''
+  }));
   
-  // Then draw the markers if requested
-  if (drawMarkers) {
-    drawConnectionMarkers({
-      ...lineOptions,
-      markerRadius,
-      color: markerColor,
-      fillColor: markerFillColor,
-      strokeWidth: markerStrokeWidth,
-      opacity: markerOpacity,
-      playerColors
-    });
-  }
+  // Draw markers for all positions
+  drawMarkers({
+    cellDimension,
+    group,
+    player,
+    playerColors,
+    markerRadius,
+    fillColor,
+    color,
+    opacity,
+    strokeWidth,
+    gridWidth,
+    gridHeight,
+    positions: labelPositions
+  });
   
-  return processedEdges;
+  // Then add text labels
+  labelPositions.forEach(({x, y, label}) => {
+    group.append('text')
+      .attr('class', `score-indicator player-${player}`)
+      .attr('x', x)
+      .attr('y', y)
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'middle')
+      .attr('fill', fontColor)
+      .attr('font-weight', fontWeight)
+      .attr('font-size', fontSize)
+      .attr('stroke', 'none') // No stroke needed with markers
+      .text(String(label));
+  });
 }; 

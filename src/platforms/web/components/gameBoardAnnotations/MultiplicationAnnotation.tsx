@@ -22,7 +22,7 @@
 import React from 'react';
 import * as d3 from 'd3';
 import { PlayerIndex, parsePositionKey, createPositionKey } from '@core';
-import { drawConnectionLines, drawConnectionMarkers } from './utils';
+import { drawConnectionLines, drawLabels, orderCellsLeftToRight } from './utils';
 
 interface MultiplicationAnnotationProps {
   components: Array<{ player: PlayerIndex, cells: string[] }>;
@@ -41,8 +41,6 @@ export const MultiplicationAnnotation: React.FC<MultiplicationAnnotationProps> =
   gridHeight,
   playerColors
 }) => {
-  // Keep track of cells that will have text annotations
-  const cellsWithText = new Set<string>();
   const processedComponents = new Set<string>();
 
   // For multiplication, highlight the component sizes and number each cell
@@ -62,61 +60,41 @@ export const MultiplicationAnnotation: React.FC<MultiplicationAnnotationProps> =
             gridWidth,
             gridHeight,
             player,
-            playerColors,
-            lineWidth: cellDimension * 0.005, // Thin lines
-            color: '#888888'
+            playerColors
           });
         }
         
-        // Order cells by position (leftmost first, then top-to-bottom)
-        const orderedCells = [...cells].sort((a, b) => {
-          const [x1, y1] = parsePositionKey(a);
-          const [x2, y2] = parsePositionKey(b);
-          // First priority: x-coordinate (ascending)
-          if (x1 !== x2) return x1 - x2;
-          // Second priority: y-coordinate (ascending)
-          return y1 - y2;
+        // Order cells by position using the utility function (left-to-right, top-to-bottom)
+        const orderedCells = orderCellsLeftToRight(cells);
+        
+        // Create sequential numbers for cell labels (1-indexed)
+        const sequentialLabels = orderedCells.map((_, index) => index + 1);
+        
+        // Convert cell keys to positions
+        const positions = orderedCells.map(cellKey => {
+          const [gridX, gridY] = parsePositionKey(cellKey);
+          return {
+            x: gridX * cellDimension + cellDimension / 2,
+            y: gridY * cellDimension + cellDimension / 2
+          };
         });
         
-        // Draw background markers using player color
-        drawConnectionMarkers({
+        // Draw background markers and text labels using player colors
+        drawLabels({
           cellDimension,
           group: scoringVisualsGroup,
-          cells: orderedCells,
+          positions,
+          labels: sequentialLabels,
           gridWidth,
           gridHeight,
           player,
-          playerColors,
-          markerRadius: cellDimension * 0.15, // Larger radius for text background
-          fillColor: playerColors[player], // Use player color directly
-        });
-        
-        // Add sequential number annotations to each cell
-        orderedCells.forEach((cellKey, index) => {
-          const [gridX, gridY] = parsePositionKey(cellKey);
-          cellsWithText.add(cellKey);
-          
-          const centerX = gridX * cellDimension + cellDimension / 2;
-          const centerY = gridY * cellDimension + cellDimension / 2;
-          
-          // Add cell number (1-based index) as text annotation
-          scoringVisualsGroup.append('text')
-            .attr('class', `score-indicator player-${player}`)
-            .attr('x', centerX)
-            .attr('y', centerY)
-            .attr('text-anchor', 'middle')
-            .attr('dominant-baseline', 'middle')
-            .attr('fill', '#ffffff') // White text for contrast
-            .attr('font-weight', 'bold')
-            .attr('font-size', cellDimension * 0.25) // Smaller font size
-            .attr('stroke', 'none') // No stroke needed with colored background
-            .text((index + 1).toString());
+          playerColors
         });
       }
     }
   });
 
-  return cellsWithText;
+  return null;
 };
 
 export default MultiplicationAnnotation; 

@@ -3,11 +3,12 @@ export { ConnectionAnnotation } from './ConnectionAnnotation';
 export { ExtensionAnnotation } from './ExtensionAnnotation';
 export { 
   getAdjacentPositions, 
-  drawComponentConnections,
   drawConnectionLines,
-  drawConnectionMarkers,
+  drawMarkers,
+  drawLabels,
   createEdgeKey,
-  parseEdgeKey
+  parseEdgeKey,
+  orderCellsLeftToRight
 } from './utils';
 export { default as GridLines } from './GridLines'; 
 export { default as Cells } from './Cells'; 

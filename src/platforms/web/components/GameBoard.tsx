@@ -41,7 +41,9 @@ import {
   ConnectionAnnotation,
   ExtensionAnnotation,
   GridLines,
-  Cells
+  Cells,
+  orderCellsLeftToRight,
+  getAdjacentPositions
 } from './gameBoardAnnotations';
 
 // Create module-specific logger
@@ -191,7 +193,8 @@ const GameBoard: React.FC = () => { // No props needed directly
       if (!visited.has(posKey)) {
         const component: string[] = [];
         dfs(posKey, component);
-        components.push(component);
+        // Sort the cells using the utility function for consistent ordering
+        components.push(orderCellsLeftToRight(component));
       }
     });
     
@@ -231,8 +234,6 @@ const GameBoard: React.FC = () => { // No props needed directly
     ];
 
     // Use the appropriate subcomponent based on the scoring mechanism
-    let cellsWithText = new Set<string>();
-    
     if (scoringMechanism === 'cell-multiplication') {
       // Use MultiplicationAnnotation component
       const annotationProps = {
@@ -243,8 +244,7 @@ const GameBoard: React.FC = () => { // No props needed directly
         gridHeight,
         playerColors
       };
-      const annotationComponent = MultiplicationAnnotation(annotationProps);
-      cellsWithText = annotationComponent as Set<string>;
+      MultiplicationAnnotation(annotationProps);
     } 
     else if (scoringMechanism === 'cell-connection') {
       // Use ConnectionAnnotation component
@@ -256,8 +256,7 @@ const GameBoard: React.FC = () => { // No props needed directly
         gridHeight,
         playerColors
       };
-      const annotationComponent = ConnectionAnnotation(annotationProps);
-      cellsWithText = annotationComponent as Set<string>;
+      ConnectionAnnotation(annotationProps);
     }
     else if (scoringMechanism === 'cell-extension') {
       // Use ExtensionAnnotation component
@@ -271,8 +270,7 @@ const GameBoard: React.FC = () => { // No props needed directly
         cellRadius,
         playerColors
       };
-      const annotationComponent = ExtensionAnnotation(annotationProps);
-      cellsWithText = annotationComponent as Set<string>;
+      ExtensionAnnotation(annotationProps);
     }
 
     // Re-add click listener (in case it got removed)
