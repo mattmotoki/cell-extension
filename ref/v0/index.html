@@ -8,13 +8,6 @@
         <link rel="icon" type="image/png" sizes="16x16" href="favicons/favicon-16x16.png">
         <link rel="manifest" href="favicons/site.webmanifest">
         <script src="https://d3js.org/d3.v7.min.js"></script>
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-9PREHWYS4F"></script>
-        <script>
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-9PREHWYS4F');
-        </script>        
     </head>
 <body>
     <div id="game">
@@ -37,6 +30,7 @@
     </div>
     <script type="module">
 
+        import {ScoreChart} from "./js/score-chart.js";
         import {Widget} from "./js/widget.js";
         import {Game} from "./js/game.js";
         
@@ -54,9 +48,16 @@
         // create widget
         let widget = new Widget("widget", 32, 8, 250);
         setTimeout(widget.playRandomly.bind(widget), widget.waitTime);
-    
+
+        // create score chart
+        let scoreChart = new ScoreChart("score-chart", gridSize);
+        scoreChart.update(playerColors, scores);
+
         // create game
-        let game = new Game(gridSize, cellSize, playerColors, currentPlayer, scores, progress);
+        let game = new Game(
+            gridSize, cellSize, playerColors, currentPlayer, scores, progress, 
+            scoreChart
+        );
 
         // game controls
         d3.select("#reset").on("click", game.reset.bind(game));
