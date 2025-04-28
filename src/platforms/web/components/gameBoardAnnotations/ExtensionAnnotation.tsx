@@ -1,6 +1,7 @@
 import React from 'react';
 import * as d3 from 'd3';
 import { PlayerIndex, parsePositionKey, createPositionKey } from '@core';
+import { getAdjacentPositions, drawComponentConnections } from './utils';
 
 interface ExtensionAnnotationProps {
   components: Array<{ player: PlayerIndex, cells: string[] }>;
@@ -24,21 +25,24 @@ export const ExtensionAnnotation: React.FC<ExtensionAnnotationProps> = ({
   // Keep track of cells that will have text annotations
   const cellsWithText = new Set<string>();
 
-  // Helper function to get adjacent positions
-  const getAdjacentPositions = (gridX: number, gridY: number): [number, number][] => {
-    return [
-      [gridX + 1, gridY],
-      [gridX - 1, gridY],
-      [gridX, gridY + 1],
-      [gridX, gridY - 1]
-    ];
-  };
-
-  // For extension scoring, highlight component perimeter/border cells
+  // For extension scoring, count perimeter cells without highlighting them
   components.forEach(({ player, cells }) => {
     if (cells.length <= 1) return;
     
-    // Highlight each cell in the component
+    // Draw connections using shared utility
+    drawComponentConnections({
+      cellDimension,
+      group: scoringVisualsGroup,
+      cells,
+      gridWidth,
+      gridHeight,
+      player,
+      lineWidth: cellDimension * 0.005, // Thin lines
+      drawMarkers: true,
+      markerRadius: cellDimension * 0.05
+    });
+    
+    // Find cells on the perimeter (having fewer than 4 neighbors) without highlighting them
     const cellKeys = new Set(cells);
     let perimeterCells = [];
     
@@ -62,31 +66,15 @@ export const ExtensionAnnotation: React.FC<ExtensionAnnotationProps> = ({
       }
     }
     
-    // Highlight perimeter cells with a subtle glow (but no border)
-    perimeterCells.forEach(cellKey => {
-      const [gridX, gridY] = parsePositionKey(cellKey);
-      
-      scoringVisualsGroup.append('rect')
-        .attr('class', `perimeter-highlight player-${player}`)
-        .attr('x', gridX * cellDimension + (cellDimension * cellPadding / 2) - 1)
-        .attr('y', gridY * cellDimension + (cellDimension * cellPadding / 2) - 1)
-        .attr('width', cellDimension * (1 - cellPadding) + 2)
-        .attr('height', cellDimension * (1 - cellPadding) + 2)
-        .attr('rx', cellRadius + 1)
-        .attr('ry', cellRadius + 1)
-        .attr('fill', 'none')
-        .attr('stroke', '#888888') // Gray color for all highlights
-        .attr('stroke-width', 1.5) // Thinner border
-        .attr('stroke-opacity', 0.9) // More opaque
-        .attr('stroke-dasharray', '2 2'); // Smaller dashes
-    });
+    // We don't add perimeter highlights anymore
     
-    // Find non-perimeter cells for the score
+    // Display score on a non-perimeter cell if available
     const nonPerimeterCells = cells.filter(cell => !perimeterCells.includes(cell));
     
-    if (perimeterCells.length > 0 && nonPerimeterCells.length > 0) {
-      // Use a non-perimeter cell to show the score
-      const [gridX, gridY] = parsePositionKey(nonPerimeterCells[0]);
+    if (perimeterCells.length > 0) {
+      // Choose a cell to display the score on (non-perimeter cell if available, otherwise the first cell)
+      const cellToUseForScore = nonPerimeterCells.length > 0 ? nonPerimeterCells[0] : cells[0];
+      const [gridX, gridY] = parsePositionKey(cellToUseForScore);
       const cellKey = createPositionKey(gridX, gridY);
       cellsWithText.add(cellKey); // Mark this cell as having text
       
