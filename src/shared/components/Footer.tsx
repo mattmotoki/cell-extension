@@ -1,5 +1,5 @@
 /**
- * src/shared/components/Footer/Footer.tsx - Cross-Platform Footer Component
+ * src/shared/components/Footer.tsx - Cross-Platform Footer Component
  * 
  * A shared React Native component that renders the application footer with
  * version information, copyright notice, and displays the current scoring mechanism.
@@ -16,7 +16,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSelector } from 'react-redux';
-import theme from '@shared/styles/theme';
+import { useTheme } from '@shared/styles/theme';
 import type { RootState } from '@core';
 
 interface FooterProps {
@@ -27,6 +27,7 @@ interface FooterProps {
 const Footer: React.FC<FooterProps> = ({ style }) => {
   // Get scoring mechanism from Redux store
   const scoringMechanism = useSelector((state: RootState) => state.settings.scoringMechanism);
+  const theme = useTheme();
   
   // Format the scoring mechanism for display
   const scoringDescription = scoringMechanism.replace('cell-','').replace('-', ' ');
@@ -34,10 +35,13 @@ const Footer: React.FC<FooterProps> = ({ style }) => {
   const currentYear = new Date().getFullYear();
   
   return (
-    <View style={[styles.container, style]}>
-      <Text style={styles.text}>© {currentYear} Cellmata</Text>
-      <Text style={styles.divider}> • </Text>
-      <Text style={styles.text}>Scoring: {scoringDescription}</Text>
+    <View style={[styles.container, { 
+      backgroundColor: theme.colors.background,
+      borderTopColor: theme.colors.divider
+    }, style]}>
+      <Text style={[styles.text, { color: theme.colors.textSecondary }]}>© {currentYear} Cellmata</Text>
+      <Text style={[styles.divider, { color: theme.colors.textSecondary }]}> • </Text>
+      <Text style={[styles.text, { color: theme.colors.textSecondary }]}>Scoring: {scoringDescription}</Text>
     </View>
   );
 };
@@ -45,24 +49,19 @@ const Footer: React.FC<FooterProps> = ({ style }) => {
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    height: theme.layout.sizing.footer.height,
+    height: 60,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: theme.layout.padding.md,
-    backgroundColor: theme.colors.background.primary,
+    paddingHorizontal: 16,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
   },
   text: {
-    fontSize: parseInt(theme.typography.fontSize.xs.px), // Convert from string to number
-    fontFamily: theme.typography.fontFamily.main,
-    color: theme.colors.text.secondary,
-    marginHorizontal: parseInt(theme.layout.spacing.sm),
+    fontSize: 12,
+    marginHorizontal: 8,
   },
   divider: {
-    fontSize: parseInt(theme.typography.fontSize.xs.px),
-    color: theme.colors.text.secondary,
+    fontSize: 12,
   }
 });
 
