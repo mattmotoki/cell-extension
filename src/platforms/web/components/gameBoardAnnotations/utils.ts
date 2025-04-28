@@ -196,6 +196,7 @@ export interface BaseConnectionOptions {
   gridWidth: number;
   gridHeight: number;
   player: PlayerIndex;
+  playerColors?: string[]; // Array of player colors
 }
 
 /**
@@ -214,6 +215,9 @@ export interface ConnectionLineOptions extends BaseConnectionOptions {
 export interface ConnectionMarkerOptions extends BaseConnectionOptions {
   markerRadius?: number;
   color?: string;
+  fillColor?: string;
+  strokeWidth?: number;
+  opacity?: number;
 }
 
 /**
@@ -222,6 +226,10 @@ export interface ConnectionMarkerOptions extends BaseConnectionOptions {
 export interface ConnectionDrawingOptions extends ConnectionLineOptions {
   drawMarkers?: boolean;
   markerRadius?: number;
+  markerColor?: string;
+  markerFillColor?: string;
+  markerStrokeWidth?: number;
+  markerOpacity?: number;
 }
 
 /**
@@ -295,17 +303,26 @@ export const drawConnectionLines = (options: ConnectionLineOptions): string[] =>
 };
 
 /**
- * Draws connection markers at the center of each cell
+ * Draws marker circles at the center of each cell in a component.
+ * Customizable options for marker size, color, and appearance.
  */
 export const drawConnectionMarkers = (options: ConnectionMarkerOptions): void => {
   const {
     cellDimension,
     group,
     markerRadius = cellDimension * 0.05,
-    color = '#888888', // Default gray color
+    color, // Explicit color overrides player color
+    fillColor, // Explicit fill color
+    strokeWidth = 0.1,
+    opacity = 1.0,
     cells,
-    player
+    player,
+    playerColors = ['#ff0000', '#0000ff'] // Default colors if not provided
   } = options;
+
+  // Use provided color or player color from array
+  const markerStroke = color || playerColors[player] || '#888888';
+  const markerFill = fillColor || markerStroke;
 
   // Process each cell directly
   cells.forEach(cellKey => {
@@ -317,13 +334,14 @@ export const drawConnectionMarkers = (options: ConnectionMarkerOptions): void =>
     
     // Draw a single marker at the cell center
     group.append('circle')
-      .attr('class', 'connection-marker')
+      .attr('class', `connection-marker player-${player}`)
       .attr('cx', centerX)
       .attr('cy', centerY)
       .attr('r', markerRadius)
-      .attr('fill', '#ffffff')
-      .attr('stroke', color)
-      .attr('stroke-width', 0.1);
+      .attr('fill', markerFill)
+      .attr('fill-opacity', opacity)
+      .attr('stroke', markerStroke)
+      .attr('stroke-width', strokeWidth);
   });
 };
 
@@ -334,6 +352,12 @@ export const drawConnectionMarkers = (options: ConnectionMarkerOptions): void =>
 export const drawComponentConnections = (options: ConnectionDrawingOptions): string[] => {
   const {
     drawMarkers = true,
+    markerRadius,
+    markerColor,
+    markerFillColor,
+    markerStrokeWidth,
+    markerOpacity,
+    playerColors,
     ...lineOptions
   } = options;
 
@@ -342,7 +366,15 @@ export const drawComponentConnections = (options: ConnectionDrawingOptions): str
   
   // Then draw the markers if requested
   if (drawMarkers) {
-    drawConnectionMarkers(options);
+    drawConnectionMarkers({
+      ...lineOptions,
+      markerRadius,
+      color: markerColor,
+      fillColor: markerFillColor,
+      strokeWidth: markerStrokeWidth,
+      opacity: markerOpacity,
+      playerColors
+    });
   }
   
   return processedEdges;

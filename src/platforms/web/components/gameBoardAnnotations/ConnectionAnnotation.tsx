@@ -7,6 +7,7 @@
  * Key features:
  * - Calculates individual connection counts for each cell
  * - Displays the connection count as a text annotation on each cell
+ * - Uses small gray markers as backgrounds for the text
  * - Follows the rule that isolated cells have a connection count of 1
  *  
  * Related files:
@@ -17,7 +18,7 @@
 import React from 'react';
 import * as d3 from 'd3';
 import { PlayerIndex, parsePositionKey, createPositionKey } from '@core';
-import { getAdjacentPositions, drawConnectionLines, parseEdgeKey } from './utils';
+import { getAdjacentPositions, drawConnectionLines, drawConnectionMarkers, parseEdgeKey } from './utils';
 
 interface ConnectionAnnotationProps {
   components: Array<{ player: PlayerIndex, cells: string[] }>;
@@ -25,6 +26,7 @@ interface ConnectionAnnotationProps {
   scoringVisualsGroup: d3.Selection<any, unknown, null, undefined>;
   gridWidth: number;
   gridHeight: number;
+  playerColors: string[]; // Array of player colors
 }
 
 export const ConnectionAnnotation: React.FC<ConnectionAnnotationProps> = ({
@@ -32,7 +34,8 @@ export const ConnectionAnnotation: React.FC<ConnectionAnnotationProps> = ({
   cellDimension,
   scoringVisualsGroup,
   gridWidth,
-  gridHeight
+  gridHeight,
+  playerColors
 }) => {
   // Keep track of cells that will have text annotations
   const cellsWithText = new Set<string>();
@@ -52,6 +55,7 @@ export const ConnectionAnnotation: React.FC<ConnectionAnnotationProps> = ({
       gridWidth,
       gridHeight,
       player,
+      playerColors,
       lineWidth: cellDimension * 0.005,
       color: '#888888'
     });
@@ -112,8 +116,26 @@ export const ConnectionAnnotation: React.FC<ConnectionAnnotationProps> = ({
       cellConnectionCount.set(cellKey, count);
     });
     
+    // Create a list of cells with their connection counts for drawing
+    const cellsWithCounts = Array.from(cellConnectionCount.entries()).map(
+      ([cellKey, count]) => ({ cellKey, count })
+    );
+    
+    // Draw small gray markers as backgrounds for text annotations
+    drawConnectionMarkers({
+      cellDimension,
+      group: scoringVisualsGroup,
+      cells: cellsWithCounts.map(item => item.cellKey),
+      gridWidth,
+      gridHeight,
+      player,
+      playerColors,
+      markerRadius: cellDimension * 0.15, // Increased radius to match MultiplicationAnnotation
+      fillColor: playerColors[player],
+    });
+    
     // Add text annotations to each cell showing its individual connection count
-    cellConnectionCount.forEach((connectionCount, cellKey) => {
+    cellsWithCounts.forEach(({ cellKey, count }) => {
       const [gridX, gridY] = parsePositionKey(cellKey);
       cellsWithText.add(cellKey); // Mark this cell as having text
       
@@ -129,10 +151,9 @@ export const ConnectionAnnotation: React.FC<ConnectionAnnotationProps> = ({
         .attr('dominant-baseline', 'middle')
         .attr('fill', '#ffffff')
         .attr('font-weight', 'bold')
-        .attr('font-size', cellDimension * 0.2) // Smaller font size
-        .attr('stroke', 'rgba(0,0,0,0.3)')
-        .attr('stroke-width', 0.3)
-        .text(connectionCount.toString());
+        .attr('font-size', cellDimension * 0.25) // Increased font size to match MultiplicationAnnotation
+        .attr('stroke', 'none') // No stroke needed with background marker
+        .text(count.toString());
     });
   });
 

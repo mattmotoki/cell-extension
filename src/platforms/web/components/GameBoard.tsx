@@ -240,7 +240,8 @@ const GameBoard: React.FC = () => { // No props needed directly
         cellDimension,
         scoringVisualsGroup,
         gridWidth,
-        gridHeight
+        gridHeight,
+        playerColors
       };
       const annotationComponent = MultiplicationAnnotation(annotationProps);
       cellsWithText = annotationComponent as Set<string>;
@@ -252,7 +253,8 @@ const GameBoard: React.FC = () => { // No props needed directly
         cellDimension,
         scoringVisualsGroup,
         gridWidth,
-        gridHeight
+        gridHeight,
+        playerColors
       };
       const annotationComponent = ConnectionAnnotation(annotationProps);
       cellsWithText = annotationComponent as Set<string>;
@@ -266,12 +268,12 @@ const GameBoard: React.FC = () => { // No props needed directly
         gridWidth,
         gridHeight,
         cellPadding,
-        cellRadius
+        cellRadius,
+        playerColors
       };
       const annotationComponent = ExtensionAnnotation(annotationProps);
       cellsWithText = annotationComponent as Set<string>;
     }
-
 
     // Re-add click listener (in case it got removed)
     svg.on('click', handleSvgClick);
