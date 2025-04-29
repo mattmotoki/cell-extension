@@ -1,33 +1,15 @@
 /**
- * src/platforms/web/components/Footer.tsx - Application Footer
+ * src/platforms/web/components/Footer.tsx - Web Platform Footer
  * 
- * React component that renders the application footer with version information,
- * copyright notice, and displays the current scoring mechanism. Positioned at 
- * the bottom of the game container using responsive styling with CSS variables.
+ * Web-specific implementation of the Footer component that uses the shared
+ * cross-platform Footer component with React Native for Web.
  * 
- * Relationships:
- * - Displays scoring mechanism information from settings
+ * This component serves as a thin wrapper around the shared component,
+ * providing any web-specific customizations if needed.
  */
 
 import React from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '@core';
+import Footer from '@shared/components/Footer';
 
-const Footer: React.FC = () => {
-  // Get scoring mechanism from Redux store
-  const scoringMechanism = useSelector((state: RootState) => state.settings.scoringMechanism);
-  // Format the scoring mechanism for display
-  const scoringDescription = scoringMechanism.replace('cell-','').replace('-', ' ');
-  
-  const currentYear = new Date().getFullYear();
-  
-  return (
-    <footer>
-      <span>© {currentYear} Cellmata </span>
-      <span>•</span>
-      <span>Scoring: {scoringDescription}</span>
-    </footer>
-  );
-};
-
+// Export the shared component directly for web use
 export default Footer; 
