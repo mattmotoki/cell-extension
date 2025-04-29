@@ -14,6 +14,7 @@ import inputs from './components/inputs';
 import navbar from './components/navbar';
 import footer from './components/footer';
 import gameControls from './components/gameControls';
+import gameSettingsPanel from './components/gameSettingsPanel';
 
 // Theme interface defining all available theme properties
 export interface ThemeInterface {
@@ -161,6 +162,7 @@ const theme = {
   navbar,
   footer,
   gameControls,
+  gameSettingsPanel,
 };
 
 // Primary theme export
@@ -176,6 +178,7 @@ export {
   navbar,
   footer,
   gameControls,
+  gameSettingsPanel,
   ThemeContext
 };
 
