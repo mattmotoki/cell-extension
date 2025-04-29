@@ -26,12 +26,8 @@
     --navbar-bg: rgba(30, 30, 30, 0.9);
     
     /* Layout Variables - Using relative units */
-    --navbar-height: 8vh;
-    --score-chart-height: 25vh;
-    --game-controls-height: 6vh;
     --board-height: 50vh;
     --scores-ui-height: 6vh;
-    --footer-height: 5vh;
     
     /* Font sizes in viewport height units - directly relative to screen size */
     --font-size-large: 2.2vh;
@@ -64,7 +60,7 @@ body {
 .game-container {
     width: 100vw; /* Use full viewport width */
     height: 100vh; /* Use full viewport height */
-    max-width: min(100vh * 9 / 16, 100vw); /* Cap width based on 9:16 aspect ratio, but don't exceed viewport */
+    max-width: 500px; /* Cap width based on 9:16 aspect ratio, but don't exceed viewport */
     background-color: var(--bg-color);
     position: relative;
     

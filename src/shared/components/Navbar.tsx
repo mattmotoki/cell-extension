@@ -63,17 +63,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: 60,
+    height: '5%',
     paddingHorizontal: 16,
     width: '100%',
   },
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    height: '100%',
   },
   logo: {
-    width: 32,
-    height: 32,
+    height: '60%',
+    aspectRatio: 1,
     marginRight: 8,
   },
   title: {
@@ -93,13 +94,13 @@ const styles = StyleSheet.create({
     borderRadius: 1,
   },
   menuLineActive1: {
-    transform: [{ rotate: '45deg' }, { translateY: 8 }],
+    transform: [{ rotate: '45deg' }, { translateY: 10 }],
   },
   menuLineActive2: {
     opacity: 0,
   },
   menuLineActive3: {
-    transform: [{ rotate: '-45deg' }, { translateY: -8 }],
+    transform: [{ rotate: '-45deg' }, { translateY: -10 }],
   },
 });
 
