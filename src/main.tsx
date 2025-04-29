@@ -20,7 +20,7 @@ const root = createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <Provider store={store}>
-      <TamaguiProvider config={config} defaultTheme="light">
+      <TamaguiProvider config={config} defaultTheme="dark">
         <App />
         <Analytics />
       </TamaguiProvider>

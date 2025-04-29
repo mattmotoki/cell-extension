@@ -36,6 +36,8 @@ import {
 } from '@core';
 
 import { createLogger } from '../../../utils/logger';
+// Import player colors from the theme
+import { players } from '../../../shared/styles/theme/colors';
 
 import {
   MultiplicationAnnotation,
@@ -60,7 +62,7 @@ const GameBoard: React.FC = () => { // No props needed directly
   const gameProgress = useSelector((state: RootState) => state.game.progress);
   const settings = useSelector((state: RootState) => state.settings);
   const scoringMechanism = useSelector((state: RootState) => state.settings.scoringMechanism);
-  const playerColors = ["#00FF00", "#1E90FF"]; // TODO: Move to config/theme
+  const playerColors = [players.player1, players.player2]; // Use consistent player colors from theme
   
   // Use AppDispatch type
   const dispatch = useDispatch<AppDispatch>();

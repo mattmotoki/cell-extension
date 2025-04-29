@@ -45496,7 +45496,7 @@ var themes2 = Object.fromEntries(
   })
 );
 var appConfig = createTamagui({
-  defaultTheme: "light",
+  defaultTheme: "dark",
   animations,
   shouldAddPrefersColorThemes: false,
   themeClassNameOnRoot: false,

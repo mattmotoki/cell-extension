@@ -1,28 +1,31 @@
 /**
  * src/shared/components/GameSettingsPanel.tsx - Cross-Platform Game Configuration Panel
  * 
- * Shared implementation of the game settings panel using Tamagui components.
+ * Shared implementation of the game settings panel using Tamagui Sheet and Select.
  * Provides a slide-in interface for adjusting game settings across platforms.
  * Allows players to configure board size, scoring mechanism, AI difficulty, and player mode.
  * 
  * Relationships:
  * - Dispatches setting updates to settingsSlice.ts
  * - Interacts with resetGame action when settings change
+ * 
+ * Revision Log:
+ * - Refactored to use Tamagui Sheet and Select, removing custom Picker and platform-specific logic.
  */
 
-import React, { useEffect, useState } from 'react';
-import { Platform } from 'react-native';
+import React from 'react';
 import { 
   YStack, 
   Text, 
   ScrollView, 
   Button,
-  AnimatePresence,
-  View,
   Sheet,
-  useTheme
+  Select,
+  Adapt,
+  H4, // Using H4 for section titles
+  Paragraph, // For descriptive text if needed
+  Separator, // To visually separate sections
 } from 'tamagui';
-import { Picker } from '@shared/components/Picker';
 
 // Import GameSettings and related types from the core module
 import {
@@ -40,7 +43,7 @@ interface GameSettingsPanelProps {
   onChange: <K extends keyof GameSettings>(key: K, value: GameSettings[K]) => void;
   isPanelOpen: boolean;
   onClose: () => void;
-  style?: object; // Optional additional styles
+  // Removed optional style prop as it's no longer needed
 }
 
 const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({ 
@@ -48,93 +51,45 @@ const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
   onChange, 
   isPanelOpen, 
   onClose,
-  style 
 }) => {
-  const theme = useTheme();
-  // Track whether the panel is fully invisible
-  const [isFullyInvisible, setIsFullyInvisible] = useState(!isPanelOpen);
 
-  // Helper to handle change events for any picker
-  const handleChange = <K extends keyof GameSettings>(key: K, value: any) => {
-    onChange(key, value as GameSettings[K]);
+  // Helper to handle change events for any Select component
+  // Tamagui Select returns the value directly, so no complex casting needed
+  const handleChange = <K extends keyof GameSettings>(key: K, value: GameSettings[K]) => {
+    onChange(key, value);
   };
 
-  // Update visibility based on isPanelOpen prop
-  useEffect(() => {
-    if (!isPanelOpen) {
-      const timer = setTimeout(() => {
-        setIsFullyInvisible(true);
-      }, 300);
-      return () => clearTimeout(timer);
-    } else {
-      setIsFullyInvisible(false);
-    }
-  }, [isPanelOpen]);
-
-  // Don't render at all if closed and fully invisible
-  if (!isPanelOpen && isFullyInvisible) {
-    return null;
-  }
-
-  // Use Sheet for mobile platforms for a native feel
-  if (Platform.OS !== 'web') {
-    return (
-      <Sheet
-        open={isPanelOpen}
-        onOpenChange={(open: boolean) => {
-          if (!open) onClose();
-        }}
-        snapPoints={[95]}
-        dismissOnSnapToBottom
-        position={isPanelOpen ? 95 : 0}
-        modal
-      >
-        <Sheet.Overlay />
-        <Sheet.Frame>
-          <YStack padding="$4" flex={1}>
-            <SettingsPanelContent 
-              settings={settings} 
-              handleChange={handleChange} 
-              onClose={onClose} 
-            />
-          </YStack>
-        </Sheet.Frame>
-      </Sheet>
-    );
-  }
-
-  // Web version uses AnimatePresence for smooth transitions
+  // Use Sheet for both web and mobile platforms
   return (
-    <AnimatePresence>
-      {isPanelOpen && (
-        <YStack
-          position="absolute"
-          top={60} // Adjust for navbar on web
-          left={0}
-          width="100%"
-          height="100%"
-          zIndex={99}
-          backgroundColor={theme.background}
-          animation="quick"
-          enterStyle={{ opacity: 0, y: 20 }}
-          exitStyle={{ opacity: 0, y: 20 }}
-          {...style}
-        >
-          <SettingsPanelContent 
-            settings={settings} 
-            handleChange={handleChange} 
-            onClose={onClose} 
-          />
-        </YStack>
-      )}
-    </AnimatePresence>
+    <Sheet
+      open={isPanelOpen}
+      onOpenChange={(open: boolean) => {
+        if (!open) onClose();
+      }}
+      snapPointsMode="percent"
+      snapPoints={[90]} // Use percentage for responsiveness
+      dismissOnSnapToBottom
+      modal // Handles modal behavior like background dimming and Esc key close
+      animation="quick"
+    >
+      <Sheet.Overlay animation="quick" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} />
+      <Sheet.Frame padding="$4" flex={1} borderTopLeftRadius="$6" borderTopRightRadius="$6"> 
+        {/* Added border radius for a softer look */}
+        <Sheet.Handle /> 
+        <SettingsPanelContent 
+          settings={settings} 
+          handleChange={handleChange} 
+          onClose={onClose} 
+        />
+      </Sheet.Frame>
+    </Sheet>
   );
 };
 
 // Extracted common content component
 interface SettingsPanelContentProps {
   settings: GameSettings;
-  handleChange: <K extends keyof GameSettings>(key: K, value: any) => void;
+  handleChange: <K extends keyof GameSettings>(key: K, value: GameSettings[K]) => void;
   onClose: () => void;
 }
 
@@ -143,158 +98,158 @@ const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
   handleChange, 
   onClose 
 }) => {
-  const theme = useTheme();
+
+  // Reusable component for Select dropdowns
+  const SettingSelect = <K extends keyof GameSettings>({ 
+    settingKey, 
+    label, 
+    items, 
+    enabled = true 
+  }: { 
+    settingKey: K; 
+    label: string; 
+    items: { label: string; value: GameSettings[K] }[];
+    enabled?: boolean;
+  }) => (
+    <YStack space="$2">
+      <H4>{label}</H4>
+      <Select 
+        id={settingKey} 
+        value={settings[settingKey]} 
+        onValueChange={(val: GameSettings[K]) => handleChange(settingKey, val)}
+        disablePreventBodyScroll // Good practice for Select within Sheet/ScrollView
+      >
+        <Select.Trigger 
+          width="100%" 
+          iconAfter={<Select.Icon />} 
+          disabled={!enabled}
+        >
+          <Select.Value placeholder={`Select ${label}...`} />
+        </Select.Trigger>
+
+        <Adapt when="sm" platform="touch">
+          <Sheet native modal dismissOnSnapToBottom snapPointsMode="fit">
+            <Sheet.Frame>
+              <Sheet.ScrollView>
+                <Adapt.Contents />
+              </Sheet.ScrollView>
+            </Sheet.Frame>
+            <Sheet.Overlay />
+          </Sheet>
+        </Adapt>
+
+        <Select.Content zIndex={200000}> 
+          <Select.ScrollUpButton />
+          <Select.Viewport minWidth={200}>
+            <Select.Group>
+              <Select.Label>{label}</Select.Label>
+              {items.map((item, index) => (
+                <Select.Item 
+                  index={index} 
+                  key={item.value} 
+                  value={item.value}
+                >
+                  <Select.ItemText>{item.label}</Select.ItemText>
+                  <Select.ItemIndicator marginLeft="auto">
+                    {/* Optional: Add a checkmark or similar indicator */}
+                  </Select.ItemIndicator>
+                </Select.Item>
+              ))}
+            </Select.Group>
+          </Select.Viewport>
+          <Select.ScrollDownButton />
+        </Select.Content>
+      </Select>
+    </YStack>
+  );
 
   return (
-    <>
+    <YStack flex={1} space="$4"> 
+      {/* Use YStack for consistent spacing */}
       <ScrollView flex={1}>
-        {/* Player Mode Setting */}
-        <YStack padding="$4" marginBottom="$2">
-          <Text fontSize="$5" fontWeight="500" marginBottom="$2" color={theme.color}>
-            Player Mode
-          </Text>
-          <View
-            borderRadius="$2"
-            marginTop="$2"
-            overflow="hidden"
-            backgroundColor={theme.background}
-          >
-            <Picker
-              selectedValue={settings.playerMode}
-              onValueChange={(value) => handleChange('playerMode', value)}
-              style={{ width: '100%', height: 50 }}
-              dropdownIconColor={theme.color?.toString()}
-              itemStyle={{ color: theme.color?.toString() }}
-            >
-              <Picker.Item label="AI Player" value="ai" />
-              <Picker.Item label="Two Player" value="user" />
-            </Picker>
-          </View>
-        </YStack>
-        
-        {/* First Player Setting */}
-        <YStack padding="$4" marginBottom="$2">
-          <Text fontSize="$5" fontWeight="500" marginBottom="$2" color={theme.color}>
-            First Player
-          </Text>
-          <View
-            borderRadius="$2"
-            marginTop="$2"
-            overflow="hidden"
-            backgroundColor={theme.background}
-          >
-            <Picker
-              selectedValue={settings.firstPlayer}
-              onValueChange={(value) => handleChange('firstPlayer', value)}
-              style={{ width: '100%', height: 50 }}
-              dropdownIconColor={theme.color?.toString()}
-              itemStyle={{ color: theme.color?.toString() }}
-            >
-              <Picker.Item label="Human (Player 1)" value="human" />
-              <Picker.Item label="AI (Player 2)" value="ai" />
-            </Picker>
-          </View>
-        </YStack>
-        
-        {/* Scoring Mechanism Setting */}
-        <YStack padding="$4" marginBottom="$2">
-          <Text fontSize="$5" fontWeight="500" marginBottom="$2" color={theme.color}>
-            Scoring Mechanism
-          </Text>
-          <View
-            borderRadius="$2"
-            marginTop="$2"
-            overflow="hidden"
-            backgroundColor={theme.background}
-          >
-            <Picker
-              selectedValue={settings.scoringMechanism}
-              onValueChange={(value) => handleChange('scoringMechanism', value)}
-              style={{ width: '100%', height: 50 }}
-              dropdownIconColor={theme.color?.toString()}
-              itemStyle={{ color: theme.color?.toString() }}
-            >
-              <Picker.Item label="Cell-Multiplication" value="cell-multiplication" />
-              <Picker.Item label="Cell-Connection" value="cell-connection" />
-              <Picker.Item label="Cell-Extension" value="cell-extension" />
-            </Picker>
-          </View>
-        </YStack>
-        
-        {/* AI Difficulty Setting */}
-        <YStack padding="$4" marginBottom="$2">
-          <Text fontSize="$5" fontWeight="500" marginBottom="$2" color={theme.color}>
-            AI Difficulty
-          </Text>
-          <View
-            borderRadius="$2"
-            marginTop="$2"
-            overflow="hidden"
-            backgroundColor={theme.background}
-          >
-            <Picker
-              selectedValue={settings.aiDifficulty}
-              onValueChange={(value) => handleChange('aiDifficulty', value)}
-              style={{ width: '100%', height: 50 }}
-              enabled={settings.playerMode === 'ai'}
-              dropdownIconColor={theme.color?.toString()}
-              itemStyle={{ color: theme.color?.toString() }}
-            >
-              <Picker.Item label="Easy" value="easy" />
-              <Picker.Item label="Hard" value="hard" />
-            </Picker>
-          </View>
-        </YStack>
-        
-        {/* Board Size Setting */}
-        <YStack padding="$4" marginBottom="$2">
-          <Text fontSize="$5" fontWeight="500" marginBottom="$2" color={theme.color}>
-            Board Size
-          </Text>
-          <View
-            borderRadius="$2"
-            marginTop="$2"
-            overflow="hidden"
-            backgroundColor={theme.background}
-          >
-            <Picker
-              selectedValue={settings.boardSize}
-              onValueChange={(value) => handleChange('boardSize', value)}
-              style={{ width: '100%', height: 50 }}
-              dropdownIconColor={theme.color?.toString()}
-              itemStyle={{ color: theme.color?.toString() }}
-            >
-              <Picker.Item label="4x4" value="4" />
-              <Picker.Item label="6x6" value="6" />
-              <Picker.Item label="10x10" value="10" />
-              <Picker.Item label="16x16" value="16" />
-            </Picker>
-          </View>
+        <YStack space="$5" paddingBottom="$4"> 
+          {/* Add vertical spacing between settings */}
+          
+          {/* Player Mode Setting */}
+          <SettingSelect<"playerMode">
+            settingKey="playerMode"
+            label="Player Mode"
+            items={[
+              { label: 'AI Player', value: 'ai' },
+              { label: 'Two Player', value: 'user' },
+            ]}
+          />
+
+          <Separator /> 
+
+          {/* First Player Setting */}
+          <SettingSelect<"firstPlayer">
+            settingKey="firstPlayer"
+            label="First Player"
+            items={[
+              { label: 'Human (Player 1)', value: 'human' },
+              { label: 'AI (Player 2)', value: 'ai' },
+            ]}
+          />
+
+          <Separator />
+
+          {/* Scoring Mechanism Setting */}
+          <SettingSelect<"scoringMechanism">
+            settingKey="scoringMechanism"
+            label="Scoring Mechanism"
+            items={[
+              { label: 'Cell-Multiplication', value: 'cell-multiplication' },
+              { label: 'Cell-Connection', value: 'cell-connection' },
+              { label: 'Cell-Extension', value: 'cell-extension' },
+            ]}
+          />
+          
+          <Separator />
+
+          {/* AI Difficulty Setting */}
+          <SettingSelect<"aiDifficulty">
+            settingKey="aiDifficulty"
+            label="AI Difficulty"
+            items={[
+              { label: 'Easy', value: 'easy' },
+              { label: 'Hard', value: 'hard' },
+            ]}
+            enabled={settings.playerMode === 'ai'}
+          />
+          
+          <Separator />
+
+          {/* Board Size Setting */}
+          <SettingSelect<"boardSize">
+            settingKey="boardSize"
+            label="Board Size"
+            items={[
+              { label: '4x4', value: '4' },
+              { label: '6x6', value: '6' },
+              { label: '10x10', value: '10' },
+              { label: '16x16', value: '16' },
+            ]}
+          />
         </YStack>
       </ScrollView>
       
       {/* Close Button */}
-      <YStack padding="$4" alignItems="center" justifyContent="center" marginTop="auto">
+      <YStack paddingVertical="$4" alignItems="center"> 
+        {/* Removed marginTop="auto", rely on ScrollView and flex layout */}
         <Button
-          width="80%" 
-          borderWidth={1}
-          borderColor={theme.color}
-          borderRadius="$2"
-          padding="$3"
-          alignItems="center"
-          justifyContent="center"
-          backgroundColor="transparent"
+          size="$4" // Use Tamagui size prop
+          width="90%" 
+          theme="active" // Example theme application
           onPress={onClose}
           accessibilityRole="button"
           accessibilityLabel="Close game settings menu"
         >
-          <Text color={theme.color} fontSize="$5" fontWeight="500">
-            Close Menu
-          </Text>
+          Close Menu
         </Button>
       </YStack>
-    </>
+    </YStack> // Changed from Fragment to YStack
   );
 };
 
-export default GameSettingsPanel; 
+export default GameSettingsPanel;
