@@ -14,7 +14,8 @@
     "test": "jest --config tests/setup/jest.config.js",
     "test:watch": "jest --config tests/setup/jest.config.js --watch",
     "test:coverage": "jest --config tests/setup/jest.config.js --coverage",
-    "dev:test": "concurrently \"npm run dev\" \"npm run test:watch\""
+    "dev:test": "concurrently \"npm run dev\" \"npm run test:watch\"",
+    "android": "react-native run-android"
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,7 @@
   "homepage": "https://github.com/mattmotoki/cell-extension#readme",
   "dependencies": {
     "@react-native-picker/picker": "^2.11.0",
+    "@react-native/metro-config": "^0.79.1",
     "@reduxjs/toolkit": "^2.2.6",
     "@tamagui/animations-react-native": "^1.126.3",
     "@tamagui/colors": "^1.126.3",
@@ -54,6 +56,8 @@
     "tamagui": "^1.126.3"
   },
   "devDependencies": {
+    "@react-native-community/cli": "^18.0.0",
+    "@react-native-community/cli-platform-android": "^18.0.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",

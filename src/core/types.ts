@@ -116,7 +116,7 @@ export interface GameState {
 export type PlayerMode = 'ai' | 'user'; // 'ai' for Human vs AI, 'user' for Human vs Human
 export type FirstPlayer = 'human' | 'ai'; // Who goes first
 export type ScoringMechanism = 'cell-multiplication' | 'cell-connection' | 'cell-extension';
-export type AIDifficulty = 'easy' | 'hard'; // AI difficulty levels
+export type AIDifficulty = 'easy' | 'medium' | 'hard'; // AI difficulty levels
 
 // Represents the game settings slice managed by settingsSlice.ts
 export interface GameSettings {
