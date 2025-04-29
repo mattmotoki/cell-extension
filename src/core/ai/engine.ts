@@ -5,6 +5,8 @@
  * (territorial, greedy, minimax) and board evaluation.
  */
 
+import { createLogger } from '../../utils/logger';
+
 import { 
     BoardState, 
     Coordinates, 
@@ -28,6 +30,9 @@ import {
     getAdjacentPlayerCells, // Needed for evaluateBoard
     parsePositionKey      // Needed for evaluateBoard
 } from '../game/utils'; // Updated path
+
+// Create module-specific logger
+const log = createLogger('AI Engine');
 
 // ====================================
 // Board Evaluation Function
@@ -59,7 +64,7 @@ export function evaluateBoard(
             playerScore = calculateScore(boardState, playerIndex, scoringMechanism);
             opponentScore = calculateScore(boardState, opponentIndex, scoringMechanism);
         } catch (scoreError) {
-            console.error("Error calculating scores in evaluateBoard:", scoreError);
+            log.error("Error calculating scores in evaluateBoard:", scoreError);
             return 0; // Return neutral evaluation on error
         }
         
@@ -157,12 +162,12 @@ export function evaluateBoard(
             
             return evaluation;
         } catch (heuristicError) {
-            console.error("Error in heuristic calculation in evaluateBoard:", heuristicError);
+            log.error("Error in heuristic calculation in evaluateBoard:", heuristicError);
             // Return basic score difference if heuristics fail
             return evaluation;
         }
     } catch (error) {
-        console.error("Fatal error in evaluateBoard:", error);
+        log.error("Fatal error in evaluateBoard:", error);
         return 0; // Return neutral evaluation on fatal error
     }
 }
@@ -182,20 +187,20 @@ export function getAIMove(gameState: GameState, settings: GameSettings): Coordin
     const { boardState, scoringMechanism, history } = gameState;
     const { aiDifficulty } = settings;
     
-    console.log(`AI START: Player ${aiPlayerIndex + 1}, Difficulty ${aiDifficulty}, ScoringMech: ${scoringMechanism}`);
+    log.info(`AI START: Player ${aiPlayerIndex + 1}, Difficulty ${aiDifficulty}, ScoringMech: ${scoringMechanism}`);
     
     try {
         const availableCells = getAvailableCells(boardState);
         
         // Simple move count based on history (excluding initial state)
-        const moveCount = history ? history.length -1 : 0; 
+        const moveCount = history ? Math.floor(history.length/2) : 0; 
         const totalCells = getTotalCellCount(boardState);
         const gameProgress = (totalCells > 0) ? moveCount / totalCells : 0;
-
-        console.log(`AI calculating move #${moveCount + 1}. Game progress: ${(gameProgress * 100).toFixed(1)}%. Available cells: ${availableCells.length}`);
+        
+        log.info(`AI calculating move #${moveCount + 1}. Game progress: ${(gameProgress * 100).toFixed(1)}%. Available cells: ${availableCells.length}`);
 
         if (availableCells.length === 0) {
-            console.warn("AI: No available cells found. Game should be over.");
+            log.warn("AI: No available cells found. Game should be over.");
             return null; // No possible moves
         }
 
@@ -203,12 +208,12 @@ export function getAIMove(gameState: GameState, settings: GameSettings): Coordin
         const validatedCells = availableCells.filter(cell => {
             if (cell.gridX === undefined || cell.gridY === undefined ||
                 isNaN(cell.gridX) || isNaN(cell.gridY)) {
-                console.error(`AI: Invalid cell coordinates: ${JSON.stringify(cell)}`);
+                log.error(`AI: Invalid cell coordinates: ${JSON.stringify(cell)}`);
                 return false;
             }
             
             if (isCellOccupied(boardState.occupiedCells, cell.gridX, cell.gridY)) {
-                console.error(`AI: Cell already occupied: ${JSON.stringify(cell)}`);
+                log.error(`AI: Cell already occupied: ${JSON.stringify(cell)}`);
                 return false;
             }
             
@@ -216,7 +221,7 @@ export function getAIMove(gameState: GameState, settings: GameSettings): Coordin
         });
         
         if (validatedCells.length === 0) {
-            console.error("AI: All available cells failed validation! Returning null.");
+            log.error("AI: All available cells failed validation! Returning null.");
             return null;
         }
         
@@ -224,57 +229,115 @@ export function getAIMove(gameState: GameState, settings: GameSettings): Coordin
 
         try {
             if (aiDifficulty === 'easy') {
-                console.log("AI: Using easy difficulty strategy");
-                if (gameProgress < 0.25) {
-                    bestMove = getTerritorialMove(boardState, validatedCells, aiPlayerIndex);
-                } else {
-                    bestMove = getGreedyMove(boardState, validatedCells, aiPlayerIndex, scoringMechanism);
-                }
+                log.info("AI: Using easy difficulty strategy");
+                bestMove = getEasyAIMove(boardState, validatedCells, aiPlayerIndex, scoringMechanism, moveCount);
+            } else if (aiDifficulty === 'medium') {
+                log.info("AI: Using medium difficulty (minimax depth=2) strategy");
+                bestMove = getMediumAIMove(boardState, validatedCells, aiPlayerIndex, scoringMechanism, moveCount);
             } else { // Hard AI
-                console.log("AI: Using hard difficulty (minimax) strategy");
-                bestMove = getMinimaxMove(boardState, validatedCells, aiPlayerIndex, scoringMechanism);
+                log.info("AI: Using hard difficulty (minimax depth=3) strategy");
+                bestMove = getHardAIMove(boardState, validatedCells, aiPlayerIndex, scoringMechanism, moveCount);
             }
             
             if (!bestMove) {
                 throw new Error("AI strategy returned null despite available cells");
             }
         } catch (error) {
-            console.error("AI calculation error:", error);
+            log.error("AI calculation error:", error);
             // Continue to fallback
         }
 
         // Fallback to random move if strategy fails or returns null
         if (!bestMove) {
-            console.warn(`AI (${aiDifficulty}) strategy failed, errored, or returned null. Falling back to random move.`);
+            log.warn(`AI (${aiDifficulty}) strategy failed, errored, or returned null. Falling back to random move.`);
             const randomIndex = Math.floor(Math.random() * validatedCells.length);
             bestMove = validatedCells[randomIndex];
-            console.log(`AI random fallback move: (${bestMove.gridX}, ${bestMove.gridY})`);
+            log.info(`AI random fallback move: (${bestMove.gridX}, ${bestMove.gridY})`);
         }
 
         // Final validation of selected move
         if (!bestMove || bestMove.gridX === undefined || bestMove.gridY === undefined || 
             isNaN(bestMove.gridX) || isNaN(bestMove.gridY)) {
-            console.error(`AI final move is invalid: ${JSON.stringify(bestMove)}. Generating emergency random move.`);
+            log.error(`AI final move is invalid: ${JSON.stringify(bestMove)}. Generating emergency random move.`);
             
             // Emergency fallback
             if (validatedCells.length > 0) {
                 // Pick the first validated cell as an emergency measure
                 bestMove = validatedCells[0]; 
             } else {
-                console.error("AI: Critical failure - no valid cells available despite earlier checks");
+                log.error("AI: Critical failure - no valid cells available despite earlier checks");
                 return null;
             }
         }
 
-        console.log(`AI COMPLETE: Selected move at (${bestMove.gridX}, ${bestMove.gridY})`);
+        log.info(`AI COMPLETE: Selected move at (${bestMove.gridX}, ${bestMove.gridY})`);
         return bestMove;
     } catch (outerError) {
-        console.error("Fatal error in top-level AI logic:", outerError);
+        log.error("Fatal error in top-level AI logic:", outerError);
         return null;
     }
 }
 
-// --- Easy AI Strategies ---
+// --- AI Strategy Functions by Difficulty ---
+
+function getEasyAIMove(
+    boardState: BoardState,
+    validatedCells: Coordinates[],
+    aiPlayerIndex: PlayerIndex,
+    scoringMechanism: ScoringMechanism,
+    moveCount: number
+): Coordinates | null {
+    log.info(`AI Easy: Move #${moveCount + 1}`);
+    
+    // Use territorial strategy for first 5 AI moves
+    if (moveCount <= 5) {
+        log.info("AI Easy: Using territorial strategy (early game)");
+        return getTerritorialMove(boardState, validatedCells, aiPlayerIndex);
+    } else {
+        log.info("AI Easy: Using greedy strategy (mid-late game)");
+        return getGreedyMove(boardState, validatedCells, aiPlayerIndex, scoringMechanism);
+    }
+}
+
+function getMediumAIMove(
+    boardState: BoardState,
+    validatedCells: Coordinates[],
+    aiPlayerIndex: PlayerIndex,
+    scoringMechanism: ScoringMechanism,
+    moveCount: number
+): Coordinates | null {
+    log.info(`AI Medium: Move #${moveCount + 1}`);
+    
+    // Use territorial strategy for first 4 AI moves
+    if (moveCount <= 4) {
+        log.info("AI Medium: Using territorial strategy (early game)");
+        return getTerritorialMove(boardState, validatedCells, aiPlayerIndex);
+    } else {
+        log.info("AI Medium: Using minimax strategy with depth=2 (mid-late game)");
+        return getMinimaxMove(boardState, validatedCells, aiPlayerIndex, scoringMechanism, MINIMAX_DEPTH_MEDIUM);
+    }
+}
+
+function getHardAIMove(
+    boardState: BoardState,
+    validatedCells: Coordinates[],
+    aiPlayerIndex: PlayerIndex,
+    scoringMechanism: ScoringMechanism,
+    moveCount: number
+): Coordinates | null {
+    log.info(`AI Hard: Move #${moveCount + 1}`);
+    
+    // Use territorial strategy for first 4 AI moves
+    if (moveCount <= 4) {
+        log.info("AI Hard: Using territorial strategy (early game)");
+        return getTerritorialMove(boardState, validatedCells, aiPlayerIndex);
+    } else {
+        log.info("AI Hard: Using minimax strategy with depth=3 (mid-late game)");
+        return getMinimaxMove(boardState, validatedCells, aiPlayerIndex, scoringMechanism, MINIMAX_DEPTH_HARD);
+    }
+}
+
+// --- Utility Strategies ---
 
 function getTerritorialMove(boardState: BoardState, availableCells: Coordinates[], aiPlayerIndex: PlayerIndex): Coordinates | null {
     let bestMove: Coordinates | null = null;
@@ -345,22 +408,25 @@ function getGreedyMove(
                 bestMove = cell; 
             }
         } else {
-             console.warn(` AI (Easy) greedy simulation failed for move (${cell.gridX}, ${cell.gridY})`);
+             log.warn(` AI (Easy) greedy simulation failed for move (${cell.gridX}, ${cell.gridY})`);
         }
     }
 
     return bestMove;
 }
 
-// --- Hard AI Strategy (Minimax) ---
 
-const MINIMAX_DEPTH = 2; // Default depth - could be configured via settings later
+// Define minimax depths for different difficulty levels
+// TODO: Make these configurable via settings
+const MINIMAX_DEPTH_MEDIUM = 2;
+const MINIMAX_DEPTH_HARD = 3;
 
 function getMinimaxMove(
     boardState: BoardState, 
     availableCells: Coordinates[], 
     aiPlayerIndex: PlayerIndex, 
-    scoringMechanism: ScoringMechanism
+    scoringMechanism: ScoringMechanism,
+    depth: number = MINIMAX_DEPTH_MEDIUM // Default to medium difficulty depth
 ): Coordinates | null {
     let bestScore = -Infinity;
     let bestMove: Coordinates | null = null;
@@ -371,7 +437,7 @@ function getMinimaxMove(
         const nextBoardState = placeCell(boardState, aiPlayerIndex, cell.gridX, cell.gridY);
         if (nextBoardState) {
             // Opponent's turn (minimizing player)
-            let score = minimax(nextBoardState, MINIMAX_DEPTH, false, -Infinity, Infinity, aiPlayerIndex, scoringMechanism);
+            let score = minimax(nextBoardState, depth, false, -Infinity, Infinity, aiPlayerIndex, scoringMechanism);
             
             if (score > bestScore) {
                 bestScore = score;
@@ -381,7 +447,7 @@ function getMinimaxMove(
                  bestMove = cell; 
             }
         } else {
-             console.warn(` AI (Hard) minimax simulation failed for move (${cell.gridX}, ${cell.gridY})`);
+             log.warn(` AI (${depth === MINIMAX_DEPTH_HARD ? 'Hard' : 'Medium'}) minimax simulation failed for move (${cell.gridX}, ${cell.gridY})`);
         }
     }
 

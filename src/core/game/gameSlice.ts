@@ -98,7 +98,7 @@ const defaultSettings: GameSettings = {
   playerMode: 'ai',
   firstPlayer: 'human',
   scoringMechanism: 'cell-multiplication',
-  aiDifficulty: 'easy',
+  aiDifficulty: 'medium',
   boardSize: '6',
 };
 
