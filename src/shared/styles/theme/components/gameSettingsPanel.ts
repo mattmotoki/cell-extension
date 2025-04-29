@@ -19,7 +19,7 @@ export const panel = {
     height: `calc(100% - ${layout.sizing.navbar.height})`,
     backgroundColor: colors.background.card,
     zIndex: layout.zIndex.settingsPanel,
-    boxShadow: `0 4px 8px ${colors.states.shadow}`,
+    boxShadow: `0 6px 12px ${colors.states.shadow}`,
     padding: 0,
     display: 'flex',
     flexDirection: 'column',
@@ -38,13 +38,15 @@ export const settingItem = {
   container: {
     padding: layout.padding.md,
     marginBottom: layout.spacing.md,
+    borderBottom: `1px solid ${colors.border}`,
   },
   
   label: {
     fontSize: typography.fontSize.medium.vh,
-    fontWeight: typography.fontWeight.medium,
+    fontWeight: typography.fontWeight.bold,
     color: colors.text.primary,
     marginBottom: layout.spacing.sm,
+    textShadow: `0 1px 2px ${colors.states.textShadow}`,
   },
   
   // Dropdown/picker styling
@@ -54,17 +56,22 @@ export const settingItem = {
       borderRadius: layout.borderRadius.medium,
       padding: layout.padding.xs,
       marginTop: layout.spacing.xs,
+      borderWidth: '1px',
+      borderStyle: 'solid',
+      borderColor: colors.border,
     },
     
     control: {
       height: '50px',
       width: '100%',
       color: colors.text.primary,
+      fontSize: typography.fontSize.medium.vh,
     },
     
     item: {
-      fontSize: typography.fontSize.small.vh,
+      fontSize: typography.fontSize.medium.vh,
       color: colors.text.primary,
+      padding: layout.padding.xs,
     },
   },
 };
@@ -77,12 +84,13 @@ export const closeButton = {
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 'auto',
+    paddingBottom: layout.padding.lg,
   },
   
   button: {
     width: '80%',
     backgroundColor: 'transparent',
-    borderWidth: '1px',
+    borderWidth: '2px',
     borderStyle: 'solid',
     borderColor: colors.primary,
     borderRadius: layout.borderRadius.small,
@@ -95,7 +103,8 @@ export const closeButton = {
   text: {
     color: colors.primary,
     fontSize: typography.fontSize.medium.vh,
-    fontWeight: typography.fontWeight.medium,
+    fontWeight: typography.fontWeight.bold,
+    textShadow: `0 1px 2px ${colors.states.textShadow}`,
   },
 };
 

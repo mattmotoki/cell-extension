@@ -34,6 +34,14 @@ import {
   BoardSizeOption 
 } from '@core';
 
+// Import shared layout values
+import layout from '@shared/styles/theme/components/layout';
+import colors from '@shared/styles/theme/colors';
+import typography from '@shared/styles/theme/typography';
+
+// Define solid background color for the panel (fully opaque)
+const PANEL_BG_COLOR = '#1e1e1e'; // Removing transparency from navbar bg color
+
 // Props definition
 interface GameSettingsPanelProps {
   settings: GameSettings;
@@ -71,6 +79,25 @@ const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
     }
   }, [isPanelOpen]);
 
+  // Add keyboard event listener for Escape key (web platform only)
+  useEffect(() => {
+    // Only add keyboard listener for web platform
+    if (Platform.OS === 'web' && isPanelOpen) {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          onClose();
+        }
+      };
+      
+      window.addEventListener('keydown', handleKeyDown);
+      
+      // Clean up event listener
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [isPanelOpen, onClose]);
+
   // Don't render at all if closed and fully invisible
   if (!isPanelOpen && isFullyInvisible) {
     return null;
@@ -90,7 +117,7 @@ const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
         modal
       >
         <Sheet.Overlay />
-        <Sheet.Frame>
+        <Sheet.Frame backgroundColor={PANEL_BG_COLOR}>
           <YStack padding="$4" flex={1}>
             <SettingsPanelContent 
               settings={settings} 
@@ -109,12 +136,12 @@ const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
       {isPanelOpen && (
         <YStack
           position="absolute"
-          top={60} // Adjust for navbar on web
+          top={layout.sizing.navbar.height}
           left={0}
           width="100%"
-          height="100%"
-          zIndex={99}
-          backgroundColor={theme.background}
+          height={`calc(100vh - ${layout.sizing.navbar.height})`} // Calculate height using shared layout value
+          zIndex={layout.zIndex.settingsPanel} // Use shared zIndex
+          backgroundColor={PANEL_BG_COLOR} // Use fully opaque background color
           animation="quick"
           enterStyle={{ opacity: 0, y: 20 }}
           exitStyle={{ opacity: 0, y: 20 }}
@@ -150,21 +177,22 @@ const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
       <ScrollView flex={1}>
         {/* Player Mode Setting */}
         <YStack padding="$4" marginBottom="$2">
-          <Text fontSize="$5" fontWeight="500" marginBottom="$2" color={theme.color}>
+          <Text fontSize="$5" fontWeight="700" marginBottom="$2" color="$color">
             Player Mode
           </Text>
           <View
             borderRadius="$2"
             marginTop="$2"
             overflow="hidden"
-            backgroundColor={theme.background}
+            backgroundColor="$background"
+            borderWidth={1}
+            borderColor="$borderColor"
           >
             <Picker
               selectedValue={settings.playerMode}
               onValueChange={(value) => handleChange('playerMode', value)}
               style={{ width: '100%', height: 50 }}
               dropdownIconColor={theme.color?.toString()}
-              itemStyle={{ color: theme.color?.toString() }}
             >
               <Picker.Item label="AI Player" value="ai" />
               <Picker.Item label="Two Player" value="user" />
@@ -174,21 +202,22 @@ const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
         
         {/* First Player Setting */}
         <YStack padding="$4" marginBottom="$2">
-          <Text fontSize="$5" fontWeight="500" marginBottom="$2" color={theme.color}>
+          <Text fontSize="$5" fontWeight="700" marginBottom="$2" color="$color">
             First Player
           </Text>
           <View
             borderRadius="$2"
             marginTop="$2"
             overflow="hidden"
-            backgroundColor={theme.background}
+            backgroundColor="$background"
+            borderWidth={1}
+            borderColor="$borderColor"
           >
             <Picker
               selectedValue={settings.firstPlayer}
               onValueChange={(value) => handleChange('firstPlayer', value)}
               style={{ width: '100%', height: 50 }}
               dropdownIconColor={theme.color?.toString()}
-              itemStyle={{ color: theme.color?.toString() }}
             >
               <Picker.Item label="Human (Player 1)" value="human" />
               <Picker.Item label="AI (Player 2)" value="ai" />
@@ -198,21 +227,22 @@ const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
         
         {/* Scoring Mechanism Setting */}
         <YStack padding="$4" marginBottom="$2">
-          <Text fontSize="$5" fontWeight="500" marginBottom="$2" color={theme.color}>
+          <Text fontSize="$5" fontWeight="700" marginBottom="$2" color="$color">
             Scoring Mechanism
           </Text>
           <View
             borderRadius="$2"
             marginTop="$2"
             overflow="hidden"
-            backgroundColor={theme.background}
+            backgroundColor="$background"
+            borderWidth={1}
+            borderColor="$borderColor"
           >
             <Picker
               selectedValue={settings.scoringMechanism}
               onValueChange={(value) => handleChange('scoringMechanism', value)}
               style={{ width: '100%', height: 50 }}
               dropdownIconColor={theme.color?.toString()}
-              itemStyle={{ color: theme.color?.toString() }}
             >
               <Picker.Item label="Cell-Multiplication" value="cell-multiplication" />
               <Picker.Item label="Cell-Connection" value="cell-connection" />
@@ -223,14 +253,16 @@ const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
         
         {/* AI Difficulty Setting */}
         <YStack padding="$4" marginBottom="$2">
-          <Text fontSize="$5" fontWeight="500" marginBottom="$2" color={theme.color}>
+          <Text fontSize="$5" fontWeight="700" marginBottom="$2" color="$color">
             AI Difficulty
           </Text>
           <View
             borderRadius="$2"
             marginTop="$2"
             overflow="hidden"
-            backgroundColor={theme.background}
+            backgroundColor="$background"
+            borderWidth={1}
+            borderColor="$borderColor"
           >
             <Picker
               selectedValue={settings.aiDifficulty}
@@ -238,7 +270,6 @@ const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
               style={{ width: '100%', height: 50 }}
               enabled={settings.playerMode === 'ai'}
               dropdownIconColor={theme.color?.toString()}
-              itemStyle={{ color: theme.color?.toString() }}
             >
               <Picker.Item label="Easy" value="easy" />
               <Picker.Item label="Hard" value="hard" />
@@ -248,21 +279,22 @@ const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
         
         {/* Board Size Setting */}
         <YStack padding="$4" marginBottom="$2">
-          <Text fontSize="$5" fontWeight="500" marginBottom="$2" color={theme.color}>
+          <Text fontSize="$5" fontWeight="700" marginBottom="$2" color="$color">
             Board Size
           </Text>
           <View
             borderRadius="$2"
             marginTop="$2"
             overflow="hidden"
-            backgroundColor={theme.background}
+            backgroundColor="$background"
+            borderWidth={1}
+            borderColor="$borderColor"
           >
             <Picker
               selectedValue={settings.boardSize}
               onValueChange={(value) => handleChange('boardSize', value)}
               style={{ width: '100%', height: 50 }}
               dropdownIconColor={theme.color?.toString()}
-              itemStyle={{ color: theme.color?.toString() }}
             >
               <Picker.Item label="4x4" value="4" />
               <Picker.Item label="6x6" value="6" />
@@ -274,7 +306,7 @@ const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
       </ScrollView>
       
       {/* Close Button */}
-      <YStack padding="$4" alignItems="center" justifyContent="center" marginTop="auto">
+      <YStack padding="$4" alignItems="center" justifyContent="center" marginTop="auto" marginBottom="$4">
         <Button
           width="80%" 
           borderWidth={1}
@@ -288,7 +320,7 @@ const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Close game settings menu"
         >
-          <Text color={theme.color} fontSize="$5" fontWeight="500">
+          <Text color={theme.color} fontSize="$5" fontWeight="700">
             Close Menu
           </Text>
         </Button>
@@ -297,4 +329,4 @@ const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
   );
 };
 
-export default GameSettingsPanel; 
+export default GameSettingsPanel;

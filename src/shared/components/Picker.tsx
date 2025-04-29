@@ -59,12 +59,38 @@ const StyledTrigger = styled(Select.Trigger, {
   backgroundColor: 'transparent',
 });
 
+// Using Tamagui theme tokens for dropdown styling 
+// instead of hardcoded values for better theme support
+const StyledContent = styled(Select.Content, {
+  backgroundColor: '$gray3',
+  borderColor: '$gray6',
+  borderWidth: 1,
+  borderRadius: '$2',
+  overflow: 'hidden',
+});
+
+// Styled component for dropdown items using theme tokens
+const StyledItem = styled(Select.Item, {
+  backgroundColor: 'transparent',
+  hoverStyle: { backgroundColor: '$blue3' },
+  focusStyle: { backgroundColor: '$blue4' },
+  pressStyle: { backgroundColor: '$blue5' },
+});
+
+// Styled component for dropdown item text using theme tokens
+const StyledItemText = styled(Select.ItemText, {
+  color: '$color',
+  fontSize: '$4',
+  fontWeight: '500',
+  padding: '$1',
+});
+
 // Define the Picker Item component to match the RN Picker API
 const Item: React.FC<ItemProps> = ({ label, value, color }) => {
   return (
-    <Select.Item index={0} value={value}>
-      <Select.ItemText color={color}>{label}</Select.ItemText>
-    </Select.Item>
+    <StyledItem index={0} value={value}>
+      <StyledItemText color={color}>{label}</StyledItemText>
+    </StyledItem>
   );
 };
 
@@ -111,7 +137,12 @@ const Picker: React.FC<PickerProps> & { Item: React.FC<ItemProps> } = ({
         {...rest}
       >
         <StyledTrigger>
-          <Select.Value placeholder={selectedLabel} color={theme.color} />
+          <Select.Value 
+            placeholder={selectedLabel} 
+            color={theme.color}
+            fontSize={16}
+            fontWeight="500"
+          />
           <Select.Icon>
             <ChevronDown color={dropdownIconColor || theme.color?.toString()} />
           </Select.Icon>
@@ -119,24 +150,23 @@ const Picker: React.FC<PickerProps> & { Item: React.FC<ItemProps> } = ({
         
         {Platform.OS === 'web' ? (
           // Native select dropdown for web
-          <Select.Content>
+          <StyledContent>
             <Select.ScrollUpButton />
             <Select.Viewport>
               <Select.Group>
                 {items.map((item, index) => (
-                  <Select.Item key={index} index={index} value={item.value}>
-                    <Select.ItemText
+                  <StyledItem key={index} index={index} value={item.value}>
+                    <StyledItemText
                       style={itemStyle}
-                      color={itemStyle?.color || theme.color}
                     >
                       {item.label}
-                    </Select.ItemText>
-                  </Select.Item>
+                    </StyledItemText>
+                  </StyledItem>
                 ))}
               </Select.Group>
             </Select.Viewport>
             <Select.ScrollDownButton />
-          </Select.Content>
+          </StyledContent>
         ) : (
           // Sheet-based select for mobile
           <>
@@ -151,26 +181,25 @@ const Picker: React.FC<PickerProps> & { Item: React.FC<ItemProps> } = ({
               </Sheet>
             </Adapt>
 
-            <Select.Content>
+            <StyledContent>
               <Select.ScrollUpButton />
               <Select.Viewport>
                 <Select.Group>
                   <YStack gap="$2">
                     {items.map((item, index) => (
-                      <Select.Item key={index} index={index} value={item.value}>
-                        <Select.ItemText
+                      <StyledItem key={index} index={index} value={item.value}>
+                        <StyledItemText
                           style={itemStyle}
-                          color={itemStyle?.color || theme.color}
                         >
                           {item.label}
-                        </Select.ItemText>
-                      </Select.Item>
+                        </StyledItemText>
+                      </StyledItem>
                     ))}
                   </YStack>
                 </Select.Group>
               </Select.Viewport>
               <Select.ScrollDownButton />
-            </Select.Content>
+            </StyledContent>
           </>
         )}
       </StyledSelect>

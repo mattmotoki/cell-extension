@@ -35,7 +35,7 @@ const themes = Object.fromEntries(
 
 // Create the config
 const appConfig = createTamagui({
-  defaultTheme: 'light',
+  defaultTheme: 'dark',
   animations,
   shouldAddPrefersColorThemes: false,
   themeClassNameOnRoot: false,
