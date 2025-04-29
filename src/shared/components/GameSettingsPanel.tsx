@@ -111,7 +111,7 @@ const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
     items: { label: string; value: GameSettings[K] }[];
     enabled?: boolean;
   }) => (
-    <YStack space="$2">
+    <YStack gap="$2">
       <H4>{label}</H4>
       <Select 
         id={settingKey} 
@@ -164,10 +164,10 @@ const SettingsPanelContent: React.FC<SettingsPanelContentProps> = ({
   );
 
   return (
-    <YStack flex={1} space="$4"> 
+    <YStack flex={1} gap="$4"> 
       {/* Use YStack for consistent spacing */}
       <ScrollView flex={1}>
-        <YStack space="$5" paddingBottom="$4"> 
+        <YStack gap="$5" paddingBottom="$4"> 
           {/* Add vertical spacing between settings */}
           
           {/* Player Mode Setting */}
