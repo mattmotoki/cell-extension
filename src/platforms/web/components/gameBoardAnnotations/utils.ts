@@ -293,17 +293,20 @@ export const drawConnectionLines = (options: ConnectionLineOptions): string[] =>
     cellDimension,
     group,
     lineWidth = cellDimension * 0.005, // Default thin line
-    color = '#888888', // Default gray color
+    color,
     opacity = 1.0,
     cells,
     gridWidth,
     gridHeight,
     player,
+    playerColors = ['#ff0000', '#0000ff'], // Default colors if not provided
     useDepthFirstOrder = false
   } = options;
 
   const processedEdges = new Set<string>();
   const cellsSet = new Set(cells);
+  // Use dark color for lines instead of player color
+  const lineColor = color || '#222222'; 
 
   cells.forEach(cellKey => {
     const [gridX, gridY] = parsePositionKey(cellKey);
@@ -337,7 +340,7 @@ export const drawConnectionLines = (options: ConnectionLineOptions): string[] =>
           .attr('y1', cellCenterY)
           .attr('x2', adjCenterX)
           .attr('y2', adjCenterY)
-          .attr('stroke', color)
+          .attr('stroke', lineColor)
           .attr('stroke-width', lineWidth)
           .attr('stroke-opacity', opacity);
       }
@@ -363,14 +366,14 @@ export const drawMarkers = (options: MarkerOptions): void => {
   const {
     cellDimension,
     group,
-    markerRadius = cellDimension * 0.05,
-    color, // Explicit color overrides player color
-    fillColor, // Explicit fill color
+    markerRadius = cellDimension * 0.02,
+    color='#222222', 
+    fillColor='#222222',
     strokeWidth = 0.1,
-    opacity = 1.0, // Default to fully opaque
+    opacity = 1.0, 
     cells,
     player,
-    playerColors = ['#ff0000', '#0000ff'], // Default colors if not provided
+    playerColors = ['#ff0000', '#0000ff'],
     positions // Optional specific positions
   } = options;
 
@@ -432,11 +435,11 @@ export const drawLabels = (options: LabelOptions): void => {
     player,
     playerColors = ['#ff0000', '#0000ff'],
     color, 
-    fillColor = playerColors[player] || '#888888', // Default to player color
+    fillColor, // Allow explicit fill color override
     opacity = 1.0, 
     strokeWidth = 0,
     fontSize = cellDimension * 0.15,
-    fontColor = '#ffffff', // White text by default
+    fontColor = '#111111', // Dark text color
     fontWeight = 'bold',
     gridWidth,
     gridHeight
@@ -448,15 +451,15 @@ export const drawLabels = (options: LabelOptions): void => {
     label: index < labels.length ? labels[index] : ''
   }));
   
-  // Draw markers for all positions
+  // Draw markers for all positions - use player colors for background
   drawMarkers({
     cellDimension,
     group,
     player,
     playerColors,
     markerRadius,
-    fillColor,
-    color,
+    fillColor: fillColor || playerColors[player] || '#888888', // Use player color for background
+    color: playerColors[player], // Match stroke to player color
     opacity,
     strokeWidth,
     gridWidth,
@@ -472,7 +475,7 @@ export const drawLabels = (options: LabelOptions): void => {
       .attr('y', y)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
-      .attr('fill', fontColor)
+      .attr('fill', fontColor) // Dark text color
       .attr('font-weight', fontWeight)
       .attr('font-size', fontSize)
       .attr('stroke', 'none') // No stroke needed with markers

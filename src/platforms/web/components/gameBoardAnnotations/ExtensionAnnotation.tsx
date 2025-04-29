@@ -102,8 +102,9 @@ export const ExtensionAnnotation: React.FC<ExtensionAnnotationProps> = ({
       useDepthFirstOrder: true // Only specify non-default value
     });
     
-    // Draw small white markers ONLY at connected cell centers
+    // Draw small dark markers at connected cell centers (matching line and text color)
     if (connectedCells.length > 0) {
+      console.log('connectedCells', connectedCells.length);
       drawMarkers({
         cellDimension,
         group: scoringVisualsGroup,
@@ -111,10 +112,7 @@ export const ExtensionAnnotation: React.FC<ExtensionAnnotationProps> = ({
         gridWidth,
         gridHeight,
         player,
-        playerColors,
-        markerRadius: cellDimension * 0.05,
-        fillColor: '#ffffff', // White fill for cell markers
-        color: playerColors[player] // Border color matches player color
+        playerColors
       });
     }
 
@@ -165,7 +163,7 @@ export const ExtensionAnnotation: React.FC<ExtensionAnnotationProps> = ({
     // Create sequential numbers for edge labels (1-indexed)
     const edgeLabels = processedEdges.map((_, index) => index + 1);
     
-    // Draw gray markers with sequential edge numbers
+    // Draw labels with sequential edge numbers using player color background and dark text
     drawLabels({
       cellDimension,
       group: scoringVisualsGroup,
@@ -175,6 +173,7 @@ export const ExtensionAnnotation: React.FC<ExtensionAnnotationProps> = ({
       playerColors,
       positions: edgePositions,
       labels: edgeLabels,
+      fillColor: playerColors[player], // Use player color for background
     });
   });
 
