@@ -88,7 +88,8 @@ export const MultiplicationAnnotation: React.FC<MultiplicationAnnotationProps> =
           gridWidth,
           gridHeight,
           player,
-          playerColors
+          playerColors,
+          fillColor: playerColors[player], // Use player color for background
         });
       }
     }

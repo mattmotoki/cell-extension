@@ -18,23 +18,23 @@ export const dark = '#121212';
 // Dark theme colors (currently the default)
 export const background = {
   primary: '#444444',
-  card: 'rgba(40, 40, 40, 0.8)',
+  card: 'rgba(30, 30, 30, 0.95)',
   board: '#1e1e1e',
-  input: '#2a2a2a',
+  input: '#363636',
   navbar: 'rgba(30, 30, 30, 0.9)',
 };
 
 export const text = {
-  primary: '#f0f0f0',
-  secondary: '#8293a7',
+  primary: '#ffffff',
+  secondary: '#a0b0c5',
 };
 
-export const border = '#444444';
+export const border = '#555555';
 
 // Hover/active state colors
 export const states = {
   primaryHover: '#3a5eff',
-  shadow: 'rgba(0, 0, 0, 0.2)',
+  shadow: 'rgba(0, 0, 0, 0.3)',
   textShadow: 'rgba(0, 0, 0, 0.3)',
 };
 

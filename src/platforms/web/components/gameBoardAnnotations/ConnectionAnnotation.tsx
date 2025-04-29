@@ -111,7 +111,8 @@ export const ConnectionAnnotation: React.FC<ConnectionAnnotationProps> = ({
       gridHeight,
       player,
       playerColors,
-      markerRadius: cellDimension * 0.15 // Only specify what's different from defaults
+      markerRadius: cellDimension * 0.15, // Only specify what's different from defaults
+      fillColor: playerColors[player], // Use player color for background
     });
   });
   
